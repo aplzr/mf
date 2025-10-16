@@ -250,7 +250,8 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
 
     if file_to_play is None:
         console.print(
-            f"[red]Index {index} not found in last search results (pattern: '{pattern}')[/red]"
+            f"[red]Index {index} not found in last search results "
+            f"(pattern: '{pattern}')[/red]"
         )
         console.print(f"[yellow]Valid indices: 1-{len(results)}[/yellow]")
         raise typer.Exit(1)
