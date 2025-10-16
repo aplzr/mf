@@ -1,0 +1,21 @@
+[project]
+name = "mf"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ap", email = "arnepelzerprivat@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.3.0",
+    "rich>=14.2.0",
+    "typer>=0.19.2",
+]
+
+[project.scripts]
+mf = "mf:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
