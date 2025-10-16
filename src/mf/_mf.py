@@ -302,5 +302,5 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
         raise typer.Exit(1)
 
 
-if __name__ == "__main__":
-    app()
+# TODOs
+# - [ ] Add a "new" command that lists the last n newest additions
