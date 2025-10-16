@@ -20,7 +20,6 @@ console = Console()
 SEARCH_PATHS = [
     Path("//doorstep/bitheap-incoming"),
     Path("//doorstep/bitpile-incoming"),
-    # Add more paths as needed
 ]
 
 # Configure supported media extensions
@@ -31,7 +30,7 @@ MEDIA_EXTENSIONS = {
     ".mov",
     ".wmv",
     ".flv",
-    ".webm",  # Video
+    ".webm",
 }
 
 
