@@ -185,7 +185,9 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
 
 @app.command()
 def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)")):
-    """List media files matching the search pattern.
+    """Find media files matching the search pattern.
+
+    Finds matching files and prints an indexed list.
 
     Args:
         pattern: Glob-based search pattern. If no wildcards are present,
