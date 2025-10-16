@@ -208,8 +208,8 @@ def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)"))
 
     table = Table(show_header=False, box=None, padding=(0, 1))
     table.add_column("#", style="cyan", width=max_index_width, justify="right")
-    table.add_column("File", style="green")
-    table.add_column("Location", style="blue")
+    table.add_column("File", style="green", overflow="fold")
+    table.add_column("Location", style="blue", overflow="fold")
 
     for idx, file_path in results:
         table.add_row(str(idx), file_path.name, str(file_path.parent))
