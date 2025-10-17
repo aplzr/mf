@@ -210,7 +210,7 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
     all_files.sort(key=lambda p: p.name.lower())
 
     # Add index
-    results = [(idx, file_path) for idx, file_path in enumerate(all_files, 1)]
+    results = [(idx, file_path) for idx, file_path in enumerate(all_files, start=1)]
 
     return results
 
@@ -370,8 +370,32 @@ def imdb(
     typer.launch(imdb_url)
 
 
+@app.command()
+def new(
+    n: int = typer.Argument(20, help="Number of latest additions to show"),
+):
+    """Find the latest additions to the media database.
+
+    Args:
+        n (int, optional): Number of latest additions to show. Defaults 20.
+    """
+    # Run parallelized IO lookups for fast create date retrieval of all files
+    all_files = [path for _, path in find_media_files("*")]
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        times = list(executor.map(lambda path: path.stat().st_birthtime, all_files))
+
+    # Sort, filter, add index
+    latest_files = [path for _, path in sorted(zip(times, all_files), reverse=True)][:n]
+    latest_files = [(idx, path) for idx, path in enumerate(latest_files, start=1)]
+
+    # Cache and print results
+    pattern = f"{n} latest additions"
+    save_search_results(pattern, latest_files)
+    print_search_results(pattern, latest_files)
+
+
 # TODOs
-# - [ ] Add a "new" command that lists the last n newest additions
+# - [x] Add a "new" command that lists the last n newest additions
 # - [x] Add a "cache" command that lists the current cache
 # - [x] Return timestamp in load_search_results and print it in cache
 # - [x] Add "imdb" command
