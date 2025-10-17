@@ -77,9 +77,6 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]]] | None:
     """
     cache_file = get_cache_file()
 
-    if not cache_file.exists():
-        return None
-
     try:
         with open(cache_file, "r", encoding="utf-8") as f:
             cache_data = json.load(f)
@@ -91,7 +88,10 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]]] | None:
 
         return pattern, results
     except (json.JSONDecodeError, KeyError, FileNotFoundError):
-        return None
+        console.print(
+            "[red]No previous search found. Please run 'mf list <pattern>' first.[/red]"
+        )
+        raise typer.Exit(1)
 
 
 def print_search_results(pattern: str, results: list[tuple[int, Path]]):
@@ -238,15 +238,7 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
                in the list command output.
     """
     # Load cached search results
-    cache = load_search_results()
-
-    if cache is None:
-        console.print(
-            "[red]No previous search found. Please run 'mf list <pattern>' first.[/red]"
-        )
-        raise typer.Exit(1)
-
-    pattern, results = cache
+    pattern, results = load_search_results()
 
     # Find the file with the requested index
     file_to_play = None
@@ -319,15 +311,7 @@ def file():
 @app.command()
 def cache():
     """Print cache file location, last search pattern, and cached results."""
-    cache = load_search_results()
-
-    if cache is None:
-        console.print(
-            "[red]No previous search found. Please run 'mf list <pattern>' first.[/red]"
-        )
-        raise typer.Exit(1)
-
-    pattern, results = cache
+    pattern, results = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
     console.print(f"[yellow]Last search pattern:[/yellow] {pattern}")
     console.print("[yellow]Cached results:[/yellow]")
