@@ -73,7 +73,7 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]]] | None:
     """Load the last search results from cache.
 
     Returns:
-        A tuple of (pattern, results) if cache exists, None otherwise.
+        A tuple of (pattern, results) if cache exists, exits otherwise.
     """
     cache_file = get_cache_file()
 
