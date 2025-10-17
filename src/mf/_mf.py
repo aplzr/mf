@@ -69,7 +69,7 @@ def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
         json.dump(cache_data, f, indent=2)
 
 
-def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime] | None:
+def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
     """Load the last search results from cache.
 
     Returns:
