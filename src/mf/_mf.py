@@ -73,7 +73,7 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]]] | None:
     """Load the last search results from cache.
 
     Returns:
-        A tuple of (pattern, results) if cache exists, exits otherwise.
+        A tuple of (pattern, results, timestamp) if cache exists, exits otherwise.
     """
     cache_file = get_cache_file()
 
@@ -85,8 +85,9 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]]] | None:
         results = [
             (item["index"], Path(item["path"])) for item in cache_data["results"]
         ]
+        timestamp = cache_data["timestamp"]
 
-        return pattern, results
+        return pattern, results, timestamp
     except (json.JSONDecodeError, KeyError, FileNotFoundError):
         console.print(
             "[red]No previous search found. Please run 'mf list <pattern>' first.[/red]"
@@ -238,7 +239,7 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
                in the list command output.
     """
     # Load cached search results
-    pattern, results = load_search_results()
+    pattern, results, _ = load_search_results()
 
     # Find the file with the requested index
     file_to_play = None
@@ -311,9 +312,12 @@ def file():
 @app.command()
 def cache():
     """Print cache file location, last search pattern, and cached results."""
-    pattern, results = load_search_results()
+    pattern, results, timestamp = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
     console.print(f"[yellow]Last search pattern:[/yellow] {pattern}")
+    console.print(
+        f"[yellow]Timestamp: {str(datetime.fromisoformat(timestamp))}[/yellow]"
+    )
     console.print("[yellow]Cached results:[/yellow]")
     print_search_results(pattern, results)
 
@@ -321,4 +325,4 @@ def cache():
 # TODOs
 # - [ ] Add a "new" command that lists the last n newest additions
 # - [x] Add a "cache" command that lists the current cache
-# - [ ] Return timestamp in load_search_results and print it in cache
+# - [x] Return timestamp in load_search_results and print it in cache
