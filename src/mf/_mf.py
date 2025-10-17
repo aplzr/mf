@@ -161,7 +161,7 @@ def cache():
 
 @app.command()
 def file():
-    """Print the cache file location"""
+    """Print the cache file location."""
     console.print(get_cache_file())
 
 
