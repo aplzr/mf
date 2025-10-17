@@ -190,10 +190,8 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
         list[tuple[int, Path]]: (index, file_path) tuples for each matching file, where
             index is a 1-based sequential number.
     """
-    normalized_pattern = normalize_pattern(pattern)
-
     # Pre-compile pattern to regex for faster matching
-    pattern_regex = re.compile(translate(normalized_pattern), re.IGNORECASE)
+    pattern_regex = re.compile(translate(pattern), re.IGNORECASE)
 
     # Scan all paths in parallel
     with ThreadPoolExecutor(max_workers=len(SEARCH_PATHS)) as executor:
@@ -268,6 +266,7 @@ def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)"))
         typer.Exit: No matching files found.
     """
     # Find, cache, and print media file paths
+    pattern = normalize_pattern(pattern)
     results = find_media_files(pattern)
 
     if not results:
@@ -275,7 +274,7 @@ def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)"))
         raise typer.Exit()
 
     save_search_results(pattern, results)
-    print_search_results(pattern, results)
+    print_search_results(f"Search pattern: {pattern}", results)
 
 
 @app.command()
@@ -345,9 +344,12 @@ def cache():
     """Print cache file location, last search pattern, timestamp, and cached results."""
     pattern, results, timestamp = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
-    console.print(f"[yellow]Last search pattern:[/yellow] {pattern}")
     console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
     console.print("[yellow]Cached results:[/yellow]")
+
+    if "latest additions" not in pattern:
+        pattern = f"Search pattern: {pattern}"
+
     print_search_results(pattern, results)
 
 
