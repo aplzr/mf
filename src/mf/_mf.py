@@ -74,8 +74,11 @@ def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
 def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
     """Load the last search results from cache.
 
+    Raises:
+        typer.Exit: Cache empty or doesn't exist.
+
     Returns:
-        A tuple of (pattern, results, timestamp) if cache exists, exits otherwise.
+        A tuple of (pattern, results, timestamp).
     """
     cache_file = get_cache_file()
 
@@ -259,6 +262,9 @@ def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)"))
     Args:
         pattern: Glob-based search pattern. If no wildcards are present,
                  the pattern will be wrapped with wildcards automatically.
+
+    Raises:
+        typer.Exit: No matching files found.
     """
     # Find, cache, and print media file paths
     results = find_media_files(pattern)
@@ -278,6 +284,10 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
     Args:
         index: The 1-based index number of the file to play, as shown
                in the list command output.
+
+    Raises:
+        typer.Exit: VLC not found.
+        typer.Exit: Error launching VLC.
     """
     file_to_play = get_file_by_index(index)
 
