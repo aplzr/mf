@@ -324,3 +324,4 @@ def cache():
 # - [ ] Add a "new" command that lists the last n newest additions
 # - [x] Add a "cache" command that lists the current cache
 # - [x] Return timestamp in load_search_results and print it in cache
+# - [ ] Add "imdb" command
