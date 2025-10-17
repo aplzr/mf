@@ -8,7 +8,9 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "cinemagoer>=2023.5.1",
     "click>=8.3.0",
+    "guessit>=3.8.0",
     "rich>=14.2.0",
     "typer>=0.19.2",
 ]
