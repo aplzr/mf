@@ -205,10 +205,10 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
         all_files.extend(files)
 
     # Sort alphabetically by filename (case-insensitive)
-    all_files.sort(key=lambda p: p.name.lower())
+    all_files.sort(key=lambda path: path.name.lower())
 
     # Add index
-    results = [(idx, file_path) for idx, file_path in enumerate(all_files, start=1)]
+    results = [(idx, path) for idx, path in enumerate(all_files, start=1)]
 
     return results
 
@@ -231,9 +231,10 @@ def get_file_by_index(index: int) -> Path:
 
     # Find the file with the requested index
     file = None
-    for idx, file_path in results:
+
+    for idx, path in results:
         if idx == index:
-            file = file_path
+            file = path
             break
 
     if file is None:
