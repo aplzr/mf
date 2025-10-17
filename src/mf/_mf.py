@@ -311,7 +311,7 @@ def file():
 
 @app.command()
 def cache():
-    """Print cache file location, last search pattern, and cached results."""
+    """Print cache file location, last search pattern, timestamp, and cached results."""
     pattern, results, timestamp = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
     console.print(f"[yellow]Last search pattern:[/yellow] {pattern}")
