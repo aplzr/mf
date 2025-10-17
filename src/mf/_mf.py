@@ -69,7 +69,7 @@ def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
         json.dump(cache_data, f, indent=2)
 
 
-def load_search_results() -> tuple[str, list[tuple[int, Path]]] | None:
+def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime] | None:
     """Load the last search results from cache.
 
     Returns:
@@ -85,7 +85,7 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]]] | None:
         results = [
             (item["index"], Path(item["path"])) for item in cache_data["results"]
         ]
-        timestamp = cache_data["timestamp"]
+        timestamp = datetime.fromisoformat(cache_data["timestamp"])
 
         return pattern, results, timestamp
     except (json.JSONDecodeError, KeyError, FileNotFoundError):
@@ -315,9 +315,7 @@ def cache():
     pattern, results, timestamp = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
     console.print(f"[yellow]Last search pattern:[/yellow] {pattern}")
-    console.print(
-        f"[yellow]Timestamp: {str(datetime.fromisoformat(timestamp))}[/yellow]"
-    )
+    console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
     console.print("[yellow]Cached results:[/yellow]")
     print_search_results(pattern, results)
 
