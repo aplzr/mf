@@ -212,6 +212,18 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
 
 
 def get_file_by_index(index: int) -> Path:
+    """Get a file path from the cache.
+
+    Args:
+        index (int): Index of the requested file.
+
+    Raises:
+        typer.Exit: Invalid index.
+        typer.Exit: File doesn't exist anymore.
+
+    Returns:
+        Path: Path of the requested file.
+    """
     # Load cached search results
     pattern, results, _ = load_search_results()
 
