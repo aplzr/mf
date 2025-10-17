@@ -238,15 +238,15 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
                in the list command output.
     """
     # Load cached search results
-    cached = load_search_results()
+    cache = load_search_results()
 
-    if cached is None:
+    if cache is None:
         console.print(
             "[red]No previous search found. Please run 'mf list <pattern>' first.[/red]"
         )
         raise typer.Exit(1)
 
-    pattern, results = cached
+    pattern, results = cache
 
     # Find the file with the requested index
     file_to_play = None
@@ -319,7 +319,15 @@ def file():
 @app.command()
 def cache():
     """Print cache file location, last search pattern, and cached results."""
-    pattern, results = load_search_results()
+    cache = load_search_results()
+
+    if cache is None:
+        console.print(
+            "[red]No previous search found. Please run 'mf list <pattern>' first.[/red]"
+        )
+        raise typer.Exit(1)
+
+    pattern, results = cache
     console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
     console.print(f"[yellow]Last search pattern:[/yellow] {pattern}")
     console.print("[yellow]Cached results:[/yellow]")
