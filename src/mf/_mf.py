@@ -9,6 +9,8 @@ from functools import partial
 from pathlib import Path
 
 import typer
+from guessit import guessit
+from imdb import IMDb
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -209,6 +211,33 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
     return results
 
 
+def get_file_by_index(index: int) -> Path:
+    # Load cached search results
+    pattern, results, _ = load_search_results()
+
+    # Find the file with the requested index
+    file = None
+    for idx, file_path in results:
+        if idx == index:
+            file = file_path
+            break
+
+    if file is None:
+        console.print(
+            f"[red]Index {index} not found in last search results "
+            f"(pattern: '{pattern}')[/red]"
+        )
+        console.print(f"[yellow]Valid indices: 1-{len(results)}[/yellow]")
+        raise typer.Exit(1)
+
+    # Check if file still exists
+    if not file.exists():
+        console.print(f"[red]File no longer exists:[/red] {file}")
+        raise typer.Exit(1)
+
+    return file
+
+
 @app.command()
 def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)")):
     """Find media files matching the search pattern.
@@ -238,28 +267,7 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
         index: The 1-based index number of the file to play, as shown
                in the list command output.
     """
-    # Load cached search results
-    pattern, results, _ = load_search_results()
-
-    # Find the file with the requested index
-    file_to_play = None
-    for idx, file_path in results:
-        if idx == index:
-            file_to_play = file_path
-            break
-
-    if file_to_play is None:
-        console.print(
-            f"[red]Index {index} not found in last search results "
-            f"(pattern: '{pattern}')[/red]"
-        )
-        console.print(f"[yellow]Valid indices: 1-{len(results)}[/yellow]")
-        raise typer.Exit(1)
-
-    # Check if file still exists
-    if not file_to_play.exists():
-        console.print(f"[red]File no longer exists:[/red] {file_to_play}")
-        raise typer.Exit(1)
+    file_to_play = get_file_by_index(index)
 
     console.print(f"[green]Playing:[/green] {file_to_play.name}")
     console.print(f"[blue]Location:[/blue] {file_to_play.parent}")
@@ -320,9 +328,28 @@ def cache():
     print_search_results(pattern, results)
 
 
+@app.command()
+def imdb(
+    index: int = typer.Argument(
+        ..., help="Index of the file for which to retrieve the IMDB URL"
+    ),
+):
+    """Open IMDB entry of a search result.
+
+    Args:
+        index (int): Index of the file for which to retrieve the IMDB URL.
+    """
+    filestem = get_file_by_index(index).stem
+    title = guessit(filestem)["title"]
+    imdb_entry = IMDb().search_movie(title)[0]
+    imdb_url = f"https://www.imdb.com/title/tt{imdb_entry.movieID}/"
+    console.print(f"IMDB entry for [green]{imdb_entry['title']}[/green]: {imdb_url}")
+    typer.launch(imdb_url)
+
+
 # TODOs
 # - [ ] Add a "new" command that lists the last n newest additions
 # - [x] Add a "cache" command that lists the current cache
 # - [x] Return timestamp in load_search_results and print it in cache
-# - [ ] Add "imdb" command
+# - [x] Add "imdb" command
 # - [ ] Add "trailer" command
