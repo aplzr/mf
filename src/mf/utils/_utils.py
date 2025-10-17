@@ -14,6 +14,7 @@ from rich.table import Table
 
 from ..params import MEDIA_EXTENSIONS, SEARCH_PATHS
 
+# The console instance used for print output throughout the package
 console = Console()
 
 
