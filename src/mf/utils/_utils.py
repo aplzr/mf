@@ -6,16 +6,19 @@ from datetime import datetime
 from fnmatch import translate
 from functools import partial
 from pathlib import Path
+from socket import gethostname
 
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from ..params import MEDIA_EXTENSIONS, SEARCH_PATHS
+from ..params import MEDIA_EXTENSIONS, SEARCH_PATHS_BY_HOSTNAME
 
 # The console instance used for print output throughout the package
 console = Console()
+
+search_paths = SEARCH_PATHS_BY_HOSTNAME[gethostname()]
 
 
 # Cross-platform cache file location
@@ -178,10 +181,10 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
     pattern_regex = re.compile(translate(pattern), re.IGNORECASE)
 
     # Scan all paths in parallel
-    with ThreadPoolExecutor(max_workers=len(SEARCH_PATHS)) as executor:
+    with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
         # Create partial function with pattern
         scan_with_pattern = partial(scan_path, pattern_regex=pattern_regex)
-        path_results = executor.map(scan_with_pattern, SEARCH_PATHS)
+        path_results = executor.map(scan_with_pattern, search_paths)
 
     # Flatten results
     all_files = []
