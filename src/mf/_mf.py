@@ -39,7 +39,7 @@ def get_cache_file() -> Path:
     """Get the cache file path following platform best practices.
 
     Returns:
-        Path to the cache file in the appropriate user directory.
+        Path: Path to the cache file in the appropriate user directory.
     """
     if os.name == "nt":  # Windows
         cache_dir = Path(os.environ.get("LOCALAPPDATA", Path.home()))
@@ -55,8 +55,8 @@ def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
     """Save search results to cache file.
 
     Args:
-        pattern: The search pattern used.
-        results: List of (index, file_path) tuples.
+        pattern (str): The search pattern used.
+        results (list[tuple[int, Path]]): List of (index, file_path) tuples.
     """
     cache_data = {
         "pattern": pattern,
@@ -78,7 +78,8 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
         typer.Exit: Cache empty or doesn't exist.
 
     Returns:
-        A tuple of (pattern, results, timestamp).
+        tuple[str, list[tuple[int, Path]], datetime]: Pattern, results, timestamp, where
+            results is a list of (index, file_path) tuples.
     """
     cache_file = get_cache_file()
 
@@ -145,11 +146,11 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
     """Scan a single path for media files.
 
     Args:
-        search_path: The directory path to scan for media files.
-        pattern_regex: Compiled regex pattern for matching filenames.
+        search_path (Path): The directory path to scan for media files.
+        pattern_regex (re.Pattern): Compiled regex pattern for matching filenames.
 
     Returns:
-        A list of Path objects for all media files found in the directory tree.
+        list[Path]: All media files found in the directory tree.
     """
     results = []
 
@@ -183,11 +184,11 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
     by the given glob pattern.
 
     Args:
-        pattern: Glob-based search pattern to match filenames against.
+        pattern (str): Glob-based search pattern to match filenames against.
 
     Returns:
-        A list of tuples containing (index, file_path) for each matching file,
-        where index is a 1-based sequential number.
+        list[tuple[int, Path]]: (index, file_path) tuples for each matching file, where
+            index is a 1-based sequential number.
     """
     normalized_pattern = normalize_pattern(pattern)
 
@@ -260,8 +261,8 @@ def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)"))
     Finds matching files and prints an indexed list.
 
     Args:
-        pattern: Glob-based search pattern. If no wildcards are present,
-                 the pattern will be wrapped with wildcards automatically.
+        pattern (str): Glob-based search pattern. If no wildcards are present, the
+            pattern will be wrapped with wildcards automatically.
 
     Raises:
         typer.Exit: No matching files found.
@@ -282,8 +283,8 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
     """Play a media file by its index.
 
     Args:
-        index: The 1-based index number of the file to play, as shown
-               in the list command output.
+        index (int): The 1-based index number of the file to play, as shown in the list
+            command output.
 
     Raises:
         typer.Exit: VLC not found.
