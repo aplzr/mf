@@ -47,6 +47,30 @@ def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)"))
 
 
 @app.command()
+def new(
+    n: int = typer.Argument(20, help="Number of latest additions to show"),
+):
+    """Find the latest additions to the media database.
+
+    Args:
+        n (int, optional): Number of latest additions to show. Defaults to 20.
+    """
+    # Run parallelized IO lookups for fast create date retrieval of all files
+    all_files = [path for _, path in find_media_files("*")]
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        times = list(executor.map(lambda path: path.stat().st_mtime, all_files))
+
+    # Sort, filter, add index
+    latest_files = [path for _, path in sorted(zip(times, all_files), reverse=True)][:n]
+    latest_files = [(idx, path) for idx, path in enumerate(latest_files, start=1)]
+
+    # Cache and print results
+    pattern = f"{n} latest additions"
+    save_search_results(pattern, latest_files)
+    print_search_results(pattern, latest_files)
+
+
+@app.command()
 def play(index: int = typer.Argument(..., help="Index of the file to play")):
     """Play a media file by its index.
 
@@ -103,26 +127,6 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
 
 
 @app.command()
-def file():
-    """Print the cache file location"""
-    console.print(get_cache_file())
-
-
-@app.command()
-def cache():
-    """Print cache file location, last search pattern, timestamp, and cached results."""
-    pattern, results, timestamp = load_search_results()
-    console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
-    console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
-    console.print("[yellow]Cached results:[/yellow]")
-
-    if "latest additions" not in pattern:
-        pattern = f"Search pattern: {pattern}"
-
-    print_search_results(pattern, results)
-
-
-@app.command()
 def imdb(
     index: int = typer.Argument(
         ..., help="Index of the file for which to retrieve the IMDB URL"
@@ -142,27 +146,23 @@ def imdb(
 
 
 @app.command()
-def new(
-    n: int = typer.Argument(20, help="Number of latest additions to show"),
-):
-    """Find the latest additions to the media database.
+def cache():
+    """Print cache file location, last search pattern, timestamp, and cached results."""
+    pattern, results, timestamp = load_search_results()
+    console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
+    console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
+    console.print("[yellow]Cached results:[/yellow]")
 
-    Args:
-        n (int, optional): Number of latest additions to show. Defaults to 20.
-    """
-    # Run parallelized IO lookups for fast create date retrieval of all files
-    all_files = [path for _, path in find_media_files("*")]
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        times = list(executor.map(lambda path: path.stat().st_mtime, all_files))
+    if "latest additions" not in pattern:
+        pattern = f"Search pattern: {pattern}"
 
-    # Sort, filter, add index
-    latest_files = [path for _, path in sorted(zip(times, all_files), reverse=True)][:n]
-    latest_files = [(idx, path) for idx, path in enumerate(latest_files, start=1)]
+    print_search_results(pattern, results)
 
-    # Cache and print results
-    pattern = f"{n} latest additions"
-    save_search_results(pattern, latest_files)
-    print_search_results(pattern, latest_files)
+
+@app.command()
+def file():
+    """Print the cache file location"""
+    console.print(get_cache_file())
 
 
 # TODOs
