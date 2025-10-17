@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from .params import MEDIA_EXTENSIONS, SEARCH_PATHS
+from ..params import MEDIA_EXTENSIONS, SEARCH_PATHS
 
 console = Console()
 
