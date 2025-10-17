@@ -1,4 +1,4 @@
-from ._mf import app
+from .mf import app
 
 
 def main():
