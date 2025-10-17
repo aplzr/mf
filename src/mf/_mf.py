@@ -153,7 +153,7 @@ def new(
     # Run parallelized IO lookups for fast create date retrieval of all files
     all_files = [path for _, path in find_media_files("*")]
     with ThreadPoolExecutor(max_workers=50) as executor:
-        times = list(executor.map(lambda path: path.stat().st_birthtime, all_files))
+        times = list(executor.map(lambda path: path.stat().st_mtime, all_files))
 
     # Sort, filter, add index
     latest_files = [path for _, path in sorted(zip(times, all_files), reverse=True)][:n]
