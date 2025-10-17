@@ -310,6 +310,22 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
         raise typer.Exit(1)
 
 
+@app.command()
+def file():
+    """Print the cache file location"""
+    console.print(get_cache_file())
+
+
+@app.command()
+def cache():
+    """Print cache file location, last search pattern, and cached results."""
+    pattern, results = load_search_results()
+    console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
+    console.print(f"[yellow]Last search pattern:[/yellow] {pattern}")
+    console.print("[yellow]Cached results:[/yellow]")
+    print_search_results(pattern, results)
+
+
 # TODOs
 # - [ ] Add a "new" command that lists the last n newest additions
-# - [ ] Add a "cache" command that lists the current cache
+# - [x] Add a "cache" command that lists the current cache
