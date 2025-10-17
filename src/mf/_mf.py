@@ -379,7 +379,7 @@ def new(
     """Find the latest additions to the media database.
 
     Args:
-        n (int, optional): Number of latest additions to show. Defaults 20.
+        n (int, optional): Number of latest additions to show. Defaults to 20.
     """
     # Run parallelized IO lookups for fast create date retrieval of all files
     all_files = [path for _, path in find_media_files("*")]
