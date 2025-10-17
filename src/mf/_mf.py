@@ -16,13 +16,11 @@ from rich.table import Table
 app = typer.Typer(help="Media file finder and player")
 console = Console()
 
-# Configure your search paths here
 SEARCH_PATHS = [
     Path("//doorstep/bitheap-incoming"),
     Path("//doorstep/bitpile-incoming"),
 ]
 
-# Configure supported media extensions
 MEDIA_EXTENSIONS = {
     ".mp4",
     ".mkv",
@@ -94,6 +92,33 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]]] | None:
         return pattern, results
     except (json.JSONDecodeError, KeyError, FileNotFoundError):
         return None
+
+
+def print_search_results(pattern: str, results: list[tuple[int, Path]]):
+    """Print results of a search.
+
+    Args:
+        pattern (str): Search pattern.
+        results (list[tuple[int, Path]]): A list of (index, Path) tuples.
+    """
+    # Create rich table
+    # Calculate width for index column based on largest index
+    max_index_width = len(str(len(results))) if results else 1
+
+    table = Table(show_header=False, box=None, padding=(0, 1))
+    table.add_column("#", style="cyan", width=max_index_width, justify="right")
+    table.add_column("File", style="green", overflow="fold")
+    table.add_column("Location", style="blue", overflow="fold")
+
+    for idx, file_path in results:
+        table.add_row(str(idx), file_path.name, str(file_path.parent))
+
+    # Wrap in panel with title on the left and vertical padding
+    panel = Panel(
+        table, title=f"[bold]{pattern}[/bold]", title_align="left", padding=(1, 1)
+    )
+    console.print()
+    console.print(panel)
 
 
 def normalize_pattern(pattern: str) -> str:
@@ -177,7 +202,7 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
     # Sort alphabetically by filename (case-insensitive)
     all_files.sort(key=lambda p: p.name.lower())
 
-    # Add index after sorting
+    # Add index
     results = [(idx, file_path) for idx, file_path in enumerate(all_files, 1)]
 
     return results
@@ -193,33 +218,15 @@ def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)"))
         pattern: Glob-based search pattern. If no wildcards are present,
                  the pattern will be wrapped with wildcards automatically.
     """
+    # Find, cache, and print media file paths
     results = find_media_files(pattern)
 
     if not results:
         console.print(f"[yellow]No media files found matching '{pattern}'[/yellow]")
         raise typer.Exit()
 
-    # Save results to cache
     save_search_results(pattern, results)
-
-    # Create rich table
-    # Calculate width for index column based on largest index
-    max_index_width = len(str(len(results))) if results else 1
-
-    table = Table(show_header=False, box=None, padding=(0, 1))
-    table.add_column("#", style="cyan", width=max_index_width, justify="right")
-    table.add_column("File", style="green", overflow="fold")
-    table.add_column("Location", style="blue", overflow="fold")
-
-    for idx, file_path in results:
-        table.add_row(str(idx), file_path.name, str(file_path.parent))
-
-    # Wrap in panel with title on the left and vertical padding
-    panel = Panel(
-        table, title=f"[bold]{pattern}[/bold]", title_align="left", padding=(1, 1)
-    )
-    console.print()  # Blank line before panel
-    console.print(panel)
+    print_search_results(pattern, results)
 
 
 @app.command()
@@ -305,3 +312,4 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
 
 # TODOs
 # - [ ] Add a "new" command that lists the last n newest additions
+# - [ ] Add a "cache" command that lists the current cache
