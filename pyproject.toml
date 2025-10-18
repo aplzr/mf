@@ -1,7 +1,7 @@
 [project]
 name = "mf"
 version = "0.1.0"
-description = "Add your description here"
+description = "Media file finder and player"
 readme = "README.md"
 authors = [
     { name = "ap", email = "arnepelzerprivat@gmail.com" }
