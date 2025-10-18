@@ -54,6 +54,7 @@ def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
     }
 
     cache_file = get_cache_file()
+
     with open(cache_file, "w", encoding="utf-8") as f:
         json.dump(cache_data, f, indent=2)
 
@@ -104,8 +105,8 @@ def print_search_results(title: str, results: list[tuple[int, Path]]):
     table.add_column("File", style="green", overflow="fold")
     table.add_column("Location", style="blue", overflow="fold")
 
-    for idx, file_path in results:
-        table.add_row(str(idx), file_path.name, str(file_path.parent))
+    for idx, path in results:
+        table.add_row(str(idx), path.name, str(path.parent))
 
     # Wrap in panel with title on the left and vertical padding
     panel = Panel(
@@ -126,6 +127,7 @@ def normalize_pattern(pattern: str) -> str:
     """
     if not any(char in pattern for char in ["*", "?", "[", "]"]):
         return f"*{pattern}*"
+
     return pattern
 
 
@@ -174,27 +176,24 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
         pattern (str): Glob-based search pattern to match filenames against.
 
     Returns:
-        list[tuple[int, Path]]: (index, file_path) tuples for each matching file, where
-            index is a 1-based sequential number.
+        list[tuple[int, Path]]: (index, path) tuples for each matching file, where index
+            is a 1-based sequential number.
     """
     # Pre-compile pattern to regex for faster matching
     pattern_regex = re.compile(translate(pattern), re.IGNORECASE)
 
     # Scan all paths in parallel
     with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
-        # Create partial function with pattern
         scan_with_pattern = partial(scan_path, pattern_regex=pattern_regex)
         path_results = executor.map(scan_with_pattern, search_paths)
 
-    # Flatten results
+    # Flatten results, sort by filename (case-insensitive), add index
     all_files = []
+
     for files in path_results:
         all_files.extend(files)
 
-    # Sort alphabetically by filename (case-insensitive)
     all_files.sort(key=lambda path: path.name.lower())
-
-    # Add index
     results = [(idx, path) for idx, path in enumerate(all_files, start=1)]
 
     return results
@@ -213,10 +212,8 @@ def get_file_by_index(index: int) -> Path:
     Returns:
         Path: Path of the requested file.
     """
-    # Load cached search results
-    pattern, results, _ = load_search_results()
 
-    # Find the file with the requested index
+    pattern, results, _ = load_search_results()
     file = None
 
     for idx, path in results:
@@ -232,7 +229,6 @@ def get_file_by_index(index: int) -> Path:
         console.print(f"[yellow]Valid indices: 1-{len(results)}[/yellow]")
         raise typer.Exit(1)
 
-    # Check if file still exists
     if not file.exists():
         console.print(f"[red]File no longer exists:[/red] {file}")
         raise typer.Exit(1)

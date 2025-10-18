@@ -121,6 +121,7 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
             "[red]Error: VLC not found. Please install VLC media player.[/red]"
         )
         raise typer.Exit(1)
+
     except Exception as e:
         console.print(f"[red]Error launching VLC:[/red] {e}")
         raise typer.Exit(1)
