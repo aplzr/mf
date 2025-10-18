@@ -88,11 +88,11 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
         raise typer.Exit(1)
 
 
-def print_search_results(pattern: str, results: list[tuple[int, Path]]):
+def print_search_results(title: str, results: list[tuple[int, Path]]):
     """Print results of a search.
 
     Args:
-        pattern (str): Search pattern.
+        title (str): Panel title.
         results (list[tuple[int, Path]]): A list of (index, Path) tuples.
     """
     # Create rich table
@@ -109,7 +109,7 @@ def print_search_results(pattern: str, results: list[tuple[int, Path]]):
 
     # Wrap in panel with title on the left and vertical padding
     panel = Panel(
-        table, title=f"[bold]{pattern}[/bold]", title_align="left", padding=(1, 1)
+        table, title=f"[bold]{title}[/bold]", title_align="left", padding=(1, 1)
     )
     console.print()
     console.print(panel)
