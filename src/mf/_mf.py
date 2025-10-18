@@ -171,3 +171,4 @@ def file():
 # - [x] Return timestamp in load_search_results and print it in cache
 # - [x] Add "imdb" command
 # - [ ] Add "trailer" command
+# - [ ] Add -r option for additional ratings
