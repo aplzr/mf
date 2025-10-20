@@ -20,6 +20,13 @@ from .utils import (
 )
 
 app = typer.Typer(help="Media file finder and player")
+cache_app = typer.Typer(
+    help=(
+        "Print cache contents, show cache location, etc. "
+        "If no argument is given, runs the default 'show' command."
+    )
+)
+app.add_typer(cache_app, name="cache")
 
 
 @app.command()
@@ -148,7 +155,23 @@ def imdb(
 
 
 @app.command()
-def cache():
+def filepath(
+    index: int = typer.Argument(
+        ..., help="Index of the file for which to print the filepath."
+    ),
+):
+    """Print filepath of a search result."""
+    console.print(get_file_by_index(index))
+
+
+@app.command()
+def version():
+    "Print version."
+    console.print(__version__)
+
+
+@cache_app.command(name="show")
+def show_cache():
     """Print cache file location, last search pattern, timestamp, and cached results."""
     pattern, results, timestamp = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
@@ -161,16 +184,24 @@ def cache():
     print_search_results(pattern, results)
 
 
-@app.command()
+@cache_app.command()
 def file():
     """Print the cache file location."""
     console.print(get_cache_file())
 
 
-@app.command()
-def version():
-    "Print version."
-    console.print(__version__)
+@cache_app.command()
+def clear():
+    """Clear the cache."""
+    get_cache_file().unlink(missing_ok=True)
+    console.print("Cache cleared.")
+
+
+@cache_app.callback(invoke_without_command=True)
+def cache_callback(ctx: typer.Context):
+    """Runs the default subcommand 'show' when no argument to 'cache' is provided."""
+    if ctx.invoked_subcommand is None:
+        show_cache()
 
 
 # TODOs
@@ -180,3 +211,4 @@ def version():
 # - [x] Add "imdb" command
 # - [ ] Add "trailer" command
 # - [ ] Add -r option for additional ratings
+# - [x] Add "filepath" command
