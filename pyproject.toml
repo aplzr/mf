@@ -1,6 +1,6 @@
 [project]
 name = "mf"
-version = "0.2.1"
+dynamic = ["version"]
 description = "Media file finder and player"
 readme = "README.md"
 authors = [
@@ -20,3 +20,6 @@ mf = "mf:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/mf/_version.py"
