@@ -84,7 +84,8 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
         return pattern, results, timestamp
     except (json.JSONDecodeError, KeyError, FileNotFoundError):
         console.print(
-            "[red]No previous search found. Please run 'mf list <pattern>' first.[/red]"
+            "Cache is empty or doesn't exist. Please run 'mf list <pattern>' first.",
+            style="red",
         )
         raise typer.Exit(1)
 

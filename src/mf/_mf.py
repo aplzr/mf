@@ -22,7 +22,7 @@ from .utils import (
 app = typer.Typer(help="Media file finder and player")
 cache_app = typer.Typer(
     help=(
-        "Print cache contents, show cache location, etc. "
+        "Show cache contents, print cache location or clear the cache. "
         "If no argument is given, runs the default 'show' command."
     )
 )
@@ -172,7 +172,7 @@ def version():
 
 @cache_app.command()
 def show():
-    """Print cache file location, last search pattern, timestamp, and cached results."""
+    """Print cache contents."""
     pattern, results, timestamp = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
     console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
