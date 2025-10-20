@@ -170,8 +170,8 @@ def version():
     console.print(__version__)
 
 
-@cache_app.command(name="show")
-def show_cache():
+@cache_app.command()
+def show():
     """Print cache file location, last search pattern, timestamp, and cached results."""
     pattern, results, timestamp = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
@@ -201,7 +201,7 @@ def clear():
 def cache_callback(ctx: typer.Context):
     """Runs the default subcommand 'show' when no argument to 'cache' is provided."""
     if ctx.invoked_subcommand is None:
-        show_cache()
+        show()
 
 
 # TODOs
