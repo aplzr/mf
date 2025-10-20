@@ -15,8 +15,6 @@ SEARCH_PATHS_BY_HOSTNAME = defaultdict(
             Path("/shared/bitheap-incoming"),
             Path("/shared/bitpile-incoming"),
         ],
-    },
-    {
         "mediabox": [
             Path("/mnt/media/bitheap-incoming"),
             Path("/mnt/media/bitpile-incoming"),
