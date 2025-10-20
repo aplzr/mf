@@ -47,7 +47,7 @@ def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)"))
     results = find_media_files(pattern)
 
     if not results:
-        console.print(f"[yellow]No media files found matching '{pattern}'[/yellow]")
+        console.print(f"No media files found matching '{pattern}'", style="yellow")
         raise typer.Exit()
 
     save_search_results(pattern, results)
@@ -126,12 +126,12 @@ def play(index: int = typer.Argument(..., help="Index of the file to play")):
 
     except FileNotFoundError:
         console.print(
-            "[red]Error: VLC not found. Please install VLC media player.[/red]"
+            "Error: VLC not found. Please install VLC media player.", style="red"
         )
         raise typer.Exit(1)
 
     except Exception as e:
-        console.print(f"[red]Error launching VLC:[/red] {e}")
+        console.print(f"Error launching VLC: {e}", style="red")
         raise typer.Exit(1)
 
 

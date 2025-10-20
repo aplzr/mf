@@ -224,8 +224,8 @@ def get_file_by_index(index: int) -> Path:
 
     if file is None:
         console.print(
-            f"[red]Index {index} not found in last search results "
-            f"(pattern: '{pattern}')[/red]"
+            f"Index {index} not found in last search results (pattern: '{pattern}')",
+            style="red",
         )
         console.print(f"[yellow]Valid indices: 1-{len(results)}[/yellow]")
         raise typer.Exit(1)
