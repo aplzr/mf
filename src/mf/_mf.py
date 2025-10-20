@@ -7,6 +7,7 @@ import typer
 from guessit import guessit
 from imdb import IMDb
 
+from ._version import __version__
 from .utils import (
     console,
     find_media_files,
@@ -164,6 +165,12 @@ def cache():
 def file():
     """Print the cache file location."""
     console.print(get_cache_file())
+
+
+@app.command()
+def version():
+    "Print version."
+    console.print(__version__)
 
 
 # TODOs
