@@ -53,7 +53,7 @@ def get_config_file() -> Path:
 
     config_dir = config_dir / "mf"
     config_dir.mkdir(parents=True, exist_ok=True)
-    return config_dir / "config.toml"  # or config.json, config.yaml
+    return config_dir / "config.toml"
 
 
 def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
