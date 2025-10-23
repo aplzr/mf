@@ -38,6 +38,22 @@ def get_cache_file() -> Path:
     return cache_dir / "last_search.json"
 
 
+def get_config_file() -> Path:
+    """Get the config file path following platform best practices.
+
+    Returns:
+        Path: Path to the config file in the appropriate user directory.
+    """
+    if os.name == "nt":  # Windows
+        config_dir = Path(os.environ.get("APPDATA", Path.home() / "AppData/Roaming"))
+    else:  # Unix-like (Linux, macOS)
+        config_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+
+    config_dir = config_dir / "mf"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    return config_dir / "config.toml"  # or config.json, config.yaml
+
+
 def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
     """Save search results to cache file.
 
