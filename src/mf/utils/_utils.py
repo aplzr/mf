@@ -47,7 +47,8 @@ def get_config_file() -> Path:
         Path: Path to the config file in the appropriate user directory.
     """
     if os.name == "nt":  # Windows
-        config_dir = Path(os.environ.get("APPDATA", Path.home() / "AppData/Roaming"))
+        # Don't use roaming because config is device-specific
+        config_dir = Path(os.environ.get("LOCALAPPDATA", Path.home()))
     else:  # Unix-like (Linux, macOS)
         config_dir = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
 
