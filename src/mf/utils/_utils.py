@@ -3,7 +3,6 @@ import os
 import re
 import shutil
 import subprocess
-import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from fnmatch import translate
@@ -295,3 +294,13 @@ def read_config() -> dict:
     """
     with open(get_config_file(), "rb") as f:
         return tomlkit.load(f)
+
+
+def write_config(cfg: dict):
+    """Write (updated) configuration back to disk.
+
+    Args:
+        cfg (dict): Configuration to write.
+    """
+    with open(get_config_file(), "w") as f:
+        tomlkit.dump(cfg, f)
