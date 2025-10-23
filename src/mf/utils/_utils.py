@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import shutil
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from fnmatch import translate
@@ -251,3 +253,30 @@ def get_file_by_index(index: int) -> Path:
         raise typer.Exit(1)
 
     return file
+
+
+def start_editor(file: Path):
+    """Edit file in editor.
+
+    Tries to edit file in default editor if there is one, otherwise tries
+    platform-specific editors that are usually available.
+
+    Args:
+        file (Path): _description_
+    """
+    editor = os.environ.get("VISUAL") or os.environ.get("EDITOR")
+
+    if editor:
+        subprocess.run([editor, str(file)])
+    elif os.name == "nt":
+        if shutil.which("notepad++"):
+            subprocess.run(["notepad++", str(file)])
+        else:
+            subprocess.run(["notepad", str(file)])
+    elif True:
+        for ed in ["nano", "vim", "vi"]:
+            if shutil.which(ed):
+                subprocess.run([ed, str(file)])
+                break
+    else:
+        console.print(f"No editor found. Edit manually: {file}")

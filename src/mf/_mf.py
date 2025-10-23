@@ -7,6 +7,7 @@ import typer
 from guessit import guessit
 from imdb import IMDb
 
+from ._config import config_app
 from ._version import __version__
 from .utils import (
     console,
@@ -27,6 +28,7 @@ cache_app = typer.Typer(
     )
 )
 app.add_typer(cache_app, name="cache")
+app.add_typer(config_app, name="config")
 
 
 @app.command()
