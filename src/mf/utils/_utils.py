@@ -24,7 +24,6 @@ console = Console()
 search_paths = SEARCH_PATHS_BY_HOSTNAME[gethostname()]
 
 
-# Cross-platform cache file location
 def get_cache_file() -> Path:
     """Get the cache file path following platform best practices.
 
