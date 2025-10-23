@@ -11,6 +11,7 @@ from functools import partial
 from pathlib import Path
 from socket import gethostname
 
+import tomlkit
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -287,10 +288,10 @@ def start_editor(file: Path):
 
 
 def read_config() -> dict:
-    """Load the configuration file.
+    """Load the configuration file from disk.
 
     Returns:
         dict: Loaded connfiguration.
     """
     with open(get_config_file(), "rb") as f:
-        return tomllib.load(f)
+        return tomlkit.load(f)
