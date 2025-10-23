@@ -11,6 +11,7 @@ dependencies = [
     "cinemagoer>=2023.5.1",
     "guessit>=3.8.0",
     "rich>=14.2.0",
+    "tomlkit>=0.13.3",
     "typer>=0.19.2",
 ]
 
