@@ -286,7 +286,7 @@ def start_editor(file: Path):
             console.print(f"No editor found. Edit manually: {file}")
 
 
-def load_config() -> dict:
+def read_config() -> dict:
     """Load the configuration file.
 
     Returns:
