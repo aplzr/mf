@@ -264,6 +264,7 @@ def start_editor(file: Path):
     Args:
         file (Path): File to edit.
     """
+    # Try defaults first
     editor = os.environ.get("VISUAL") or os.environ.get("EDITOR")
 
     if editor:
