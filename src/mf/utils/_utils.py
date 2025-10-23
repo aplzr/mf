@@ -262,7 +262,7 @@ def start_editor(file: Path):
     platform-specific editors that are usually available.
 
     Args:
-        file (Path): _description_
+        file (Path): File to edit.
     """
     editor = os.environ.get("VISUAL") or os.environ.get("EDITOR")
 

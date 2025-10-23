@@ -9,6 +9,7 @@ from ._utils import (
     print_search_results,
     save_search_results,
     scan_path,
+    start_editor,
 )
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "print_search_results",
     "save_search_results",
     "scan_path",
+    "start_editor",
 ]
