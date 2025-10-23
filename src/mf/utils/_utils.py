@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import subprocess
+import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from fnmatch import translate
@@ -283,3 +284,13 @@ def start_editor(file: Path):
                 break
         else:
             console.print(f"No editor found. Edit manually: {file}")
+
+
+def load_config() -> dict:
+    """Load the configuration file.
+
+    Returns:
+        dict: Loaded connfiguration.
+    """
+    with open(get_config_file(), "rb") as f:
+        return tomllib.load(f)
