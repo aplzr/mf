@@ -281,5 +281,5 @@ def start_editor(file: Path):
             if shutil.which(ed):
                 subprocess.run([ed, str(file)])
                 break
-    else:
-        console.print(f"No editor found. Edit manually: {file}")
+        else:
+            console.print(f"No editor found. Edit manually: {file}")
