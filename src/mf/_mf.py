@@ -161,7 +161,7 @@ def filepath(
     ),
 ):
     """Print filepath of a search result."""
-    console.print(get_file_by_index(index))
+    print(get_file_by_index(index))
 
 
 @app.command()
