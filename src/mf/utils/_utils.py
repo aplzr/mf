@@ -292,7 +292,7 @@ def read_config() -> dict:
     Returns:
         dict: Loaded connfiguration.
     """
-    with open(get_config_file(), "rb") as f:
+    with open(get_config_file()) as f:
         return tomlkit.load(f)
 
 
