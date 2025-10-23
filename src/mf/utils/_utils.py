@@ -268,12 +268,14 @@ def start_editor(file: Path):
 
     if editor:
         subprocess.run([editor, str(file)])
+    # Windows: try np++, fall back to np
     elif os.name == "nt":
         if shutil.which("notepad++"):
             subprocess.run(["notepad++", str(file)])
         else:
             subprocess.run(["notepad", str(file)])
-    elif True:
+    # Linux/macOS
+    else:
         for ed in ["nano", "vim", "vi"]:
             if shutil.which(ed):
                 subprocess.run([ed, str(file)])
