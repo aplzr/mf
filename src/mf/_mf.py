@@ -2,6 +2,7 @@ import os
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from random import randrange
 
 import typer
 from guessit import guessit
@@ -81,18 +82,29 @@ def new(
 
 
 @app.command()
-def play(index: int = typer.Argument(..., help="Index of the file to play")):
+def play(
+    index: int = typer.Argument(
+        None, help="Index of the file to play. If None, plays a random file."
+    ),
+):
     """Play a media file by its index.
 
     Args:
-        index (int): The 1-based index number of the file to play, as shown in the list
-            command output.
+        index (optional, int): The 1-based index number of the file to play, as shown
+            in the list command output. Plays a random file if no index is given.
 
     Raises:
         typer.Exit: VLC not found.
         typer.Exit: Error launching VLC.
     """
-    file_to_play = get_file_by_index(index)
+    if index:
+        # Play requested file
+        file_to_play = get_file_by_index(index)
+
+    else:
+        # Play random file
+        all_files = find_media_files("*")
+        _, file_to_play = all_files[randrange(len(all_files))]
 
     console.print(f"[green]Playing:[/green] {file_to_play.name}")
     console.print(f"[blue]Location:[/blue] {file_to_play.parent}")
