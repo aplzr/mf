@@ -26,7 +26,7 @@ search_paths = SEARCH_PATHS_BY_HOSTNAME[gethostname()]
 
 def get_cache_file() -> Path:
     """Get the cache file following platform conventions if available, fall back to
-    home/.cache/mf/last_search.json otherwise.
+    ~/.cache/mf/last_search.json otherwise.
 
     Returns:
         Path: Path to the cache file.
@@ -45,7 +45,7 @@ def get_cache_file() -> Path:
 
 def get_config_file() -> Path:
     """Get the config file following platform conventions if available, fall back to
-    home/.config/mf/config.toml otherwise.
+    ~/.config/mf/config.toml otherwise.
 
     Returns:
         Path: Path to the config file.
