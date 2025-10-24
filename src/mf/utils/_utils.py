@@ -25,10 +25,11 @@ search_paths = SEARCH_PATHS_BY_HOSTNAME[gethostname()]
 
 
 def get_cache_file() -> Path:
-    """Get the cache file path following platform best practices.
+    """Get the cache file following platform conventions if available, fall back to
+    home/.cache/mf/last_search.json otherwise.
 
     Returns:
-        Path: Path to the cache file in the appropriate user directory.
+        Path: Path to the cache file.
     """
     cache_dir = Path(
         os.environ.get(
@@ -43,12 +44,12 @@ def get_cache_file() -> Path:
 
 
 def get_config_file() -> Path:
-    """Get the config file path following platform best practices.
+    """Get the config file following platform conventions if available, fall back to
+    home/.config/mf/config.toml otherwise.
 
     Returns:
-        Path: Path to the config file in the appropriate user directory.
+        Path: Path to the config file.
     """
-
     # Use localappdata instead of roaming on windows because the
     # configuration is device-specific
     config_dir = Path(
