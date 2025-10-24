@@ -29,8 +29,8 @@ def edit():
     start_editor(get_config_file())
 
 
-@config_app.command()
-def list():
+@config_app.command(name="list")
+def list_config():
     "List the current configuration."
     config_file = get_config_file()
     console.print(f"Configuration file: {config_file}\n", style="dim")
