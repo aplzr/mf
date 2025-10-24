@@ -293,7 +293,7 @@ def start_editor(file: Path):
             console.print(f"No editor found. Edit manually: {file}")
 
 
-def read_config() -> dict:
+def read_config() -> tomlkit.TOMLDocument:
     """Load the configuration file from disk.
 
     Returns:
