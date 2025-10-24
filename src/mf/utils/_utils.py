@@ -30,12 +30,12 @@ def get_cache_file() -> Path:
     Returns:
         Path: Path to the cache file in the appropriate user directory.
     """
-    if os.name == "nt":  # Windows
-        cache_dir = Path(
-            os.environ.get("LOCALAPPDATA", Path.home())
-        )  # TODO: use .cache as well if localappdata doesn't exist
-    else:  # Unix-like (Linux, macOS)
-        cache_dir = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
+    cache_dir = Path(
+        os.environ.get(
+            "LOCALAPPDATA" if os.name == "nt" else "XDG_CACHE_HOME",
+            Path.home() / ".cache",
+        ),
+    )
 
     cache_dir = cache_dir / "mf"
     cache_dir.mkdir(parents=True, exist_ok=True)
