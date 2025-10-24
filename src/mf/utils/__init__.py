@@ -11,6 +11,7 @@ from ._utils import (
     save_search_results,
     scan_path,
     start_editor,
+    write_config,
 )
 
 __all__ = [
@@ -19,11 +20,12 @@ __all__ = [
     "get_cache_file",
     "get_config_file",
     "get_file_by_index",
-    "read_config",
     "load_search_results",
     "normalize_pattern",
     "print_search_results",
+    "read_config",
     "save_search_results",
     "scan_path",
     "start_editor",
+    "write_config",
 ]

@@ -1,6 +1,7 @@
 import typer
+from rich.syntax import Syntax
 
-from .utils import get_config_file, start_editor
+from .utils import console, get_config_file, start_editor
 
 config_app = typer.Typer(help="Manage mf configuration.")
 
@@ -15,3 +16,18 @@ def file():
 def edit():
     "Edit the config file."
     start_editor(get_config_file())
+
+
+@config_app.command()
+def list():
+    "List the current configuration."
+    config_file = get_config_file()
+    console.print(f"Configuration file: {config_file}\n", style="dim")
+    console.print(
+        Syntax.from_path(
+            config_file,
+            lexer="toml",
+            background_color="default",
+            line_numbers=False,
+        )
+    )
