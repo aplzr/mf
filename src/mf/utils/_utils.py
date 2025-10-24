@@ -253,7 +253,7 @@ def get_file_by_index(index: int) -> Path:
             f"Index {index} not found in last search results (pattern: '{pattern}')",
             style="red",
         )
-        console.print(f"[yellow]Valid indices: 1-{len(results)}[/yellow]")
+        console.print(f"Valid indices: 1-{len(results)}", style="yellow")
         raise typer.Exit(1)
 
     if not file.exists():
