@@ -1,9 +1,20 @@
+from typing import Any
+
 import typer
 from rich.syntax import Syntax
+from tomlkit import TOMLDocument
 
-from .utils import console, get_config_file, start_editor
+from .utils import console, get_config_file, read_config, start_editor, write_config
 
 config_app = typer.Typer(help="Manage mf configuration.")
+
+
+def set_search_paths(cfg: TOMLDocument, search_paths: list[str]):
+    if len(search_paths) == 1:
+        search_paths = search_paths[0]
+
+    cfg["search_paths"] = search_paths
+    return cfg
 
 
 @config_app.command()
@@ -31,3 +42,24 @@ def list():
             line_numbers=False,
         )
     )
+
+
+@config_app.command()
+def get(key: str):
+    """Get an mf option."""
+    console.print(f"{key} = {read_config().get(key)}")
+
+
+@config_app.command()
+def set(key: str, value: list[str]):
+    """Set an mf option."""
+    setters = {"search_paths": set_search_paths}
+
+    cfg = read_config()
+    cfg = setters[key](cfg, value)
+
+    # TODO: remove
+    print(value)
+    print(cfg)
+
+    write_config(cfg)
