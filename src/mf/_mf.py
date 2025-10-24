@@ -33,17 +33,18 @@ app.add_typer(config_app, name="config")
 
 
 @app.command()
-def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)")):
+def find(
+    pattern: str = typer.Argument(
+        "*",
+        help=(
+            "Search pattern (glob-based). If no wildcards are present, the pattern "
+            "will be wrapped with wildcards automatically."
+        ),
+    ),
+):
     """Find media files matching the search pattern.
 
     Finds matching files and prints an indexed list.
-
-    Args:
-        pattern (str): Glob-based search pattern. If no wildcards are present, the
-            pattern will be wrapped with wildcards automatically.
-
-    Raises:
-        typer.Exit: No matching files found.
     """
     # Find, cache, and print media file paths
     pattern = normalize_pattern(pattern)
@@ -61,11 +62,7 @@ def find(pattern: str = typer.Argument("*", help="Search pattern (glob-based)"))
 def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
 ):
-    """Find the latest additions to the media database.
-
-    Args:
-        n (int, optional): Number of latest additions to show. Defaults to 20.
-    """
+    """Find the latest additions to the media database."""
     # Run parallelized IO lookups for fast create date retrieval of all files
     all_files = [path for _, path in find_media_files("*")]
     with ThreadPoolExecutor(max_workers=50) as executor:
@@ -87,16 +84,7 @@ def play(
         None, help="Index of the file to play. If None, plays a random file."
     ),
 ):
-    """Play a media file by its index.
-
-    Args:
-        index (optional, int): The 1-based index number of the file to play, as shown
-            in the list command output. Plays a random file if no index is given.
-
-    Raises:
-        typer.Exit: VLC not found.
-        typer.Exit: Error launching VLC.
-    """
+    """Play a media file by its index."""
     if index:
         # Play requested file
         file_to_play = get_file_by_index(index)
@@ -155,11 +143,7 @@ def imdb(
         ..., help="Index of the file for which to retrieve the IMDB URL"
     ),
 ):
-    """Open IMDB entry of a search result.
-
-    Args:
-        index (int): Index of the file for which to retrieve the IMDB URL.
-    """
+    """Open IMDB entry of a search result."""
     filestem = get_file_by_index(index).stem
     title = guessit(filestem)["title"]
     imdb_entry = IMDb().search_movie(title)[0]
