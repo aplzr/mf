@@ -55,6 +55,9 @@ def set_search_paths(
     return cfg
 
 
+setters = {"search_paths": set_search_paths}
+
+
 @app_config.command()
 def file():
     "Print the configuration file location."
@@ -90,7 +93,6 @@ def get(key: str):
 @app_config.command()
 def set(key: str, value: list[str]):
     """Set an mf setting."""
-    setters = {"search_paths": set_search_paths}
     write_config(setters[key](read_config(), value))
 
 
