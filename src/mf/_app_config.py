@@ -119,6 +119,32 @@ def set(key: str, value: list[str]):
     write_config(setters[key](read_config(), value))
 
 
+@app_config.command()
+def add(key: str, value: list[str]):
+    """Add an element to a list setting."""
+    if supports_action(setters[key], "add"):
+        write_config(setters[key](read_config(), value, action="add"))
+    else:
+        console.print(f"'add' action not supported for {key} setting.")
+        raise typer.Exit(1)
+
+
+@app_config.command()
+def remove(key: str, value: list[str]):
+    """Remove an element from a list setting."""
+    if supports_action(setters[key], "remove"):
+        write_config(setters[key](read_config(), value, action="remove"))
+    else:
+        console.print(f"'remove' action not supported for {key} setting.")
+        raise typer.Exit(1)
+
+
+@app_config.command()
+def clear(key: str):
+    """Clear a setting."""
+    write_config(setters[key](read_config(), None, action="clear"))
+
+
 # TODOs
 # - [ ] Add "add" command to append elements to list settings
 # - [ ] Add "remove" command to remove elements from list settings
