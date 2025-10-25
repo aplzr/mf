@@ -30,27 +30,50 @@ def supports_action(setter: Callable, action: Literal["add", "remove"]) -> bool:
 
 
 def set_search_paths(
-    cfg: TOMLDocument, search_paths: list[str], action: Literal["set", "add"] = "set"
+    cfg: TOMLDocument,
+    search_paths: list[str] | None,
+    action: Literal["set", "add", "remove", "clear"] = "set",
 ) -> TOMLDocument:
-    """Set search paths.
+    """Set / add / remove / clear search paths.
 
     Converts relative paths to full paths, escapes backslashes, etc. Warns wenn a path
     doesn't exist, but sets it anyway.
 
     Args:
         cfg (TOMLDocument): The current configuration.
-        search_paths (list[str]): Updated search paths.
+        search_paths (list[str] | None): Paths to set / add / remove or None when
+            search paths are cleared.
+        Literal["set", "add", "remove", "clear"]: Action to perform.
 
     Returns:
         TOMLDocument: Updated configuration.
     """
-    search_paths: list[Path] = [Path(path).resolve() for path in search_paths]
+    if search_paths:
+        search_paths: list[Path] = [Path(path).resolve() for path in search_paths]
+        search_paths = [str(path) for path in search_paths]
 
-    for path in search_paths:
-        if not path.exists():
-            warn(f"Search path {path} does not exist (storing anyway).", stacklevel=2)
+    if action == "set" or action == "add":
+        for path in search_paths:
+            if not path.exists():
+                warn(f"Search path {path} does not exist (storing anyway).")
 
-    cfg["search_paths"] = [str(path) for path in search_paths]
+        if action == "set":
+            cfg["search_paths"] = search_paths
+        if action == "add":
+            cfg["search_paths"].extend(search_paths)
+
+    elif action == "remove":
+        for search_path in search_paths:
+            try:
+                cfg["search_paths"].remove(search_path)
+            except ValueError:
+                console.print(f"{search_path} not found in configuration", style="red")
+
+    elif action == "clear":
+        cfg["search_paths"].clear()
+
+    else:
+        raise ValueError(f"Unknown action: {action}")
 
     return cfg
 
