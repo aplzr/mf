@@ -311,3 +311,22 @@ def write_config(cfg: dict):
     """
     with open(get_config_file(), "w") as f:
         tomlkit.dump(cfg, f)
+
+
+def get_search_paths():
+    search_paths = read_config()["search_paths"]
+
+    for search_path in list(search_paths):
+        if not Path(search_path).exists():
+            console.print(
+                f"Configured search path {search_path} does not exist", style="red"
+            )
+            search_paths.remove(search_path)
+
+    if not search_paths:
+        console.print(
+            "List of search paths is empty or paths don't exist.", style="red"
+        )
+        raise typer.Exit(1)
+    else:
+        return search_paths
