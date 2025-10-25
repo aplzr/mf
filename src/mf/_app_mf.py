@@ -8,31 +8,24 @@ import typer
 from guessit import guessit
 from imdb import IMDb
 
-from ._config import config_app
+from ._app_cache import app_cache
+from ._app_config import app_config
 from ._version import __version__
 from .utils import (
     console,
     find_media_files,
-    get_cache_file,
     get_file_by_index,
-    load_search_results,
     normalize_pattern,
     print_search_results,
     save_search_results,
 )
 
-app = typer.Typer(help="Media file finder and player")
-cache_app = typer.Typer(
-    help=(
-        "Show cache contents, print cache location or clear the cache. "
-        "If no argument is given, runs the default 'show' command."
-    )
-)
-app.add_typer(cache_app, name="cache")
-app.add_typer(config_app, name="config")
+app_mf = typer.Typer(help="Media file finder and player")
+app_mf.add_typer(app_cache, name="cache")
+app_mf.add_typer(app_config, name="config")
 
 
-@app.command()
+@app_mf.command()
 def find(
     pattern: str = typer.Argument(
         "*",
@@ -58,7 +51,7 @@ def find(
     print_search_results(f"Search pattern: {pattern}", results)
 
 
-@app.command()
+@app_mf.command()
 def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
 ):
@@ -78,7 +71,7 @@ def new(
     print_search_results(pattern, latest_files)
 
 
-@app.command()
+@app_mf.command()
 def play(
     index: int = typer.Argument(
         None, help="Index of the file to play. If None, plays a random file."
@@ -137,7 +130,7 @@ def play(
         raise typer.Exit(1)
 
 
-@app.command()
+@app_mf.command()
 def imdb(
     index: int = typer.Argument(
         ..., help="Index of the file for which to retrieve the IMDB URL"
@@ -152,7 +145,7 @@ def imdb(
     typer.launch(imdb_url)
 
 
-@app.command()
+@app_mf.command()
 def filepath(
     index: int = typer.Argument(
         ..., help="Index of the file for which to print the filepath."
@@ -162,44 +155,10 @@ def filepath(
     print(get_file_by_index(index))
 
 
-@app.command()
+@app_mf.command()
 def version():
     "Print version."
     console.print(__version__)
-
-
-@cache_app.command()
-def show():
-    """Print cache contents."""
-    pattern, results, timestamp = load_search_results()
-    console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
-    console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
-    console.print("[yellow]Cached results:[/yellow]")
-
-    if "latest additions" not in pattern:
-        pattern = f"Search pattern: {pattern}"
-
-    print_search_results(pattern, results)
-
-
-@cache_app.command()
-def file():
-    """Print the cache file location."""
-    console.print(get_cache_file())
-
-
-@cache_app.command()
-def clear():
-    """Clear the cache."""
-    get_cache_file().unlink(missing_ok=True)
-    console.print("Cache cleared.")
-
-
-@cache_app.callback(invoke_without_command=True)
-def cache_callback(ctx: typer.Context):
-    """Runs the default subcommand 'show' when no argument to 'cache' is provided."""
-    if ctx.invoked_subcommand is None:
-        show()
 
 
 # TODOs

@@ -1,10 +1,10 @@
 from . import params, utils
-from ._mf import app
+from ._app_mf import app_mf
 from ._version import __version__
 
 __all__ = [
     "__version__",
-    "app",
+    "app_mf",
     "main",
     "params",
     "utils",
@@ -12,4 +12,4 @@ __all__ = [
 
 
 def main():
-    app()
+    app_mf()
