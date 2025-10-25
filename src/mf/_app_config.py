@@ -66,3 +66,4 @@ def set(key: str, value: list[str]):
 # - [ ] Add "remove" command to remove elements from list settings
 # - [ ] Define expected types for settings (list, str) and check against that when
 #       doing things where the type matters
+# - [ ] Add media extensions
