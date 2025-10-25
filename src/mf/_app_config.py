@@ -151,3 +151,11 @@ def clear(key: str):
 # - [ ] Define expected types for settings (list, str) and check against that when
 #       doing things where the type matters
 # - [ ] Add media extensions
+# - [ ] Fix:
+# # mf config get search_paths
+# search_paths = ['\\\\doorstep\\bitheap-incoming\\', '\\\\doorstep\\bitpile-incoming\\']
+
+#  ap on  ~/development/mf
+#  mf 3.12.0 add-config ≢  ~1  3
+# # mf config remove search_paths \\\\doorstep\\bitpile-incoming\\
+# \\\\doorstep\bitpile-incoming not found in configuration
