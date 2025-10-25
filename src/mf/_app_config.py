@@ -49,18 +49,20 @@ def set_search_paths(
         TOMLDocument: Updated configuration.
     """
     if search_paths:
-        search_paths: list[Path] = [Path(path).resolve() for path in search_paths]
+        search_paths = [Path(path).resolve() for path in search_paths]
+
+        if action == "set" or action == "add":
+            for path in search_paths:
+                if not path.exists():
+                    warn(f"Search path {path} does not exist (storing anyway).")
+
         search_paths = [str(path) for path in search_paths]
 
-    if action == "set" or action == "add":
-        for path in search_paths:
-            if not path.exists():
-                warn(f"Search path {path} does not exist (storing anyway).")
+    if action == "set":
+        cfg["search_paths"] = search_paths
 
-        if action == "set":
-            cfg["search_paths"] = search_paths
-        if action == "add":
-            cfg["search_paths"].extend(search_paths)
+    elif action == "add":
+        cfg["search_paths"].extend(search_paths)
 
     elif action == "remove":
         for search_path in search_paths:
