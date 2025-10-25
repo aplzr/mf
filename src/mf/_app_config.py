@@ -43,7 +43,7 @@ def set_search_paths(
         cfg (TOMLDocument): The current configuration.
         search_paths (list[str] | None): Paths to set / add / remove or None when
             search paths are cleared.
-        Literal["set", "add", "remove", "clear"]: Action to perform.
+        action: (Literal["set", "add", "remove", "clear"]): Action to perform.
 
     Returns:
         TOMLDocument: Updated configuration.
