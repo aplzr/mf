@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Callable, Literal, get_args, get_type_hints
 from warnings import warn
 
 import typer
@@ -10,7 +11,27 @@ from .utils import console, get_config_file, read_config, start_editor, write_co
 app_config = typer.Typer(help="Manage mf configuration.")
 
 
-def set_search_paths(cfg: TOMLDocument, search_paths: list[str]) -> TOMLDocument:
+def supports_action(setter: Callable, action: Literal["add"]) -> bool:
+    """Check if setter function supports action.
+
+    Args:
+        setter (Callable): Setter function.
+        action (Literal["add"]): Action to check.
+
+    Returns:
+        bool: True if setter supports action, False otherwise.
+    """
+    type_hints = get_type_hints(setter)
+
+    if "action" in type_hints:
+        return action in get_args(type_hints["action"])
+    else:
+        return False
+
+
+def set_search_paths(
+    cfg: TOMLDocument, search_paths: list[str], action: Literal["set", "add"] = "set"
+) -> TOMLDocument:
     """Set search paths.
 
     Converts relative paths to full paths, escapes backslashes, etc. Warns wenn a path
