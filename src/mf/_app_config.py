@@ -11,12 +11,12 @@ from .utils import console, get_config_file, read_config, start_editor, write_co
 app_config = typer.Typer(help="Manage mf configuration.")
 
 
-def supports_action(setter: Callable, action: Literal["add"]) -> bool:
+def supports_action(setter: Callable, action: Literal["add", "remove"]) -> bool:
     """Check if setter function supports action.
 
     Args:
         setter (Callable): Setter function.
-        action (Literal["add"]): Action to check.
+        action (Literal["add", "remove"]): Action to check.
 
     Returns:
         bool: True if setter supports action, False otherwise.
