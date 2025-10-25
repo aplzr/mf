@@ -318,7 +318,7 @@ def write_config(cfg: TOMLDocument):
 def get_search_paths() -> Array:
     """Get search paths from the configuration file.
 
-    Validates paths by checkign if they exist. Paths that don't are removed from the
+    Validates paths by checking if they exist. Paths that don't are removed from the
     returned Array.
 
     Raises:
