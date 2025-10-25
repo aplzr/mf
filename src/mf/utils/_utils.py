@@ -15,6 +15,8 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from tomlkit import TOMLDocument
+from tomlkit.items import Array
 
 from ..params import MEDIA_EXTENSIONS, SEARCH_PATHS_BY_HOSTNAME
 
@@ -293,7 +295,7 @@ def start_editor(file: Path):
             console.print(f"No editor found. Edit manually: {file}")
 
 
-def read_config() -> tomlkit.TOMLDocument:
+def read_config() -> TOMLDocument:
     """Load the configuration file from disk.
 
     Returns:
@@ -303,7 +305,7 @@ def read_config() -> tomlkit.TOMLDocument:
         return tomlkit.load(f)
 
 
-def write_config(cfg: dict):
+def write_config(cfg: TOMLDocument):
     """Write (updated) configuration back to disk.
 
     Args:
@@ -314,6 +316,7 @@ def write_config(cfg: dict):
 
 
 def get_search_paths():
+def get_search_paths() -> Array:
     search_paths = read_config()["search_paths"]
 
     for search_path in list(search_paths):
