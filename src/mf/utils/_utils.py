@@ -315,7 +315,7 @@ def write_config(cfg: TOMLDocument):
         tomlkit.dump(cfg, f)
 
 
-def get_search_paths() -> Array:
+def get_search_paths() -> Array[str]:
     """Get search paths from the configuration file.
 
     Validates paths by checking if they exist. Paths that don't are removed from the
@@ -325,7 +325,7 @@ def get_search_paths() -> Array:
         typer.Exit: Array empty or entries don't exist.
 
     Returns:
-        Array: Validated search paths.
+        Array[str]: Validated search paths.
     """
     search_paths = read_config()["search_paths"]
 
