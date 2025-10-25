@@ -10,7 +10,19 @@ from .utils import console, get_config_file, read_config, start_editor, write_co
 app_config = typer.Typer(help="Manage mf configuration.")
 
 
-def set_search_paths(cfg: TOMLDocument, search_paths: list[str]):
+def set_search_paths(cfg: TOMLDocument, search_paths: list[str]) -> TOMLDocument:
+    """Set search paths.
+
+    Converts relative paths to full paths, escapes backslashes, etc. Warns wenn a path
+    doesn't exist, but sets it anyway.
+
+    Args:
+        cfg (TOMLDocument): The current configuration.
+        search_paths (list[str]): Updated search paths.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
     search_paths: list[Path] = [Path(path).resolve() for path in search_paths]
 
     for path in search_paths:
