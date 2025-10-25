@@ -80,6 +80,7 @@ def set_search_paths(
     return cfg
 
 
+# {name of setting in the configuration file: setter function}
 setters = {"search_paths": set_search_paths}
 
 
