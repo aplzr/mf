@@ -295,7 +295,12 @@ def start_editor(file: Path):
 
 
 def write_default_config() -> tomlkit.TOMLDocument:
-    """Create a default configuration file with comments."""
+    """Write configuration with default settings to the location returned by
+    get_config_file().
+
+    Returns:
+        tomlkit.TOMLDocument: The default configuration as written to disk.
+    """
     # fmt: off
     default_cfg = tomlkit.document()
 
