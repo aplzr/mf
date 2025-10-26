@@ -568,7 +568,7 @@ def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
     if extension in cfg["media_extensions"]:
         cfg["media_extensions"].remove(extension)
         console.print(
-            f"✔  Extension '{extension}' removed from configuration.", style="yellow"
+            f"✔  Extension '{extension}' removed from configuration.", style="green"
         )
         return cfg
     else:
