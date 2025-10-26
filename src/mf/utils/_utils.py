@@ -499,6 +499,9 @@ def normalize_media_extension(extension: str) -> str:
     Args:
         extension (str): Extension to normalize.
 
+    Raises:
+        typer.Exit: Extension empty after normalization.
+
     Returns:
         str: Normalized extension (lowercase with a single leading dot, no whitespace).
     """
