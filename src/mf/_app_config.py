@@ -6,7 +6,16 @@ import typer
 from rich.syntax import Syntax
 from tomlkit import TOMLDocument
 
-from .utils import console, get_config_file, read_config, start_editor, write_config
+from .utils import (
+    add_search_path,
+    console,
+    get_config_file,
+    normalize_path,
+    read_config,
+    remove_search_path,
+    start_editor,
+    write_config,
+)
 
 app_config = typer.Typer(help="Manage mf configuration.")
 
@@ -48,28 +57,19 @@ def set_search_paths(
     Returns:
         TOMLDocument: Updated configuration.
     """
-    if search_paths:
-        search_paths = [Path(path).resolve() for path in search_paths]
-
-        if action == "set" or action == "add":
-            for path in search_paths:
-                if not path.exists():
-                    warn(f"Search path {path} does not exist (storing anyway).")
-
-        search_paths = [str(path) for path in search_paths]
-
     if action == "set":
-        cfg["search_paths"] = search_paths
+        cfg["search_paths"].clear()
+
+        for search_path in search_paths:
+            cfg = add_search_path(cfg, search_path)
 
     elif action == "add":
-        cfg["search_paths"].extend(search_paths)
+        for search_path in search_paths:
+            cfg = add_search_path(cfg, search_path)
 
     elif action == "remove":
         for search_path in search_paths:
-            try:
-                cfg["search_paths"].remove(search_path)
-            except ValueError:
-                console.print(f"{search_path} not found in configuration", style="red")
+            remove_search_path(cfg, search_path)
 
     elif action == "clear":
         cfg["search_paths"].clear()
