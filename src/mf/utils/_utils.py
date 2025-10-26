@@ -16,8 +16,6 @@ from rich.panel import Panel
 from rich.table import Table
 from tomlkit import TOMLDocument
 
-from ..params import MEDIA_EXTENSIONS
-
 # The console instance used for print output throughout the package
 console = Console()
 
@@ -181,7 +179,7 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
                 for entry in entries:
                     if entry.is_file(follow_symlinks=False):
                         # Check extension first (cheapest check)
-                        if Path(entry.name).suffix.lower() in MEDIA_EXTENSIONS:
+                        if Path(entry.name).suffix.lower() in get_media_extensions():
                             # Then check pattern match
                             if pattern_regex.match(entry.name.lower()):
                                 results.append(Path(entry.path))
@@ -392,7 +390,9 @@ def get_search_paths() -> list[Path]:
 
     if not validated_paths:
         console.print(
-            "❌ List of search paths is empty or paths don't exist.", style="red"
+            "❌ List of search paths is empty or paths don't exist. "
+            "Set search paths with 'mf config set search_paths'.",
+            style="red",
         )
         raise typer.Exit(1)
     else:
@@ -467,3 +467,11 @@ def remove_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
             f"❌ Path '{path_str}' not found in configuration file.", style="red"
         )
         raise typer.Exit(1)
+
+
+def get_media_extensions() -> list[str]:
+    """The media extensions from the configuration file."""
+    # TODOs
+    # - [ ] Validate extensions
+    # - [ ] Handle empty list
+    return list(read_config()["media_extensions"])
