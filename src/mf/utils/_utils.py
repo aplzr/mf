@@ -325,7 +325,9 @@ def write_default_config() -> tomlkit.TOMLDocument:
     # fmt: on
 
     write_config(default_cfg)
-    console.print(f"✔  Writte default configuration to '{get_config_file()}'.")
+    console.print(
+        f"✔  Written default configuration to '{get_config_file()}'.", style="green"
+    )
 
     return default_cfg
 
