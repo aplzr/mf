@@ -146,12 +146,13 @@ def clear(key: str):
 
 
 # TODOs
-# - [ ] Add "add" command to append elements to list settings
-# - [ ] Add "remove" command to remove elements from list settings
-# - [ ] Define expected types for settings (list, str) and check against that when
-#       doing things where the type matters
+# - [x] Add "add" command to append elements to list settings
+# - [x] Add "remove" command to remove elements from list settings
+# - [x, sort of (check if action is supported by setter instead)] Define expected types
+#   for settings (list, str) and check against that when doing things where the type
+#   matters
 # - [ ] Add media extensions
-# - [ ] Fix:
+# - [x] Fix:
 # # mf config get search_paths
 # search_paths = ['\\\\doorstep\\bitheap-incoming\\', '\\\\doorstep\\bitpile-incoming\\']
 
