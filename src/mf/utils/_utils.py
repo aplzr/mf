@@ -168,6 +168,7 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
         list[Path]: All media files found in the directory tree.
     """
     results = []
+    match_extensions = read_config["match_extensions"]
 
     if not search_path.exists():
         return results
@@ -178,7 +179,7 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
             with os.scandir(path) as entries:
                 for entry in entries:
                     if entry.is_file(follow_symlinks=False):
-                        if read_config()["match_extensions"]:
+                        if match_extensions:
                             # Check extension first (cheapest check)
                             if (
                                 Path(entry.name).suffix.lower()
@@ -490,3 +491,78 @@ def get_media_extensions() -> list[str]:
     # - [ ] Validate extensions
     # - [ ] Handle empty list
     return list(read_config()["media_extensions"])
+
+
+def normalize_media_extension(extension: str) -> str:
+    """Normalize media extensions.
+
+    Args:
+        extension (str): Extension to normalize.
+
+    Raises:
+        typer.Exit: Extension empty after normalization.
+
+    Returns:
+        str: Normalized extension (lowercase with a single leading dot, no whitespace).
+    """
+    if not extension:
+        raise ValueError("Extension can't be empty.")
+
+    extension = extension.lower().strip().lstrip(".")
+
+    if not extension:
+        console.print("❌ Extension can't be empty after normalization.")
+        raise typer.Exit(1)
+
+    return "." + extension
+
+
+def add_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
+    """Add media extension to the configuration.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        extension (str): Extension to add.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
+    if extension not in cfg["media_extensions"]:
+        extension = normalize_media_extension(extension)
+        cfg["media_extensions"].append(extension)
+        console.print(f"✔  Added media extension '{extension}'.", style="green")
+    else:
+        console.print(
+            f"⚠  Extension '{extension}' already stored in configuration, skipping.",
+            style="yellow",
+        )
+
+    return cfg
+
+
+def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
+    """Remove media extension from configuration.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        extension (str): Extension to remove.
+
+    Raises:
+        typer.Exit: Extension not found in configuration.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
+    extension = normalize_media_extension(extension)
+
+    if extension in cfg["media_extensions"]:
+        cfg["media_extensions"].remove(extension)
+        console.print(
+            f"✔  Extension '{extension}' removed from configuration.", style="yellow"
+        )
+        return cfg
+    else:
+        console.print(
+            f"❌ Extension '{extension}' not found in configuration.", style="red"
+        )
+        raise typer.Exit(1)
