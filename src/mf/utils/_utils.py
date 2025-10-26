@@ -511,7 +511,7 @@ def normalize_media_extension(extension: str) -> str:
     extension = extension.lower().strip().lstrip(".")
 
     if not extension:
-        console.print(f"❌ Extension can't be empty after normalization.")
+        console.print("❌ Extension can't be empty after normalization.")
         raise typer.Exit(1)
 
     return "." + extension
@@ -538,6 +538,7 @@ def add_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
         )
 
     return cfg
+
 
 def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
     """Remove media extension from configuration.
