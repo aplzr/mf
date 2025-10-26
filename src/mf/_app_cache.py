@@ -34,7 +34,7 @@ def file():
 def clear():
     """Clear the cache."""
     get_cache_file().unlink(missing_ok=True)
-    console.print("Cache cleared.")
+    console.print("✔  Cache cleared.", style="green")
 
 
 @app_cache.callback(invoke_without_command=True)
