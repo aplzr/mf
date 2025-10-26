@@ -335,6 +335,9 @@ def write_default_config() -> tomlkit.TOMLDocument:
 def read_config() -> TOMLDocument:
     """Load the configuration file from disk.
 
+    If the configuration file doesn't exist, write the default configuration, then
+    return that.
+
     Returns:
         TOMLDocument: Loaded configuration.
     """
