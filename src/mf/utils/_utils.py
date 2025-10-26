@@ -218,6 +218,20 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
         list[tuple[int, Path]]: (index, path) tuples for each matching file, where index
             is a 1-based sequential number.
     """
+    match_extensions = read_config()["match_extensions"]
+    media_extensions = read_config()["media_extensions"]
+
+    if match_extensions and not media_extensions:
+        console.print(
+            (
+                "❌  match_extensions is set to true, but media_extensions is "
+                "empty. Set list of allowed media extensions with 'mf config set "
+                "media_extensions'."
+            ),
+            style="red",
+        )
+        raise typer.Exit(1)
+
     search_paths = get_search_paths()
 
     # Pre-compile pattern to regex for faster matching
