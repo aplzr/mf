@@ -1,6 +1,5 @@
-from ._params import MEDIA_EXTENSIONS, SEARCH_PATHS_BY_HOSTNAME
+from ._params import MEDIA_EXTENSIONS
 
 __all__ = [
     "MEDIA_EXTENSIONS",
-    "SEARCH_PATHS_BY_HOSTNAME",
 ]

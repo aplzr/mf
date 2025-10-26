@@ -8,7 +8,6 @@ from datetime import datetime
 from fnmatch import translate
 from functools import partial
 from pathlib import Path
-from socket import gethostname
 
 import tomlkit
 import typer
@@ -17,12 +16,10 @@ from rich.panel import Panel
 from rich.table import Table
 from tomlkit import TOMLDocument
 
-from ..params import MEDIA_EXTENSIONS, SEARCH_PATHS_BY_HOSTNAME
+from ..params import MEDIA_EXTENSIONS
 
 # The console instance used for print output throughout the package
 console = Console()
-
-search_paths = SEARCH_PATHS_BY_HOSTNAME[gethostname()]
 
 
 def get_cache_file() -> Path:
@@ -207,6 +204,8 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
         list[tuple[int, Path]]: (index, path) tuples for each matching file, where index
             is a 1-based sequential number.
     """
+    search_paths = get_search_paths()
+
     # Pre-compile pattern to regex for faster matching
     pattern_regex = re.compile(translate(pattern), re.IGNORECASE)
 
