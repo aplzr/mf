@@ -367,7 +367,7 @@ def add_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
     stores anyway.
 
     Args:
-        cfg (TOMLDocument): Current configuration
+        cfg (TOMLDocument): Current configuration.
         path_str (str): Search path to add.
 
     Returns:
