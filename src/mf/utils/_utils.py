@@ -197,9 +197,9 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
                         scan_dir(entry.path)
         except PermissionError:
             console.print(
-                f"❌ Missing access rights for search path '{path}.'", style="red"
+                f"⚠  Missing access permissions for directory {path}, skipping.",
+                style="yellow",
             )
-            raise typer.Exit(1)
 
     scan_dir(str(search_path))
     return results
