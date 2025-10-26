@@ -317,10 +317,10 @@ def get_search_paths() -> list[Path]:
     """Get search paths from the configuration file.
 
     Validates paths by checking if they exist. Paths that don't are removed from the
-    returned Array.
+    returned list.
 
     Raises:
-        typer.Exit: Array empty or entries don't exist.
+        typer.Exit: List empty or entries don't exist.
 
     Returns:
         list[Path]: Validated search paths.
