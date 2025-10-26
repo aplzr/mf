@@ -16,7 +16,6 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from tomlkit import TOMLDocument
-from tomlkit.items import Array
 
 from ..params import MEDIA_EXTENSIONS, SEARCH_PATHS_BY_HOSTNAME
 
@@ -315,7 +314,7 @@ def write_config(cfg: TOMLDocument):
         tomlkit.dump(cfg, f)
 
 
-def get_search_paths() -> Array[str]:
+def get_search_paths() -> list[Path]:
     """Get search paths from the configuration file.
 
     Validates paths by checking if they exist. Paths that don't are removed from the
@@ -325,21 +324,25 @@ def get_search_paths() -> Array[str]:
         typer.Exit: Array empty or entries don't exist.
 
     Returns:
-        Array[str]: Validated search paths.
+        list[Path]: Validated search paths.
     """
     search_paths = read_config()["search_paths"]
+    validated_paths: list[Path] = []
 
-    for search_path in list(search_paths):
-        if not Path(search_path).exists():
+    for search_path in search_paths:
+        path = Path(search_path)
+
+        if not path.exists():
             console.print(
                 f"Configured search path {search_path} does not exist", style="red"
             )
-            search_paths.remove(search_path)
+        else:
+            validated_paths.append(path)
 
-    if not search_paths:
+    if not validated_paths:
         console.print(
             "List of search paths is empty or paths don't exist.", style="red"
         )
         raise typer.Exit(1)
     else:
-        return search_paths
+        return validated_paths
