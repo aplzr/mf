@@ -346,11 +346,6 @@ def write_default_config() -> TOMLDocument:
     default_cfg.add(tomlkit.comment("Set to false if your search paths only contain media files and you don't want to manage media"))
     default_cfg.add(tomlkit.comment("extensions."))
     default_cfg.add("match_extensions", True)
-    default_cfg.add(tomlkit.nl())
-
-    # Player setting
-    default_cfg.add(tomlkit.comment("This is the player that is used by mf play"))
-    default_cfg.add("player", "vlc")
     # fmt: on
 
     write_config(default_cfg)
