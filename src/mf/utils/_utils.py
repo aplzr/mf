@@ -584,6 +584,17 @@ def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
 
 
 def normalize_bool_str(bool_str: str) -> str:
+    """Normalize bool string.
+
+    Args:
+        bool_str (str): String representing a boolean value.
+
+    Raises:
+        typer.Exit: Invalid value.
+
+    Returns:
+        str: "true" or "false".
+    """
     bool_str = bool_str.strip().lower()
 
     TRUE_VALUES = {"1", "true", "yes", "y", "on", "enable", "enabled"}
