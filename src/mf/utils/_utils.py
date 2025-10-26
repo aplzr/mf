@@ -296,14 +296,57 @@ def start_editor(file: Path):
             console.print(f"No editor found. Edit manually: {file}")
 
 
+def write_default_config() -> tomlkit.TOMLDocument:
+    """Create a default configuration file with comments."""
+    # fmt: off
+    default_cfg = tomlkit.document()
+
+    # Media file search paths
+    default_cfg.add(tomlkit.comment("Media file search paths"))
+    default_cfg.add("search_paths", [])
+    default_cfg.add(tomlkit.nl())
+
+    # Media file extensions
+    default_cfg.add(tomlkit.comment("Media file extensions matched by 'mf find' and 'mf new'."))
+    default_cfg.add("media_extensions", ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm'])
+    default_cfg.add(tomlkit.nl())
+
+    # Match extensions setting
+    default_cfg.add(tomlkit.comment("If true, 'mf find' and 'mf new' will only return results that match one of the file extensions"))
+    default_cfg.add(tomlkit.comment("defined by media_extensions. Otherwise all files found in the search paths will be returned."))
+    default_cfg.add(tomlkit.comment("Set to false if your search paths only contain media files and you don't want to manage media"))
+    default_cfg.add(tomlkit.comment("extensions."))
+    default_cfg.add("match_extensions", True)
+    default_cfg.add(tomlkit.nl())
+
+    # Player setting
+    default_cfg.add(tomlkit.comment("This is the player that is used by mf play"))
+    default_cfg.add("player", "vlc")
+    # fmt: on
+
+    write_config(default_cfg)
+    console.print(f"✔  Writte default configuration to '{get_config_file()}'.")
+
+    return default_cfg
+
+
 def read_config() -> TOMLDocument:
     """Load the configuration file from disk.
 
     Returns:
-        dict: Loaded connfiguration.
+        TOMLDocument: Loaded configuration.
     """
-    with open(get_config_file()) as f:
-        return tomlkit.load(f)
+    try:
+        with open(get_config_file()) as f:
+            cfg = tomlkit.load(f)
+    except FileNotFoundError:
+        console.print(
+            "⚠  Configuration file doesn't exist, creating it with default settings.",
+            style="yellow",
+        )
+        cfg = write_default_config()
+
+    return cfg
 
 
 def write_config(cfg: TOMLDocument):

@@ -1,5 +1,6 @@
 from typing import Callable, Literal, get_args, get_type_hints
 
+import tomlkit
 import typer
 from rich.syntax import Syntax
 from tomlkit import TOMLDocument
@@ -97,11 +98,10 @@ def edit():
 @app_config.command(name="list")
 def list_config():
     "List the current configuration."
-    config_file = get_config_file()
-    console.print(f"Configuration file: {config_file}\n", style="dim")
+    console.print(f"Configuration file: {get_config_file()}\n", style="dim")
     console.print(
-        Syntax.from_path(
-            config_file,
+        Syntax(
+            code=tomlkit.dumps(read_config()),
             lexer="toml",
             line_numbers=True,
         )
