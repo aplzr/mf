@@ -479,3 +479,23 @@ def get_media_extensions() -> list[str]:
     # - [ ] Validate extensions
     # - [ ] Handle empty list
     return list(read_config()["media_extensions"])
+
+
+def normalize_media_extension(extension: str) -> str:
+    """Normalize media extensions.
+
+    Args:
+        extension (str): Extension to normalize.
+
+    Returns:
+        str: Normalized extension (lowercase with a single leading dot, no whitespace).
+    """
+    if not extension:
+        raise ValueError("Extension can't be empty.")
+
+    extension = extension.lower().strip().lstrip(".")
+
+    if not extension:
+        raise ValueError("Extension can't be empty after normalization.")
+
+    return "." + extension
