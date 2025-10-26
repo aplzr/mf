@@ -10,6 +10,7 @@ from .utils import (
     add_search_path,
     console,
     get_config_file,
+    normalize_bool_str,
     read_config,
     remove_media_extension,
     remove_search_path,
@@ -20,12 +21,14 @@ from .utils import (
 app_config = typer.Typer(help="Manage mf configuration.")
 
 
-def supports_action(setter: Callable, action: Literal["add", "remove"]) -> bool:
+def supports_action(
+    setter: Callable, action: Literal["add", "remove", "clear"]
+) -> bool:
     """Check if setter function supports action.
 
     Args:
         setter (Callable): Setter function.
-        action (Literal["add", "remove"]): Action to check.
+        action (Literal["add", "remove", "clear"]): Action to check.
 
     Returns:
         bool: True if setter supports action, False otherwise.
@@ -41,7 +44,7 @@ def supports_action(setter: Callable, action: Literal["add", "remove"]) -> bool:
 def set_search_paths(
     cfg: TOMLDocument,
     search_paths: list[str] | None,
-    action: Literal["set", "add", "remove", "clear"] = "set",
+    action: Literal["set", "add", "remove", "clear"],
 ) -> TOMLDocument:
     """Set / add / remove / clear search paths.
 
@@ -118,10 +121,52 @@ def set_media_extensions(
     return cfg
 
 
+def set_match_extensions(
+    cfg: TOMLDocument,
+    match_extensions: list[str],
+    action: Literal["set"],
+) -> TOMLDocument:
+    """Set match_extensions. If 'true', search results will be matched against the list
+    of allowed media file extensions. If 'false', all search results matching the search
+    pattern will be returned.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        match_extensions (list[str]): ['true'] or ['false'].
+        action (Literal["set"]): Action to perform.
+
+    Raises:
+        typer.Exit: More than one value provided.
+        ValueError: Wrong value provided.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
+    if len(match_extensions) > 1:
+        console.print(
+            (
+                "❌ A single value is expected when setting match_extensions, "
+                f"got: {match_extensions}."
+            ),
+            style="red",
+        )
+        raise typer.Exit(1)
+
+    bool_str = normalize_bool_str(match_extensions[0])
+
+    if action == "set":
+        cfg["match_extensions"] = bool_str
+        console.print(f"✔  Set match_extensions to '{bool_str}'.", style="green")
+        return cfg
+    else:
+        raise ValueError(f"Unknown action: {action}")
+
+
 # {name of setting in the configuration file: setter function}
 setters = {
     "search_paths": set_search_paths,
     "media_extensions": set_media_extensions,
+    "match_extensions": set_match_extensions,
 }
 
 
@@ -159,7 +204,7 @@ def get(key: str):
 @app_config.command()
 def set(key: str, value: list[str]):
     """Set an mf setting."""
-    write_config(setters[key](read_config(), value))
+    write_config(setters[key](read_config(), value, action="set"))
 
 
 @app_config.command()
@@ -189,7 +234,13 @@ def remove(key: str, value: list[str]):
 @app_config.command()
 def clear(key: str):
     """Clear a setting."""
-    write_config(setters[key](read_config(), None, action="clear"))
+    if supports_action(setters[key], "clear"):
+        write_config(setters[key](read_config(), None, action="clear"))
+    else:
+        console.print(
+            f"❌ 'clear' action not supported for {key} setting.", style="red"
+        )
+        raise typer.Exit(1)
 
 
 # TODOs
