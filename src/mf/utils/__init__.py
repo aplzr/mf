@@ -1,4 +1,5 @@
 from ._utils import (
+    add_search_path,
     console,
     find_media_files,
     get_cache_file,
@@ -6,9 +7,11 @@ from ._utils import (
     get_file_by_index,
     get_search_paths,
     load_search_results,
+    normalize_path,
     normalize_pattern,
     print_search_results,
     read_config,
+    remove_search_path,
     save_search_results,
     scan_path,
     start_editor,
@@ -16,6 +19,7 @@ from ._utils import (
 )
 
 __all__ = [
+    "add_search_path",
     "console",
     "find_media_files",
     "get_cache_file",
@@ -23,9 +27,11 @@ __all__ = [
     "get_file_by_index",
     "get_search_paths",
     "load_search_results",
+    "normalize_path",
     "normalize_pattern",
     "print_search_results",
     "read_config",
+    "remove_search_path",
     "save_search_results",
     "scan_path",
     "start_editor",

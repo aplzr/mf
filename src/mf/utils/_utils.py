@@ -346,3 +346,66 @@ def get_search_paths() -> list[Path]:
         raise typer.Exit(1)
     else:
         return validated_paths
+
+
+def normalize_path(path_str: str) -> str:
+    """Make paths consistent by resolving to full paths and returning a posix-style
+    string representation (forward slashes).
+
+    Args:
+        path_str (str): Path to normalize.
+
+    Returns:
+        str: Normalized path.
+    """
+    return Path(path_str).resolve().as_posix()
+
+
+def add_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
+    """Add search path to configuration.
+
+    Skips if path is already in the configuration, warns if path does not exist but
+    stores anyway.
+
+    Args:
+        cfg (TOMLDocument): Current configuration
+        path_str (str): Search path to add.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
+    path_str = normalize_path(path_str)
+
+    if path_str not in cfg["search_paths"]:
+        if not Path(path_str).exists():
+            console.print(
+                f"Path '{path_str}' does not exist (storing anyway).", style="yellow"
+            )
+        cfg["search_paths"].append(path_str)
+    else:
+        console.print(
+            f"Search path '{path_str}' already stored in configuration file, skipping.",
+            style="yellow",
+        )
+
+    return cfg
+
+
+def remove_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
+    """Remove search path from configuration.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        path_str (str): Search path to remove.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
+    path_str = normalize_path(path_str)
+
+    try:
+        cfg["search_paths"].remove(path_str)
+        return cfg
+    except ValueError:
+        console.print(f"Path {path_str} not found in configuration file.", style="red")
+        raise typer.Exit(1)
