@@ -169,6 +169,7 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
     """
     results = []
     match_extensions = read_config()["match_extensions"]
+    media_extensions = read_config()["media_extensions"]
 
     if not search_path.exists():
         console.print(
@@ -184,10 +185,7 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
                     if entry.is_file(follow_symlinks=False):
                         if match_extensions:
                             # Check extension first (cheapest check)
-                            if (
-                                Path(entry.name).suffix.lower()
-                                in get_media_extensions()
-                            ):
+                            if Path(entry.name).suffix.lower() in media_extensions:
                                 # Then check pattern match
                                 if pattern_regex.match(entry.name.lower()):
                                     results.append(Path(entry.path))
