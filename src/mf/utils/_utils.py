@@ -168,7 +168,7 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
         list[Path]: All media files found in the directory tree.
     """
     results = []
-    match_extensions = read_config["match_extensions"]
+    match_extensions = read_config()["match_extensions"]
 
     if not search_path.exists():
         return results
