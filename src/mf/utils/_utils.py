@@ -581,3 +581,22 @@ def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
             f"❌ Extension '{extension}' not found in configuration.", style="red"
         )
         raise typer.Exit(1)
+
+
+def normalize_bool_str(bool_str: str) -> str:
+    bool_str = bool_str.strip().lower()
+
+    TRUE_VALUES = {"1", "true", "yes", "y", "on", "enable", "enabled"}
+    FALSE_VALUES = {"0", "false", "no", "n", "off", "disable", "disabled"}
+
+    if bool_str in TRUE_VALUES:
+        return "true"
+    elif bool_str in FALSE_VALUES:
+        return "false"
+    else:
+        console.print(
+            f"❌  Invalid boolean value. Got: '{bool_str}'. Expected one of:",
+            ", ".join(repr(item) for item in sorted(TRUE_VALUES | FALSE_VALUES)),
+            style="red",
+        )
+        raise typer.Exit(1)
