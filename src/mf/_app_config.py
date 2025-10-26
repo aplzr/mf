@@ -1,6 +1,4 @@
-from pathlib import Path
 from typing import Callable, Literal, get_args, get_type_hints
-from warnings import warn
 
 import typer
 from rich.syntax import Syntax
@@ -10,7 +8,6 @@ from .utils import (
     add_search_path,
     console,
     get_config_file,
-    normalize_path,
     read_config,
     remove_search_path,
     start_editor,
