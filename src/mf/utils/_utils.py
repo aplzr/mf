@@ -169,8 +169,12 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
     """
     results = []
     match_extensions = read_config()["match_extensions"]
+    media_extensions = read_config()["media_extensions"]
 
     if not search_path.exists():
+        console.print(
+            f"⚠  Search path '{search_path}' does not exist, skipping.", style="yellow"
+        )
         return results
 
     # Use os.scandir for better performance with cached stat info
@@ -181,10 +185,7 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
                     if entry.is_file(follow_symlinks=False):
                         if match_extensions:
                             # Check extension first (cheapest check)
-                            if (
-                                Path(entry.name).suffix.lower()
-                                in get_media_extensions()
-                            ):
+                            if Path(entry.name).suffix.lower() in media_extensions:
                                 # Then check pattern match
                                 if pattern_regex.match(entry.name.lower()):
                                     results.append(Path(entry.path))
@@ -217,6 +218,20 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
         list[tuple[int, Path]]: (index, path) tuples for each matching file, where index
             is a 1-based sequential number.
     """
+    match_extensions = read_config()["match_extensions"]
+    media_extensions = read_config()["media_extensions"]
+
+    if match_extensions and not media_extensions:
+        console.print(
+            (
+                "❌  match_extensions is set to true, but media_extensions is "
+                "empty. Set list of allowed media extensions with 'mf config set "
+                "media_extensions'."
+            ),
+            style="red",
+        )
+        raise typer.Exit(1)
+
     search_paths = get_search_paths()
 
     # Pre-compile pattern to regex for faster matching
