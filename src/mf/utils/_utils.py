@@ -333,14 +333,15 @@ def get_search_paths() -> list[Path]:
 
         if not path.exists():
             console.print(
-                f"Configured search path {search_path} does not exist", style="red"
+                f"⚠  Configured search path {search_path} does not exist.",
+                style="yellow",
             )
         else:
             validated_paths.append(path)
 
     if not validated_paths:
         console.print(
-            "List of search paths is empty or paths don't exist.", style="red"
+            "❌ List of search paths is empty or paths don't exist.", style="red"
         )
         raise typer.Exit(1)
     else:
@@ -378,7 +379,7 @@ def add_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
     if path_str not in cfg["search_paths"]:
         if not Path(path_str).exists():
             console.print(
-                f"Path '{path_str}' does not exist (storing anyway).", style="yellow"
+                f"⚠  Path '{path_str}' does not exist (storing anyway).", style="yellow"
             )
         cfg["search_paths"].append(path_str)
         console.print(f"✔  Added search path: '{path_str}'", style="green")

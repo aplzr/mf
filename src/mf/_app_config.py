@@ -126,7 +126,9 @@ def add(key: str, value: list[str]):
     if supports_action(setters[key], "add"):
         write_config(setters[key](read_config(), value, action="add"))
     else:
-        console.print(f"'add' action not supported for {key} setting.")
+        console.print(
+            f"⚠  'add' action not supported for {key} setting.", style="yellow"
+        )
         raise typer.Exit(1)
 
 
@@ -136,7 +138,9 @@ def remove(key: str, value: list[str]):
     if supports_action(setters[key], "remove"):
         write_config(setters[key](read_config(), value, action="remove"))
     else:
-        console.print(f"'remove' action not supported for {key} setting.")
+        console.print(
+            f"⚠  'remove' action not supported for {key} setting.", style="yellow"
+        )
         raise typer.Exit(1)
 
 
