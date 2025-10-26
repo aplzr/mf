@@ -294,12 +294,11 @@ def start_editor(file: Path):
             console.print(f"No editor found. Edit manually: {file}")
 
 
-def write_default_config() -> tomlkit.TOMLDocument:
-    """Write configuration with default settings to the location returned by
-    get_config_file().
+def write_default_config() -> TOMLDocument:
+    """Write configuration with default settings.
 
     Returns:
-        tomlkit.TOMLDocument: The default configuration as written to disk.
+        TOMLDocument: The default configuration as written to disk.
     """
     # fmt: off
     default_cfg = tomlkit.document()
