@@ -496,11 +496,15 @@ def remove_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
 
 
 def get_media_extensions() -> list[str]:
-    """The media extensions from the configuration file."""
-    # TODOs
-    # - [ ] Validate extensions
-    # - [ ] Handle empty list
-    return list(read_config()["media_extensions"])
+    """Get the list of media extensions from the configuration file.
+
+    Returns:
+        list[str]: Configured media extensions.
+    """
+    return [
+        normalize_media_extension(extension)
+        for extension in read_config()["media_extensions"]
+    ]
 
 
 def normalize_media_extension(extension: str) -> str:
