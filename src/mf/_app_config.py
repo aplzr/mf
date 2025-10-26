@@ -157,6 +157,7 @@ def clear(key: str):
 #   for settings (list, str) and check against that when doing things where the type
 #   matters
 # - [ ] Add media extensions
+# - [ ] Remove params module
 # - [x] Fix:
 # # mf config get search_paths
 # search_paths = ['\\\\doorstep\\bitheap-incoming\\', '\\\\doorstep\\bitpile-incoming\\']
