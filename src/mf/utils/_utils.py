@@ -515,3 +515,51 @@ def normalize_media_extension(extension: str) -> str:
         raise typer.Exit(1)
 
     return "." + extension
+
+
+def add_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
+    """Add media extension to the configuration.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        extension (str): Extension to add.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
+    if extension not in cfg["media_extensions"]:
+        extension = normalize_media_extension(extension)
+        cfg["media_extensions"].append(extension)
+        console.print(f"✔  Added media extension '{extension}'.", style="green")
+    else:
+        console.print(
+            f"⚠  Extension '{extension}' already stored in configuration, skipping.",
+            style="yellow",
+        )
+
+
+def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
+    """Remove media extension from configuration.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        extension (str): Extension to remove.
+
+    Raises:
+        typer.Exit: Extension not found in configuration.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
+    extension = normalize_media_extension(extension)
+
+    if extension in cfg["media_extensions"]:
+        cfg["media_extensions"].remove(extension)
+        console.print(
+            f"✔  Extension '{extension}' removed from configuration.", style="yellow"
+        )
+    else:
+        console.print(
+            f"❌ Extension '{extension}' not found in configuration.", style="red"
+        )
+        raise typer.Exit(1)

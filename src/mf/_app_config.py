@@ -6,10 +6,12 @@ from rich.syntax import Syntax
 from tomlkit import TOMLDocument
 
 from .utils import (
+    add_media_extension,
     add_search_path,
     console,
     get_config_file,
     read_config,
+    remove_media_extension,
     remove_search_path,
     start_editor,
     write_config,
@@ -76,8 +78,49 @@ def set_search_paths(
     return cfg
 
 
+def set_media_extensions(
+    cfg: TOMLDocument,
+    media_extensions: list[str] | None,
+    action: Literal["set", "add", "remove", "clear"],
+) -> TOMLDocument:
+    """Set / add / remove / clear media extensions.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        media_extensions (list[str] | None): List of media extensions.
+        action (Literal["set", "add", "remove", "clear"]): Action to perform.
+
+    Raises:
+        ValueError: Unknown action.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
+    if action == "set":
+        cfg["media_extensions"].clear()
+
+        for media_extension in media_extensions:
+            cfg = add_media_extension(cfg, media_extension)
+
+    elif action == "add":
+        for media_extension in media_extensions:
+            cfg = add_media_extension(cfg, media_extension)
+
+    elif action == "remove":
+        for media_extension in media_extensions:
+            cfg = remove_media_extension(cfg, media_extension)
+    elif action == "clear":
+        cfg["media_extensions"].clear()
+        console.print("✔  Cleared media extensions.", style="green")
+    else:
+        raise ValueError(f"Unknown action: {action}.")
+
+
 # {name of setting in the configuration file: setter function}
-setters = {"search_paths": set_search_paths}
+setters = {
+    "search_paths": set_search_paths,
+    "media_extensions": set_media_extensions,
+}
 
 
 @app_config.command()
@@ -155,7 +198,7 @@ def clear(key: str):
 #   matters
 # - [x] Add media extensions
 # - [x] Remove params module
-# - [ ] Add setter for media extensions
+# - [x] Add setter for media extensions
 # - [x] Fix:
 # # mf config get search_paths
 # search_paths = ['\\\\doorstep\\bitheap-incoming\\', '\\\\doorstep\\bitpile-incoming\\']
