@@ -537,6 +537,7 @@ def add_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
             style="yellow",
         )
 
+    return cfg
 
 def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
     """Remove media extension from configuration.
@@ -558,6 +559,7 @@ def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
         console.print(
             f"✔  Extension '{extension}' removed from configuration.", style="yellow"
         )
+        return cfg
     else:
         console.print(
             f"❌ Extension '{extension}' not found in configuration.", style="red"

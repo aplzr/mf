@@ -115,6 +115,8 @@ def set_media_extensions(
     else:
         raise ValueError(f"Unknown action: {action}.")
 
+    return cfg
+
 
 # {name of setting in the configuration file: setter function}
 setters = {
