@@ -70,6 +70,7 @@ def set_search_paths(
 
     elif action == "clear":
         cfg["search_paths"].clear()
+        console.print("✔  Cleared search paths.", style="green")
 
     else:
         raise ValueError(f"Unknown action: {action}")

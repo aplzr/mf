@@ -381,9 +381,10 @@ def add_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
                 f"Path '{path_str}' does not exist (storing anyway).", style="yellow"
             )
         cfg["search_paths"].append(path_str)
+        console.print(f"✔  Added search path: '{path_str}'", style="green")
     else:
         console.print(
-            f"Search path '{path_str}' already stored in configuration file, skipping.",
+            f"⚠  Search path '{path_str}' already stored in configuration file, skipping.",
             style="yellow",
         )
 
@@ -404,7 +405,10 @@ def remove_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
 
     try:
         cfg["search_paths"].remove(path_str)
+        console.print(f"✔  Removed search path: '{path_str}'", style="green")
         return cfg
     except ValueError:
-        console.print(f"Path {path_str} not found in configuration file.", style="red")
+        console.print(
+            f"❌ Path '{path_str}' not found in configuration file.", style="red"
+        )
         raise typer.Exit(1)
