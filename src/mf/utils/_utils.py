@@ -521,7 +521,7 @@ def normalize_media_extension(extension: str) -> str:
     extension = extension.lower().strip().lstrip(".")
 
     if not extension:
-        console.print("❌ Extension can't be empty after normalization.")
+        console.print("❌ Extension can't be empty after normalization.", style="red")
         raise typer.Exit(1)
 
     return "." + extension
