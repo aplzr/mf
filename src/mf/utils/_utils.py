@@ -171,6 +171,9 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
     match_extensions = read_config()["match_extensions"]
 
     if not search_path.exists():
+        console.print(
+            f"⚠  Search path '{search_path}' does not exist, skipping.", style="yellow"
+        )
         return results
 
     # Use os.scandir for better performance with cached stat info
