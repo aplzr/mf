@@ -178,15 +178,26 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
             with os.scandir(path) as entries:
                 for entry in entries:
                     if entry.is_file(follow_symlinks=False):
-                        # Check extension first (cheapest check)
-                        if Path(entry.name).suffix.lower() in get_media_extensions():
-                            # Then check pattern match
+                        if read_config()["match_extensions"]:
+                            # Check extension first (cheapest check)
+                            if (
+                                Path(entry.name).suffix.lower()
+                                in get_media_extensions()
+                            ):
+                                # Then check pattern match
+                                if pattern_regex.match(entry.name.lower()):
+                                    results.append(Path(entry.path))
+                        else:
+                            # Only check pattern match
                             if pattern_regex.match(entry.name.lower()):
                                 results.append(Path(entry.path))
                     elif entry.is_dir(follow_symlinks=False):
                         scan_dir(entry.path)
         except PermissionError:
-            pass  # Skip directories we can't access
+            console.print(
+                f"❌ Missing access rights for search path '{path}.'", style="red"
+            )
+            raise typer.Exit(1)
 
     scan_dir(str(search_path))
     return results

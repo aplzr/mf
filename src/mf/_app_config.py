@@ -43,9 +43,6 @@ def set_search_paths(
 ) -> TOMLDocument:
     """Set / add / remove / clear search paths.
 
-    Converts relative paths to full paths, escapes backslashes, etc. Warns wenn a path
-    doesn't exist, but sets it anyway.
-
     Args:
         cfg (TOMLDocument): The current configuration.
         search_paths (list[str] | None): Paths to set / add / remove or None when
