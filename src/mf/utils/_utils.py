@@ -384,7 +384,10 @@ def add_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
         console.print(f"✔  Added search path: '{path_str}'", style="green")
     else:
         console.print(
-            f"⚠  Search path '{path_str}' already stored in configuration file, skipping.",
+            (
+                f"⚠  Search path '{path_str}' already stored "
+                "in configuration file, skipping."
+            ),
             style="yellow",
         )
 
