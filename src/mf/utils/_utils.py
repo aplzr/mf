@@ -487,7 +487,7 @@ def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
         raise typer.Exit(1)
 
 
-def normalize_bool_str(bool_str: str) -> str:
+def normalize_bool_str(bool_str: str) -> bool:
     """Normalize bool string.
 
     Args:
@@ -497,7 +497,7 @@ def normalize_bool_str(bool_str: str) -> str:
         typer.Exit: Invalid value.
 
     Returns:
-        str: "true" or "false".
+        bool: True or False.
     """
     bool_str = bool_str.strip().lower()
 
@@ -505,9 +505,9 @@ def normalize_bool_str(bool_str: str) -> str:
     FALSE_VALUES = {"0", "false", "no", "n", "off", "disable", "disabled"}
 
     if bool_str in TRUE_VALUES:
-        return "true"
+        return True
     elif bool_str in FALSE_VALUES:
-        return "false"
+        return False
     else:
         console.print(
             f"❌  Invalid boolean value. Got: '{bool_str}'. Expected one of:",
