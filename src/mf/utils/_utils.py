@@ -678,7 +678,7 @@ def find_media_files(
         sort_by_mtime (bool, optional): If True, sorts results by last modified time.
             Forces use of the python scanner. Defaults to False.
         prefer_fd (bool, optional): Prefer external fd binary for faster file scanning
-            when possible, else use the python scanner. Defaults to True.
+            if possible, else use the python scanner. Defaults to True.
 
     Returns:
         list[tuple[int, Path]]: List of indexed search results.
