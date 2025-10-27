@@ -23,19 +23,31 @@ be providing the speedup, not Python-level caching. Needs further investigation.
 Note: [`Path` has started to cache some information in its new `info` attribute](https://docs.python.org/3/library/pathlib.html#pathlib.Path.info) starting in Python 3.14, but no stat info so far.
 
 ### Performance validation on Windows
-Switching from `Path(DirEntry).stat().st_mtime` to `DirEntry.stat().st_mtime` (see issue [#19](https://github.com/aplzr/mf/issues/19)):
+Switching from `Path(DirEntry).stat().st_mtime` to `DirEntry.stat().st_mtime` (see issue [#19](https://github.com/aplzr/mf/issues/19)) (`mr new` runtime duration):
 
 **Before**: 5199 ms average (warm cache)  
 **After**: 2378 ms average (warm cache)  
 **Improvement**: 2.2x speedup
 
-This confirms that Windows DirEntry caching provides substantial benefits 
+This confirms that Windows `DirEntry` caching provides substantial benefits 
 even with warm filesystem caches.
 
+### Performance validation on Linux
+Adding to the results above, running the same comparison on my Linux desktop I only see a slight improvement, with total runtime duration being almost 3x that of the Windows desktop:
+
+| Platform | Method | Time | Improvement |
+|----------|---------|------|-------------|
+| **Windows (wired)** | Path.stat | 5.2 s | - |
+| **Windows (wired)** | DirEntry.stat | 2.4 s | **2.2x faster** |
+| **Linux (WiFi)** | Path.stat | 14.6 s | - |
+| **Linux (WiFi)** | DirEntry.stat | 13.1 s | **1.1x faster** |
+
+The much smaller improvement is in line with `DirEntry` caching stat info on Windows, but always needing an additional syscall on Linux (which is effecively what the previous implementation was doing).
+
 ## Platform Performance Difference - Unresolved
-Possibly unrelated to the previous entry, there's also a stark difference in `mf new` runtime duration depending on the platform on which it is called:
+There's also a stark difference in `mf new` runtime duration depending on the platform on which it is called:
 
-Windows desktop → Linux server: ~5 s for `mf new`  
-Linux desktop → Linux server: Much slower
+\[See table one entry up\]
 
-I initially thought this was `DirEntry` caching on Windows but not on Linux (see entry above), but at the time of writing the implementation uses `Path.stat()` which never caches. Cause currently unknown - possibly SMB client implementation differences or network stack optimizations.
+I initially thought this was `DirEntry` caching on Windows but not on Linux (see entry above), but at the time of writing the implementation uses `Path.stat()` which never caches. Cause currently unknown - possibly SMB client implementation differences, network stack optimizations, or the differnce between WIFI and wired network (although the AP is very close and no network contention to speak of).
+
