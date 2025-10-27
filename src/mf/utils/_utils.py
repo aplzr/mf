@@ -1,12 +1,15 @@
 import json
 import os
+import platform
 import re
 import shutil
+import stat
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from fnmatch import translate
 from functools import partial
+from importlib.resources import files
 from pathlib import Path
 
 import tomlkit
@@ -694,4 +697,120 @@ def normalize_bool_str(bool_str: str) -> str:
             ", ".join(repr(item) for item in sorted(TRUE_VALUES | FALSE_VALUES)),
             style="red",
         )
+        raise typer.Exit(1)
+
+
+def get_fd_binary() -> Path:
+    """Get the path to the appropriate fd binary for the current platform.
+
+    Raises:
+        RuntimeError: Unsupported platform.
+
+    Returns:
+        Path: fd binary.
+    """
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+
+    if system == "linux":
+        binary_name = "fd-v10_3_0-x86_64-unknown-linux-gnu"
+    elif system == "darwin":
+        if machine == "arm64":
+            binary_name = "fd-v10_3_0-aarch64-apple-darwin"
+        else:
+            binary_name = "fd-v10_3_0-x86_64-apple-darwin"
+    elif system == "windows":
+        binary_name = "fd-v10_3_0-x86_64-pc-windows-msvc.exe"
+    else:
+        raise RuntimeError(f"Unsupported platform: {system}-{machine}")
+
+    # Get binary path using importlib.resources and to actual Path (needed for
+    # subprocess)
+    bin_path = files("mf").joinpath("bin", binary_name)
+    bin_path = Path(str(bin_path))
+
+    # Make executable on Unix systems
+    if system in ("linux", "darwin"):
+        try:
+            current_perms = bin_path.stat().st_mode
+            if not (current_perms & stat.S_IXUSR):
+                bin_path.chmod(
+                    current_perms | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+                )
+        except (OSError, PermissionError):
+            # If we can't chmod (e.g., read-only filesystem), try to run anyway
+            # TODO: This should probably at least warn
+            # TODO: fall back to pure python if this fails
+            pass
+
+    return bin_path
+
+
+def scan_path_with_fd(
+    search_path: Path,
+    pattern: str,
+    media_extensions: set[str],
+    match_extensions: bool,
+) -> list[Path]:
+    """Scan a single path using fd for better performance.
+
+    Args:
+        search_path (Path): The directory path to scan for media files.
+        pattern (str): Glob pattern for matching filenames.
+        media_extensions (set[str]): The set of allowed media file extensions.
+        match_extensions (bool): Whether to filter by media extensions.
+
+    Returns:
+        list[Path]: All matching files found in the directory tree.
+    """
+    if not search_path.exists():
+        console.print(
+            f"⚠  Search path '{search_path}' does not exist, skipping.", style="yellow"
+        )
+        return []
+
+    fd_binary = get_fd_binary()
+
+    # TODO: remove
+    console.print(f"fd binary: {fd_binary}", style="bright_cyan")
+
+    # Build fd command
+    cmd = [
+        str(fd_binary),
+        "--glob",
+        "--type",
+        "f",  # files only
+        "--absolute-path",  # get full paths
+        "--hidden",  # include hidden files if needed
+        pattern,
+        str(search_path),
+    ]
+
+    # Add extension filters if needed
+    if match_extensions and media_extensions:
+        # TODO: check if warning is necessary when list is empty
+        for ext in media_extensions:
+            # Remove leading dot if present and add extension filter
+            cmd.extend(["-e", ext.lstrip(".")])
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+        # Parse output into Path objects
+        files = []
+
+        for line in result.stdout.strip().split("\n"):
+            if line:  # Skip empty lines
+                files.append(Path(line))
+
+        return files
+
+    except subprocess.CalledProcessError as e:
+        console.print(
+            f"⚠  fd command failed for path {search_path}: {e.stderr}", style="yellow"
+        )
+        return []
+
+    except FileNotFoundError:
+        console.print("❌  fd command not found. Please install fd-find.", style="red")
         raise typer.Exit(1)
