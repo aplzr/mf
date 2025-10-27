@@ -15,7 +15,7 @@ A cross-platform command-line tool for finding and managing video files in large
 - **🖥️ Cross-platform** - Works on Windows, Linux, and macOS
 
 ## Installation
-Currently not packaged on PyPI, install from Github:
+Currently not packaged on PyPI, install (with [uv](https://docs.astral.sh/uv/)) from Github:
 
 ```
 uv tool install git+https://github.com/aplzr/mf.git
