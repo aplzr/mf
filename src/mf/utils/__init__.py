@@ -19,7 +19,7 @@ from ._utils import (
     remove_media_extension,
     remove_search_path,
     save_search_results,
-    scan_path,
+    scan_path_with_python,
     start_editor,
     write_config,
 )
@@ -44,7 +44,7 @@ __all__ = [
     "remove_media_extension",
     "remove_search_path",
     "save_search_results",
-    "scan_path",
+    "scan_path_with_python",
     "start_editor",
     "write_config",
     "find_newest_media_files",
