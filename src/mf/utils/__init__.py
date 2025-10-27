@@ -3,6 +3,7 @@ from ._utils import (
     add_search_path,
     console,
     find_media_files,
+    find_newest_media_files,
     get_cache_file,
     get_config_file,
     get_file_by_index,
@@ -44,4 +45,5 @@ __all__ = [
     "scan_path",
     "start_editor",
     "write_config",
+    "find_newest_media_files",
 ]
