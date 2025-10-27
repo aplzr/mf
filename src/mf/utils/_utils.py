@@ -274,8 +274,8 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
     # Flatten results, sort by filename (case-insensitive), add index
     all_files = []
 
-    for files in path_results:
-        all_files.extend(files)
+    for results in path_results:
+        all_files.extend(results)
 
     all_files.sort(key=lambda path: path.name.lower())
     results = [(idx, path) for idx, path in enumerate(all_files, start=1)]
@@ -330,8 +330,8 @@ def find_newest_media_files(pattern: str) -> list[tuple[int, Path]]:
     # Flatten results
     newest_files = []
 
-    for files in path_results:
-        newest_files.extend(files)
+    for results in path_results:
+        newest_files.extend(results)
 
     # Sort by mtime (descending), add index, remove mtime
     newest_files.sort(key=lambda result: result[1], reverse=True)
