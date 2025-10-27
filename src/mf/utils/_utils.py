@@ -157,19 +157,25 @@ def normalize_pattern(pattern: str) -> str:
     return pattern
 
 
-def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
+def scan_path(
+    search_path: Path,
+    pattern_regex: re.Pattern,
+    media_extensions: set[str],
+    match_extensions: bool,
+) -> list[Path]:
     """Scan a single path for media files.
 
     Args:
         search_path (Path): The directory path to scan for media files.
         pattern_regex (re.Pattern): Compiled regex pattern for matching filenames.
+        media_extensions (set[str]): The set of allowed media file extensions.
+        match_extensions (bool): Whether search results should be matched against
+            media_extensions or not.
 
     Returns:
         list[Path]: All media files found in the directory tree.
     """
     results = []
-    match_extensions = read_config()["match_extensions"]
-    media_extensions = get_media_extensions()
 
     if not search_path.exists():
         console.print(
@@ -239,7 +245,12 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
 
     # Scan all paths in parallel
     with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
-        scan_with_pattern = partial(scan_path, pattern_regex=pattern_regex)
+        scan_with_pattern = partial(
+            scan_path,
+            pattern_regex=pattern_regex,
+            media_extensions=media_extensions,
+            match_extensions=match_extensions,
+        )
         path_results = executor.map(scan_with_pattern, search_paths)
 
     # Flatten results, sort by filename (case-insensitive), add index
