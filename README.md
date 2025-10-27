@@ -61,12 +61,13 @@ mf new 50 # Show 50 newest files
 
 ### Core Commands
 
-- `mf find <pattern>` - Search for media files matching the glob pattern
+- `mf find [pattern]` - Search for media files matching the glob pattern
 - `mf new [n]` - Show latest additions (default: 20 files)
 - `mf play [index]` - Play a file by index, or random file if no index given
 - `mf imdb <index>` - Open IMDB page for a media file
 - `mf filepath <index>` - Print full path of a search result
 - `mf version` - Print version information
+- `mf` or `mf --help` - Print help
 
 ### Configuration Management
 
