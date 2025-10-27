@@ -169,7 +169,7 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
     """
     results = []
     match_extensions = read_config()["match_extensions"]
-    media_extensions = read_config()["media_extensions"]
+    media_extensions = get_media_extensions()
 
     if not search_path.exists():
         console.print(
@@ -219,7 +219,7 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
             is a 1-based sequential number.
     """
     match_extensions = read_config()["match_extensions"]
-    media_extensions = read_config()["media_extensions"]
+    media_extensions = get_media_extensions()
 
     if match_extensions and not media_extensions:
         console.print(
@@ -495,16 +495,16 @@ def remove_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
         raise typer.Exit(1)
 
 
-def get_media_extensions() -> list[str]:
+def get_media_extensions() -> set[str]:
     """Get the list of media extensions from the configuration file.
 
     Returns:
-        list[str]: Configured media extensions.
+        set[str]: Configured media extensions.
     """
-    return [
+    return {
         normalize_media_extension(extension)
         for extension in read_config()["media_extensions"]
-    ]
+    }
 
 
 def normalize_media_extension(extension: str) -> str:
