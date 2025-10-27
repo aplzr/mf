@@ -202,7 +202,13 @@ def list_config():
 @app_config.command()
 def get(key: str):
     """Get an mf setting."""
-    console.print(f"{key} = {read_config().get(key)}")
+    setting = read_config().get(key)
+
+    if setting in [True, False]:
+        # Print as TOML
+        setting = str(setting).lower()
+
+    console.print(f"{key} = {setting}")
 
 
 @app_config.command()
