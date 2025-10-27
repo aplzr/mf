@@ -243,22 +243,3 @@ def clear(key: str):
             f"❌ 'clear' action not supported for {key} setting.", style="red"
         )
         raise typer.Exit(1)
-
-
-# TODOs
-# - [x] Add "add" command to append elements to list settings
-# - [x] Add "remove" command to remove elements from list settings
-# - [x, sort of (check if action is supported by setter instead)] Define expected types
-#   for settings (list, str) and check against that when doing things where the type
-#   matters
-# - [x] Add media extensions
-# - [x] Remove params module
-# - [x] Add setter for media extensions
-# - [x] Fix:
-# # mf config get search_paths
-# search_paths = ['\\\\doorstep\\bitheap-incoming\\', '\\\\doorstep\\bitpile-incoming\\']
-
-#  ap on  ~/development/mf
-#  mf 3.12.0 add-config ≢  ~1  3
-# # mf config remove search_paths \\\\doorstep\\bitpile-incoming\\
-# \\\\doorstep\bitpile-incoming not found in configuration
