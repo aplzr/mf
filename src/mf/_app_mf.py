@@ -1,6 +1,5 @@
 import os
 import subprocess
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from random import randrange
 
@@ -14,7 +13,6 @@ from ._version import __version__
 from .utils import (
     console,
     find_media_files,
-    find_newest_media_files,
     get_file_by_index,
     normalize_pattern,
     print_search_results,
@@ -57,7 +55,7 @@ def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
 ):
     """Find the latest additions to the media database."""
-    newest_files = find_newest_media_files("*")[:n]
+    newest_files = find_media_files("*", sort_by_mtime=True)[:n]
     pattern = f"{n} latest additions"
     save_search_results(pattern, newest_files)
     print_search_results(pattern, newest_files)
@@ -154,10 +152,5 @@ def version():
 
 
 # TODOs
-# - [x] Add a "new" command that lists the last n newest additions
-# - [x] Add a "cache" command that lists the current cache
-# - [x] Return timestamp in load_search_results and print it in cache
-# - [x] Add "imdb" command
 # - [ ] Add "trailer" command
 # - [ ] Add -r option for additional ratings
-# - [x] Add "filepath" command
