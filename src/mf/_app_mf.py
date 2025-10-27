@@ -29,8 +29,9 @@ def find(
     pattern: str = typer.Argument(
         "*",
         help=(
-            "Search pattern (glob-based). If no wildcards are present, the pattern "
-            "will be wrapped with wildcards automatically."
+            "Search pattern (glob-based). Use quotes around patterns with wildcards "
+            "to prevent shell expansion (e.g., 'mf find \"*.mp4\"'). If no wildcards "
+            "are present, the pattern will be wrapped with wildcards automatically."
         ),
     ),
 ):
