@@ -112,9 +112,11 @@ def set_media_extensions(
     elif action == "remove":
         for media_extension in media_extensions:
             cfg = remove_media_extension(cfg, media_extension)
+
     elif action == "clear":
         cfg["media_extensions"].clear()
         console.print("✔  Cleared media extensions.", style="green")
+
     else:
         raise ValueError(f"Unknown action: {action}.")
 
