@@ -24,3 +24,12 @@ build-backend = "hatchling.build"
 
 [tool.hatch.version]
 path = "src/mf/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mf"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/mf/bin/fd-v10_3_0-x86_64-unknown-linux-gnu" = "mf/bin/fd-v10_3_0-x86_64-unknown-linux-gnu"
+"src/mf/bin/fd-v10_3_0-aarch64-apple-darwin" = "mf/bin/fd-v10_3_0-aarch64-apple-darwin"
+"src/mf/bin/fd-v10_3_0-x86_64-apple-darwin" = "mf/bin/fd-v10_3_0-x86_64-apple-darwin"
+"src/mf/bin/fd-v10_3_0-x86_64-pc-windows-msvc.exe" = "mf/bin/fd-v10_3_0-x86_64-pc-windows-msvc.exe"
