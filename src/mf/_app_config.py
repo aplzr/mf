@@ -152,11 +152,13 @@ def set_match_extensions(
         )
         raise typer.Exit(1)
 
-    bool_str = normalize_bool_str(match_extensions[0])
+    bool_ = normalize_bool_str(match_extensions[0])
 
     if action == "set":
-        cfg["match_extensions"] = bool_str
-        console.print(f"✔  Set match_extensions to '{bool_str}'.", style="green")
+        cfg["match_extensions"] = bool_
+        console.print(
+            f"✔  Set match_extensions to '{str(bool_).lower()}'.", style="green"
+        )
         return cfg
     else:
         raise ValueError(f"Unknown action: {action}")
