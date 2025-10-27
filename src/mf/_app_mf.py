@@ -14,6 +14,7 @@ from ._version import __version__
 from .utils import (
     console,
     find_media_files,
+    find_newest_media_files,
     get_file_by_index,
     normalize_pattern,
     print_search_results,
@@ -56,19 +57,10 @@ def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
 ):
     """Find the latest additions to the media database."""
-    # Run parallelized IO lookups for fast create date retrieval of all files
-    all_files = [path for _, path in find_media_files("*")]
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        times = list(executor.map(lambda path: path.stat().st_mtime, all_files))
-
-    # Sort, filter, add index
-    latest_files = [path for _, path in sorted(zip(times, all_files), reverse=True)][:n]
-    latest_files = [(idx, path) for idx, path in enumerate(latest_files, start=1)]
-
-    # Cache and print results
+    newest_files = find_newest_media_files("*")[:n]
     pattern = f"{n} latest additions"
-    save_search_results(pattern, latest_files)
-    print_search_results(pattern, latest_files)
+    save_search_results(pattern, newest_files)
+    print_search_results(pattern, newest_files)
 
 
 @app_mf.command()
