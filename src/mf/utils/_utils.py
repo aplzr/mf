@@ -169,7 +169,7 @@ def scan_path(search_path: Path, pattern_regex: re.Pattern) -> list[Path]:
     """
     results = []
     match_extensions = read_config()["match_extensions"]
-    media_extensions = read_config()["media_extensions"]
+    media_extensions = get_media_extensions()
 
     if not search_path.exists():
         console.print(
@@ -219,7 +219,7 @@ def find_media_files(pattern: str) -> list[tuple[int, Path]]:
             is a 1-based sequential number.
     """
     match_extensions = read_config()["match_extensions"]
-    media_extensions = read_config()["media_extensions"]
+    media_extensions = get_media_extensions()
 
     if match_extensions and not media_extensions:
         console.print(
