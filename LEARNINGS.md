@@ -33,7 +33,7 @@ This confirms that Windows `DirEntry` caching provides substantial benefits
 even with warm filesystem caches.
 
 ### Performance validation on Linux
-Adding to the results above, running the same comparison on my Linux desktop I only see a slight improvement, with total runtime duration being almost 3x that of the Windows desktop:
+Adding to the results above, running the same comparison on my Linux desktop I only see a slight improvement, with total runtime duration being 2.8 to 5.5 times that of the Windows desktop:
 
 | Platform | Method | Time | Improvement |
 |----------|---------|------|-------------|
