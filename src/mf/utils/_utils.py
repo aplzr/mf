@@ -1,12 +1,14 @@
 import json
 import os
-import re
+import platform
 import shutil
+import stat
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from fnmatch import translate
+from fnmatch import fnmatch
 from functools import partial
+from importlib.resources import files
 from pathlib import Path
 
 import tomlkit
@@ -157,188 +159,6 @@ def normalize_pattern(pattern: str) -> str:
     return pattern
 
 
-def scan_path(
-    search_path: Path,
-    pattern_regex: re.Pattern,
-    media_extensions: set[str],
-    match_extensions: bool,
-    include_mtime: bool = False,
-) -> list[Path] | list[tuple[Path, float]]:
-    """Scan a single path for media files.
-
-    Args:
-        search_path (Path): The directory path to scan for media files.
-        pattern_regex (re.Pattern): Compiled regex pattern for matching filenames.
-        media_extensions (set[str]): The set of allowed media file extensions.
-        match_extensions (bool): Whether search results should be matched against
-            media_extensions or not.
-        include_mtime (bool, optional): Additionally look up and return mtime for each
-            entry. Defaults to False.
-
-    Returns:
-        list[Path] | list[tuple[Path, float]]: All (media) files found in the directory
-            tree. If include_mtime, additionally the last modified time of each entry.
-    """
-    results = []
-
-    if not search_path.exists():
-        console.print(
-            f"⚠  Search path '{search_path}' does not exist, skipping.", style="yellow"
-        )
-        return results
-
-    # Use os.scandir for better performance with cached stat info
-    def scan_dir(path):
-        try:
-            with os.scandir(path) as entries:
-                for entry in entries:
-                    if entry.is_file(follow_symlinks=False):
-                        if match_extensions:
-                            # Check extension first (cheapest check)
-                            if Path(entry.name).suffix.lower() in media_extensions:
-                                # Then check pattern match
-                                if pattern_regex.match(entry.name.lower()):
-                                    if include_mtime:
-                                        # Cached on Windows (if it's not a symlink),
-                                        # additional syscall on Linux
-                                        mtime = entry.stat().st_mtime
-                                        results.append((Path(entry.path), mtime))
-                                    else:
-                                        results.append(Path(entry.path))
-                        else:
-                            # Only check pattern match
-                            if pattern_regex.match(entry.name.lower()):
-                                if include_mtime:
-                                    mtime = entry.stat().st_mtime
-                                    results.append((Path(entry), mtime))
-                                else:
-                                    results.append(Path(entry.path))
-                    elif entry.is_dir(follow_symlinks=False):
-                        scan_dir(entry.path)
-        except PermissionError:
-            console.print(
-                f"⚠  Missing access permissions for directory {path}, skipping.",
-                style="yellow",
-            )
-
-    scan_dir(str(search_path))
-    return results
-
-
-def find_media_files(pattern: str) -> list[tuple[int, Path]]:
-    """Search for media files matching the pattern.
-
-    Scans all configured search paths in parallel and filters results
-    by the given glob pattern.
-
-    Args:
-        pattern (str): Glob-based search pattern to match filenames against.
-
-    Returns:
-        list[tuple[int, Path]]: (index, path) tuples for each matching file, where index
-            is a 1-based sequential number.
-    """
-    # TODO: Use fd here, which is faster when no stat lookups are necessary
-    match_extensions = read_config()["match_extensions"]
-    media_extensions = get_media_extensions()
-
-    if match_extensions and not media_extensions:
-        console.print(
-            (
-                "❌  match_extensions is set to true, but media_extensions is "
-                "empty. Set list of allowed media extensions with 'mf config set "
-                "media_extensions'."
-            ),
-            style="red",
-        )
-        raise typer.Exit(1)
-
-    search_paths = get_search_paths()
-
-    # Pre-compile pattern to regex for faster matching
-    pattern_regex = re.compile(translate(pattern), re.IGNORECASE)
-
-    # Scan all paths in parallel
-    with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
-        scan_with_pattern = partial(
-            scan_path,
-            pattern_regex=pattern_regex,
-            media_extensions=media_extensions,
-            match_extensions=match_extensions,
-        )
-        path_results = executor.map(scan_with_pattern, search_paths)
-
-    # Flatten results, sort by filename (case-insensitive), add index
-    all_files = []
-
-    for files in path_results:
-        all_files.extend(files)
-
-    all_files.sort(key=lambda path: path.name.lower())
-    results = [(idx, path) for idx, path in enumerate(all_files, start=1)]
-
-    return results
-
-
-def find_newest_media_files(pattern: str) -> list[tuple[int, Path]]:
-    """Search for media files matching the pattern.
-
-    Scans all configured search paths in parallel, filters results
-    by the given glob pattern, and sorts them by last modified time (newer first).
-
-    Args:
-        pattern (str): Glob-based search pattern to match filenames against.
-
-    Raises:
-        typer.Exit: Extension matching is turned on but list of allowed extensions is
-            empty.
-
-    Returns:
-        list[tuple[int, Path]]: (index, path) tuples for each matching file, where index
-            is a 1-based sequential number. Sorted by last modified time.
-    """
-    match_extensions = read_config()["match_extensions"]
-    media_extensions = get_media_extensions()
-
-    if match_extensions and not media_extensions:
-        console.print(
-            (
-                "❌  match_extensions is set to true, but media_extensions is "
-                "empty. Set list of allowed media extensions with 'mf config set "
-                "media_extensions'."
-            ),
-            style="red",
-        )
-        raise typer.Exit(1)
-
-    search_paths = get_search_paths()
-    pattern_regex = re.compile(translate(pattern), re.IGNORECASE)
-
-    with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
-        scan_with_mtime = partial(
-            scan_path,
-            pattern_regex=pattern_regex,
-            media_extensions=media_extensions,
-            match_extensions=match_extensions,
-            include_mtime=True,
-        )
-        path_results = executor.map(scan_with_mtime, search_paths)
-
-    # Flatten results
-    newest_files = []
-
-    for files in path_results:
-        newest_files.extend(files)
-
-    # Sort by mtime (descending), add index, remove mtime
-    newest_files.sort(key=lambda result: result[1], reverse=True)
-    newest_files = [
-        (idx, path) for idx, (path, mtime) in enumerate(newest_files, start=1)
-    ]
-
-    return newest_files
-
-
 def get_file_by_index(index: int) -> Path:
     """Get a file path from the cache.
 
@@ -473,7 +293,7 @@ def write_config(cfg: TOMLDocument):
         tomlkit.dump(cfg, f)
 
 
-def get_search_paths() -> list[Path]:
+def get_validated_search_paths() -> list[Path]:
     """Get search paths from the configuration file.
 
     Validates paths by checking if they exist. Paths that don't are removed from the
@@ -695,3 +515,237 @@ def normalize_bool_str(bool_str: str) -> str:
             style="red",
         )
         raise typer.Exit(1)
+
+
+def get_fd_binary() -> Path:
+    """Get the path to the appropriate fd binary for the current platform.
+
+    Raises:
+        RuntimeError: Unsupported platform.
+
+    Returns:
+        Path: fd binary.
+    """
+    # NOTE: Exceptions caused by this are handled by the calling find_media_files, which
+    # will fall back to the python scanner
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+
+    if system == "linux":
+        binary_name = "fd-v10_3_0-x86_64-unknown-linux-gnu"
+    elif system == "darwin":
+        if machine == "arm64":
+            binary_name = "fd-v10_3_0-aarch64-apple-darwin"
+        else:
+            binary_name = "fd-v10_3_0-x86_64-apple-darwin"
+    elif system == "windows":
+        binary_name = "fd-v10_3_0-x86_64-pc-windows-msvc.exe"
+    else:
+        raise RuntimeError(f"Unsupported platform: {system}-{machine}")
+
+    # Get binary resource path and convert to actual Path (needed for subprocess)
+    bin_path = files("mf").joinpath("bin", binary_name)
+    bin_path = Path(str(bin_path))
+
+    # Make executable on Unix systems
+    if system in ("linux", "darwin"):
+        current_perms = bin_path.stat().st_mode
+        if not (current_perms & stat.S_IXUSR):
+            bin_path.chmod(current_perms | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    return bin_path
+
+
+def scan_path_with_python(
+    search_path: Path,
+    pattern: str,
+    media_extensions: set[str],
+    match_extensions: bool,
+    include_mtime: bool = False,
+) -> list[Path] | list[tuple[Path, float]]:
+    """Scan a single path for media files.
+
+    Slower compared to the fd scanner for regular file searches, but can optionally
+    provide mtime information (and can do it faster than fd scanner + mtime lookup).
+
+    Args:
+        search_path (Path): The directory path to scan for media files.
+        pattern (str): Glob pattern for matching filenames.
+        media_extensions (set[str]): The set of allowed media file extensions.
+        match_extensions (bool): Whether search results should be matched against
+            media_extensions or not.
+        include_mtime (bool, optional): Additionally look up and return mtime for each
+            entry. Defaults to False.
+
+    Returns:
+        list[Path] | list[tuple[Path, float]]: All (media) files found in the directory
+            tree. If include_mtime, additionally the last modified time of each entry.
+    """
+    results = []
+
+    # Use os.scandir for better performance with cached stat info
+    def scan_dir(path):
+        try:
+            with os.scandir(path) as entries:
+                for entry in entries:
+                    if entry.is_file(follow_symlinks=False):
+                        if match_extensions and media_extensions:
+                            # Check extension first (cheapest check)
+                            if Path(entry.name).suffix.lower() in media_extensions:
+                                # Then check pattern match
+                                if fnmatch(entry.name.lower(), pattern.lower()):
+                                    if include_mtime:
+                                        # Cached on Windows (if it's not a symlink),
+                                        # additional syscall on Linux
+                                        mtime = entry.stat().st_mtime
+                                        results.append((Path(entry.path), mtime))
+                                    else:
+                                        results.append(Path(entry.path))
+                        else:
+                            # Only check pattern match
+                            if fnmatch(entry.name.lower(), pattern.lower()):
+                                if include_mtime:
+                                    mtime = entry.stat().st_mtime
+                                    results.append((Path(entry), mtime))
+                                else:
+                                    results.append(Path(entry.path))
+                    elif entry.is_dir(follow_symlinks=False):
+                        scan_dir(entry.path)
+        except PermissionError:
+            console.print(
+                f"⚠  Missing access permissions for directory {path}, skipping.",
+                style="yellow",
+            )
+
+    scan_dir(str(search_path))
+    return results
+
+
+def scan_path_with_fd(
+    search_path: Path,
+    pattern: str,
+    media_extensions: set[str],
+    match_extensions: bool,
+) -> list[Path]:
+    """Scan a single path using fd for better performance.
+
+    Args:
+        search_path (Path): The directory path to scan for media files.
+        pattern (str): Glob pattern for matching filenames.
+        media_extensions (set[str]): The set of allowed media file extensions.
+        match_extensions (bool): Whether to filter by media extensions.
+
+    Returns:
+        list[Path]: All matching files found in the directory tree.
+    """
+    # Build fd command
+    cmd = [
+        str(get_fd_binary()),
+        "--glob",
+        "--type",
+        "f",  # files only
+        "--absolute-path",
+        "--hidden",
+        pattern,
+        str(search_path),
+    ]
+
+    # Add extension filters if needed
+    if match_extensions and media_extensions:
+        for ext in media_extensions:
+            # Remove leading dot if present and add extension filter
+            cmd.extend(["-e", ext.lstrip(".")])
+
+    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+    # Parse output into Path objects
+    files = []
+
+    for line in result.stdout.strip().split("\n"):
+        if line:  # Skip empty lines
+            files.append(Path(line))
+
+    return files
+
+
+def find_media_files(
+    pattern: str, *, sort_by_mtime: bool = False, prefer_fd: bool = True
+) -> list[tuple[int, Path]]:
+    """Unified media file search with configurable sorting and scanner preference.
+
+    Args:
+        pattern (str): Glob pattern to match filenames against.
+        sort_by_mtime (bool, optional): If True, sorts results by last modified time.
+            Forces use of the python scanner. Defaults to False.
+        prefer_fd (bool, optional): Prefer external fd binary for faster file scanning
+            if possible, else use the python scanner. Defaults to True.
+
+    Returns:
+        list[tuple[int, Path]]: List of indexed search results.
+    """
+
+    # Get and validate config
+    search_paths = get_validated_search_paths()
+    match_extensions = read_config()["match_extensions"]
+    media_extensions = get_media_extensions()
+
+    # Determine which scanner to use
+    use_fd = prefer_fd and not sort_by_mtime  # fd can't provide mtime
+
+    # Parallel scanning over search paths
+    with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
+        if use_fd:
+            try:
+                scanner = partial(
+                    scan_path_with_fd,
+                    pattern=pattern,
+                    media_extensions=media_extensions,
+                    match_extensions=match_extensions,
+                )
+                path_results = executor.map(scanner, search_paths)
+            except (
+                FileNotFoundError,
+                subprocess.CalledProcessError,
+                OSError,
+                PermissionError,
+            ):
+                # Fallback to python scanner
+                scanner = partial(
+                    scan_path_with_python,
+                    pattern=pattern,
+                    media_extensions=media_extensions,
+                    match_extensions=match_extensions,
+                    include_mtime=False,
+                )
+                path_results = executor.map(scanner, search_paths)
+        else:
+            # Use python scanner for mtime
+            scanner = partial(
+                scan_path_with_python,
+                pattern=pattern,
+                media_extensions=media_extensions,
+                match_extensions=match_extensions,
+                include_mtime=sort_by_mtime,
+            )
+            path_results = executor.map(scanner, search_paths)
+
+    # Flatten results
+    all_results = []
+    for results in path_results:
+        all_results.extend(results)
+
+    # Sort and index based on what we got back
+    if sort_by_mtime:
+        # all_results contains [(Path, mtime), ...] tuples
+        # Sort by mtime (newest first), add index, remove mtime
+        all_results.sort(key=lambda item: item[1], reverse=True)
+        indexed_results = [
+            (idx, path) for idx, (path, mtime) in enumerate(all_results, start=1)
+        ]
+    else:
+        # all_results contains [Path, Path, ...] objects
+        # Sort alphabetically, add index
+        all_results.sort(key=lambda path: path.name.lower())
+        indexed_results = [(idx, path) for idx, path in enumerate(all_results, start=1)]
+
+    return indexed_results
