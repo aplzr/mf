@@ -23,7 +23,7 @@ be providing the speedup, not Python-level caching. Needs further investigation.
 Note: [`Path` has started to cache some information in its new `info` attribute](https://docs.python.org/3/library/pathlib.html#pathlib.Path.info) starting in Python 3.14, but no stat info so far.
 
 ### Performance validation on Windows
-Switching from `Path(DirEntry).stat().st_mtime` to `DirEntry.stat().st_mtime` (see issue [#19](https://github.com/aplzr/mf/issues/19)) (`mr new` runtime duration):
+Switching from `Path(DirEntry).stat().st_mtime` to `DirEntry.stat().st_mtime` (see issue [#19](https://github.com/aplzr/mf/issues/19)) (`mf new` runtime duration):
 
 **Before**: 5199 ms average (warm cache)  
 **After**: 2378 ms average (warm cache)  
