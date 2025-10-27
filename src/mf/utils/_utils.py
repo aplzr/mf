@@ -160,7 +160,7 @@ def normalize_pattern(pattern: str) -> str:
     return pattern
 
 
-def scan_path(
+def scan_path_with_python(
     search_path: Path,
     pattern_regex: re.Pattern,
     media_extensions: set[str],
@@ -319,7 +319,7 @@ def find_newest_media_files(pattern: str) -> list[tuple[int, Path]]:
 
     with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
         scan_with_mtime = partial(
-            scan_path,
+            scan_path_with_python,
             pattern_regex=pattern_regex,
             media_extensions=media_extensions,
             match_extensions=match_extensions,
