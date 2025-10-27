@@ -152,6 +152,16 @@ def version():
     console.print(__version__)
 
 
+@app_mf.callback(invoke_without_command=True)
+def main_callback(ctx: typer.Context):
+    """Show help when no command is provided."""
+    if ctx.invoked_subcommand is None:
+        console.print("")
+        console.print(f" Version: {__version__}", style="bright_yellow")
+        console.print(ctx.get_help())
+        raise typer.Exit()
+
+
 # TODOs
 # - [ ] Add "trailer" command
 # - [ ] Add -r option for additional ratings
