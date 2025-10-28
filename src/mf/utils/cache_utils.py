@@ -22,7 +22,15 @@ __all__ = [
 
 
 def get_cache_file() -> Path:
-    """Return path to cache file (platform aware, fallback to ~/.cache/mf)."""
+    """Return path to cache file.
+
+    Args:
+        None
+
+    Returns:
+        Path: Location of the JSON cache file (platform aware; falls back to
+        ~/.cache/mf on POSIX).
+    """
     import os
 
     cache_dir = (
@@ -39,7 +47,15 @@ def get_cache_file() -> Path:
 
 
 def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
-    """Persist search results with pattern + timestamp to JSON cache."""
+    """Persist search results to cache.
+
+    Args:
+        pattern (str): Search pattern used.
+        results (list[tuple[int, Path]]): Indexed file path results.
+
+    Returns:
+        None
+    """
     cache_data = {
         "pattern": pattern,
         "timestamp": datetime.now().isoformat(),
@@ -53,10 +69,13 @@ def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
 
 
 def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
-    """Load last cached search results.
+    """Load cached search results.
 
     Raises:
-        typer.Exit: If cache missing or invalid.
+        typer.Exit: If cache is missing or invalid.
+
+    Returns:
+        tuple[str, list[tuple[int, Path]], datetime]: Pattern, results, timestamp.
     """
     cache_file = get_cache_file()
     try:
@@ -80,7 +99,12 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
 
 
 def print_search_results(title: str, results: list[tuple[int, Path]]):
-    """Render a rich table of indexed file search results."""
+    """Render a table of search results.
+
+    Args:
+        title (str): Title displayed above table.
+        results (list[tuple[int, Path]]): Indexed search results.
+    """
     from rich.panel import Panel
     from rich.table import Table
 
@@ -99,7 +123,17 @@ def print_search_results(title: str, results: list[tuple[int, Path]]):
 
 
 def get_file_by_index(index: int) -> Path:
-    """Retrieve file path by index from cached results, validating existence."""
+    """Retrieve file path by index.
+
+    Args:
+        index (int): Index of desired file.
+
+    Raises:
+        typer.Exit: If index not found or file no longer exists.
+
+    Returns:
+        Path: File path for the given index.
+    """
     pattern, results, _ = load_search_results()
     file = None
     for idx, path in results:

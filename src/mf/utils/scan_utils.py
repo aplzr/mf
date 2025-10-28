@@ -29,6 +29,14 @@ __all__ = [
 
 
 def get_fd_binary() -> Path:
+    """Resolve path to packaged fd binary.
+
+    Raises:
+        RuntimeError: Unsupported platform / architecture.
+
+    Returns:
+        Path: Path to fd executable bundled with the package.
+    """
     system = platform.system().lower()
     machine_raw = platform.machine().lower()
     # Normalize common architecture aliases
@@ -57,6 +65,19 @@ def scan_path_with_python(
     match_extensions: bool,
     include_mtime: bool = False,
 ) -> list[Path] | list[tuple[Path, float]]:
+    """Recursively scan a directory using Python.
+
+    Args:
+        search_path (Path): Root directory to scan.
+        pattern (str): Case-insensitive glob pattern.
+        media_extensions (set[str]): Extensions allowed when filtering.
+        match_extensions (bool): Whether to restrict by extensions.
+        include_mtime (bool): Include modification time in results.
+
+    Returns:
+        list[Path] | list[tuple[Path, float]]: Matching files, optionally paired with
+            mtime.
+    """
     results: list[Path] | list[tuple[Path, float]] = []
 
     def scan_dir(path: str):
@@ -97,6 +118,20 @@ def scan_path_with_fd(
     media_extensions: set[str],
     match_extensions: bool,
 ) -> list[Path]:
+    """Scan a directory using fd.
+
+    Args:
+        search_path (Path): Directory to scan.
+        pattern (str): Pattern passed to fd.
+        media_extensions (set[str]): Extensions used for -e filters.
+        match_extensions (bool): Whether to apply extension filtering.
+
+    Raises:
+        subprocess.CalledProcessError: If fd exits with non-zero status.
+
+    Returns:
+        list[Path]: Matching file paths.
+    """
     cmd = [
         str(get_fd_binary()),
         "--glob",
@@ -121,6 +156,19 @@ def scan_path_with_fd(
 def find_media_files(
     pattern: str, *, sort_by_mtime: bool = False, prefer_fd: bool = True
 ) -> list[tuple[int, Path]]:
+    """Find media files across all search paths.
+
+    Args:
+        pattern (str): Search pattern.
+        sort_by_mtime (bool): Sort by modification time (Python scan only).
+        prefer_fd (bool): Prefer fd unless mtime sorting is requested.
+
+    Raises:
+        RuntimeError: From fd resolution if platform unsupported.
+
+    Returns:
+        list[tuple[int, Path]]: Indexed list of results starting at 1.
+    """
     pattern = normalize_pattern(pattern)
     search_paths = get_validated_search_paths()
     match_extensions = read_config()["match_extensions"]
