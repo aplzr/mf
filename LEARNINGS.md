@@ -1,3 +1,4 @@
+# 2025-10-27
 ## Caching `stat` info and `os.scandir`, `os.DirEntry`, and `pathlib.Path`
 The list of files is currently built by traversing the search paths with `os.scandir`, then converting each resulting `DirEntry` object to `pathlib.Path` and calling `stat().st_mtime` to get the last modified time for sorting. This is much faster (around 5 s for all files on my two network search paths) than getting the file list with something other than `os.scandir` and then converting that to `pathlib.Path` followed by `stat().st_mtime` (around 26 s for the same file list).
 
@@ -23,7 +24,11 @@ be providing the speedup, not Python-level caching. Needs further investigation.
 Note: [`Path` has started to cache some information in its new `info` attribute](https://docs.python.org/3/library/pathlib.html#pathlib.Path.info) starting in Python 3.14, but no stat info so far.
 
 ### Performance validation on Windows
-Switching from `Path(DirEntry).stat().st_mtime` to `DirEntry.stat().st_mtime` (see issue [#19](https://github.com/aplzr/mf/issues/19)) (`mf new` runtime duration):
+Switching from `Path(DirEntry).stat().st_mtime` to `DirEntry.stat().st_mtime` (see issue [#19](https://github.com/aplzr/mf/issues/19))
+
+- Numbers are `mf new` runtime duration with two configured search paths
+- Both are on seperate mechanical drives on a Linux file server, mounted via SMB on the clients
+- Total file volume ~17 TiB 
 
 **Before**: 5199 ms average (warm cache)  
 **After**: 2378 ms average (warm cache)  
@@ -44,10 +49,33 @@ Adding to the results above, running the same comparison on my Linux desktop I o
 
 The much smaller improvement is in line with `DirEntry` caching stat info on Windows, but always needing an additional syscall on Linux (which is effecively what the previous implementation was doing).
 
-## Platform Performance Difference - Unresolved
+## Platform performance difference - unresolved
 There's also a stark difference in `mf new` runtime duration depending on the platform on which it is called:
 
 \[See table one entry up\]
 
 I initially thought this was `DirEntry` caching on Windows but not on Linux (see entry above), but at the time of writing the implementation uses `Path.stat()` which never caches. Cause currently unknown - possibly SMB client implementation differences, network stack optimizations, or the differnce between WIFI and wired network (although the AP is very close and no network contention to speak of).
 
+# 2025-10-29
+## Platform performance difference - continued
+I looked more into why running `mf new` takes so much longer on my Linux desktop compared to my Windows desktop. Initial situation was this:
+
+- Two configured search paths
+- Both are on seperate mechanical drives on a Linux file server, mounted via SMB on the clients
+- Total file volume ~17 TiB
+
+Initial average `mf new` scan duration on Linux was almost 15 s, compared to 5.2 s on Windows. Optimization of the file scanning code in `mf` reduced this to 13.1 and 5.2 s, respectively. Nice, but on Linux nowhere near where I'd like it to be.
+
+I ended up experimenting a little with a more recent version of SMB / CIFS than what was initially running on the Linux desktop, tweaked the caching parameters, then ended up switching from SMB to NFS shares on the file server and repeated the whole parameter tweaking procedure again.
+
+All numbers with a warm cache:
+
+| Optimization Step | Average Time (seconds) | Time Saved (seconds) | Improvement (%) | Cumulative Improvement (%) |
+|-------------------|------------------------|---------------------|-----------------|---------------------------|
+| First implementation | 14.55 | - | - | - |
+| Switch from Path.stat to DirEntry.stat | 13.08 | 1.47 | 10.1% | 10.1% |
+| More aggressive SMB caching | 10.97 | 2.11 | 16.2% | 24.6% |
+| Switch to NFS with standard caching | 3.74 | 7.22 | 65.9% | 74.3% |
+| More aggressive NFS caching | 1.82 | 1.92 | 51.4% | 87.5% |
+
+Up to this point I had always been quite happy with SMB in my shared Windows/Linux environment, as both sides understand it, but these numbers make it absolutely clear that NFS is the way to go for the Linux <-> Linux side of things.
