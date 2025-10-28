@@ -13,3 +13,6 @@ wheels/
 .vscode/
 .idea/
 *.iml
+
+# Misc
+.coverage
