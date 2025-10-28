@@ -39,6 +39,8 @@ packages = ["src/mf"]
 "src/mf/bin/fd-v10_3_0-aarch64-apple-darwin" = "mf/bin/fd-v10_3_0-aarch64-apple-darwin"
 "src/mf/bin/fd-v10_3_0-x86_64-apple-darwin" = "mf/bin/fd-v10_3_0-x86_64-apple-darwin"
 "src/mf/bin/fd-v10_3_0-x86_64-pc-windows-msvc.exe" = "mf/bin/fd-v10_3_0-x86_64-pc-windows-msvc.exe"
+"src/mf/bin/LICENSE-fd-APACHE" = "mf/bin/LICENSE-fd-APACHE"
+"src/mf/bin/LICENSE-fd-MIT" = "mf/bin/LICENSE-fd-MIT"
 
 [tool.pytest.ini_options]
 addopts = "-q --cov=src/mf --cov-report=term-missing --cov-report=xml --cov-report=html"
