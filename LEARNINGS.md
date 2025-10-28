@@ -64,7 +64,7 @@ I looked more into why running `mf new` takes so much longer on my Linux desktop
 - Both are on seperate mechanical drives on a Linux file server, mounted via SMB on the clients
 - Total file volume ~17 TiB
 
-Initial average `mf new` scan duration on Linux was almost 15 s, compared to 5.2 s on Windows. Optimization of the file scanning code in `mf` reduced this to 13.1 and 5.2 s, respectively. Nice, but on Linux nowhere near where I'd like it to be.
+Initial average `mf new` scan duration on Linux was almost 15 s, compared to 5.2 s on Windows. Optimization of the file scanning code in `mf` reduced this to 13.1 and 2.4 s, respectively. Nice, but on Linux nowhere near where I'd like it to be.
 
 I ended up experimenting a little with a more recent version of SMB / CIFS than what was initially running on the Linux desktop, tweaked the caching parameters, then ended up switching from SMB to NFS shares on the file server and repeated the whole parameter tweaking procedure again.
 
