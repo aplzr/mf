@@ -446,13 +446,14 @@ def add_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
     Returns:
         TOMLDocument: Updated configuration.
     """
-    if extension not in cfg["media_extensions"]:
-        extension = normalize_media_extension(extension)
-        cfg["media_extensions"].append(extension)
-        console.print(f"✔  Added media extension '{extension}'.", style="green")
+    normalized_ext = normalize_media_extension(extension)
+
+    if normalized_ext not in cfg["media_extensions"]:
+        cfg["media_extensions"].append(normalized_ext)
+        console.print(f"✔  Added media extension '{normalized_ext}'.", style="green")
     else:
         console.print(
-            f"⚠  Extension '{extension}' already stored in configuration, skipping.",
+            f"⚠  Extension '{normalized_ext}' already stored in configuration, skipping.",
             style="yellow",
         )
 
