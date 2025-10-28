@@ -10,6 +10,8 @@ from functools import partial
 from importlib.resources import files
 from pathlib import Path
 
+from mf.constants import FD_BINARIES, STATUS_SYMBOLS
+
 from .config_utils import (
     get_media_extensions,
     get_validated_search_paths,
@@ -28,18 +30,16 @@ __all__ = [
 
 def get_fd_binary() -> Path:
     system = platform.system().lower()
-    machine = platform.machine().lower()
-    if system == "linux":
-        binary_name = "fd-v10_3_0-x86_64-unknown-linux-gnu"
-    elif system == "darwin":
-        binary_name = (
-            "fd-v10_3_0-aarch64-apple-darwin"
-            if machine == "arm64"
-            else "fd-v10_3_0-x86_64-apple-darwin"
-        )
-    elif system == "windows":
-        binary_name = "fd-v10_3_0-x86_64-pc-windows-msvc.exe"
+    machine_raw = platform.machine().lower()
+    # Normalize common architecture aliases
+    if machine_raw in {"amd64", "x86-64", "x86_64"}:
+        machine = "x86_64"
+    elif machine_raw in {"arm64", "aarch64"}:
+        machine = "arm64"
     else:
+        machine = machine_raw
+    binary_name = FD_BINARIES.get((system, machine))
+    if not binary_name:
         raise RuntimeError(f"Unsupported platform: {system}-{machine}")
     bin_path = files("mf").joinpath("bin", binary_name)
     bin_path = Path(str(bin_path))
@@ -83,7 +83,7 @@ def scan_path_with_python(
                         scan_dir(entry.path)
         except PermissionError:
             console.print(
-                f"⚠  Missing access permissions for directory {path}, skipping.",
+                f"{STATUS_SYMBOLS['warn']}  Missing access permissions for directory {path}, skipping.",
                 style="yellow",
             )
 
