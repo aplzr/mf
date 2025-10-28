@@ -110,7 +110,7 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
         console.print(
             (
                 "❌ Cache is empty or doesn't exist. "
-                "Please run 'mf list <pattern>' or 'mf new' first."
+                "Please run 'mf find <pattern>' or 'mf new' first."
             ),
             style="red",
         )
