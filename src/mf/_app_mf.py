@@ -17,6 +17,7 @@ from .utils import (
     get_file_by_index,
     normalize_pattern,
     print_search_results,
+    read_config,
     save_search_results,
 )
 
@@ -102,9 +103,15 @@ def play(
         else:  # Unix-like (Linux, macOS)
             vlc_cmd = "vlc"
 
+        fullscreen_playback = read_config().get("fullscreen_playback", True)
+        vlc_args = [vlc_cmd, str(file_to_play)]
+
+        if fullscreen_playback:
+            vlc_args.extend(["--fullscreen", "--no-video-title-show"])
+
         # Launch VLC in background
         subprocess.Popen(
-            [vlc_cmd, str(file_to_play)],
+            vlc_args,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )

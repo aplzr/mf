@@ -171,11 +171,57 @@ def set_match_extensions(
         raise ValueError(f"Unknown action: {action}")
 
 
+def set_fullscreen_playback(
+    cfg: TOMLDocument,
+    match_extensions: list[str],
+    action: Literal["set"],
+) -> TOMLDocument:
+    """Set fullscreen_playback. If 'true', VLC will be started in fullscreen mode when
+    playing a file.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        match_extensions (list[str]): ['true'] or ['false'].
+        action (Literal["set"]): Action to perform.
+
+    Raises:
+        typer.Exit: More than one value provided.
+        ValueError: Wrong value provided.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
+    if len(match_extensions) > 1:
+        console.print(
+            (
+                f"{STATUS_SYMBOLS['error']} A single value is expected "
+                "when setting match_extensions, "
+                f"got: {match_extensions}."
+            ),
+            style="red",
+        )
+        raise typer.Exit(1)
+
+    bool_ = normalize_bool_str(match_extensions[0])
+
+    if action == "set":
+        cfg["fullscreen_playback"] = bool_
+        console.print(
+            f"{STATUS_SYMBOLS['ok']}  Set fullscreen_playback "
+            f"to '{str(bool_).lower()}'.",
+            style="green",
+        )
+        return cfg
+    else:
+        raise ValueError(f"Unknown action: {action}")
+
+
 # {name of setting in the configuration file: setter function}
 setters = {
     "search_paths": set_search_paths,
     "media_extensions": set_media_extensions,
     "match_extensions": set_match_extensions,
+    "fullscreen_playback": set_fullscreen_playback,
 }
 
 
