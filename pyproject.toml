@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "ap", email = "arnepelzerprivat@gmail.com" }
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "cinemagoer>=2023.5.1",
     "guessit>=3.8.0",
