@@ -4,7 +4,14 @@ __all__ = ["normalize_pattern"]
 
 
 def normalize_pattern(pattern: str) -> str:
-    """Add wildcards if pattern lacks glob meta characters."""
+    """Normalize a search pattern.
+
+    Args:
+        pattern (str): Raw pattern (may lack wildcards).
+
+    Returns:
+        str: Pattern wrapped with * on both sides if no glob characters found.
+    """
     if not any(ch in pattern for ch in ["*", "?", "[", "]"]):
         return f"*{pattern}*"
     return pattern

@@ -34,7 +34,12 @@ __all__ = [
 
 
 def get_config_file() -> Path:
-    """Return path to config file (platform aware, fallback to ~/.config/mf)."""
+    """Return path to config file.
+
+    Returns:
+        Path: Location of the configuration file (platform aware; falls back to
+            ~/.config/mf on POSIX).
+    """
     config_dir = (
         Path(
             os.environ.get(
@@ -49,7 +54,11 @@ def get_config_file() -> Path:
 
 
 def write_default_config() -> TOMLDocument:
-    """Write and return default configuration file with initial settings."""
+    """Create and persist a default configuration file.
+
+    Returns:
+        TOMLDocument: The default configuration document after writing.
+    """
     # fmt: off
     default_cfg = tomlkit.document()
     default_cfg.add(tomlkit.comment("Media file search paths"))
@@ -73,7 +82,13 @@ def write_default_config() -> TOMLDocument:
 
 
 def read_config() -> TOMLDocument:
-    """Load configuration or create default if missing."""
+    """Load configuration contents.
+
+    Falls back to creating a default configuration when the file is missing.
+
+    Returns:
+        TOMLDocument: Parsed configuration.
+    """
     try:
         with open(get_config_file()) as f:
             cfg = tomlkit.load(f)
@@ -87,16 +102,36 @@ def read_config() -> TOMLDocument:
 
 
 def write_config(cfg: TOMLDocument):
-    """Persist configuration back to disk."""
+    """Persist configuration to disk.
+
+    Args:
+        cfg (TOMLDocument): Configuration object to write.
+    """
     with open(get_config_file(), "w") as f:
         tomlkit.dump(cfg, f)
 
 
 def normalize_path(path_str: str) -> str:
+    """Normalize a path to an absolute POSIX-style string.
+
+    Args:
+        path_str (str): Input path (relative or absolute).
+
+    Returns:
+        str: Normalized absolute path with forward slashes.
+    """
     return Path(path_str).resolve().as_posix()
 
 
 def get_validated_search_paths() -> list[Path]:
+    """Return existing configured search paths.
+
+    Raises:
+        typer.Exit: If no valid search paths are configured.
+
+    Returns:
+        list[Path]: List of validated existing search paths.
+    """
     search_paths = read_config()["search_paths"]
     validated: list[Path] = []
     for search_path in search_paths:
@@ -118,6 +153,15 @@ def get_validated_search_paths() -> list[Path]:
 
 
 def add_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
+    """Add a search path to the configuration.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        path_str (str): Path to add.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
     path_str = normalize_path(path_str)
     if path_str not in cfg["search_paths"]:
         if not Path(path_str).exists():
@@ -139,6 +183,18 @@ def add_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
 
 
 def remove_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
+    """Remove a search path.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        path_str (str): Path to remove.
+
+    Raises:
+        typer.Exit: If the path is not configured.
+
+    Returns:
+        TOMLDocument: Updated configuration with path removed.
+    """
     path_str = normalize_path(path_str)
     try:
         cfg["search_paths"].remove(path_str)
@@ -156,6 +212,18 @@ def remove_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
 
 
 def normalize_media_extension(extension: str) -> str:
+    """Normalize a media file extension.
+
+    Args:
+        extension (str): Raw extension (with or without leading dot).
+
+    Raises:
+        ValueError: If the initial extension value is empty.
+        typer.Exit: If normalization results in empty value.
+
+    Returns:
+        str: Normalized extension including leading dot.
+    """
     if not extension:
         raise ValueError("Extension can't be empty.")
     extension = extension.lower().strip().lstrip(".")
@@ -169,6 +237,15 @@ def normalize_media_extension(extension: str) -> str:
 
 
 def add_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
+    """Add a media extension.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        extension (str): Extension to add.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
     normalized = normalize_media_extension(extension)
     if normalized not in cfg["media_extensions"]:
         cfg["media_extensions"].append(normalized)
@@ -185,6 +262,18 @@ def add_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
 
 
 def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
+    """Remove a media extension.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        extension (str): Extension to remove.
+
+    Raises:
+        typer.Exit: If the extension is not configured.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
     extension = normalize_media_extension(extension)
     if extension in cfg["media_extensions"]:
         cfg["media_extensions"].remove(extension)
@@ -201,10 +290,29 @@ def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
 
 
 def get_media_extensions() -> set[str]:
+    """Retrieve configured media extensions.
+
+    Args:
+        None
+
+    Returns:
+        set[str]: Set of normalized extensions.
+    """
     return {normalize_media_extension(e) for e in read_config()["media_extensions"]}
 
 
 def normalize_bool_str(bool_str: str) -> bool:
+    """Normalize a boolean-like string literal.
+
+    Args:
+        bool_str (str): User provided value (e.g. 'true', 'yes', '0').
+
+    Raises:
+        typer.Exit: If the value is not recognized.
+
+    Returns:
+        bool: Parsed boolean value.
+    """
     bool_str = bool_str.strip().lower()
     if bool_str in BOOLEAN_TRUE_VALUES:
         return True

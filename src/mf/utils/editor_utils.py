@@ -13,7 +13,16 @@ __all__ = ["start_editor"]
 
 
 def start_editor(file: Path):
-    """Open file in user-preferred editor or fall back to common editors."""
+    """Open a file in an editor.
+
+    Resolution order:
+        1. VISUAL or EDITOR environment variables.
+        2. Windows: Notepad++ if present else notepad.
+        3. POSIX: First available editor from FALLBACK_EDITORS_POSIX.
+
+    Args:
+        file (Path): File to open.
+    """
     editor = os.environ.get("VISUAL") or os.environ.get("EDITOR")
     if editor:
         subprocess.run([editor, str(file)])
