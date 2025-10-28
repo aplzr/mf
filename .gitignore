@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# IDE files
+.vscode/
+.idea/
+*.iml
