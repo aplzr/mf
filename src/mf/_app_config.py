@@ -5,6 +5,7 @@ import typer
 from rich.syntax import Syntax
 from tomlkit import TOMLDocument
 
+from .constants import STATUS_SYMBOLS
 from .utils import (
     add_media_extension,
     add_search_path,
@@ -73,7 +74,7 @@ def set_search_paths(
 
     elif action == "clear":
         cfg["search_paths"].clear()
-        console.print("✔  Cleared search paths.", style="green")
+        console.print(f"{STATUS_SYMBOLS['ok']}  Cleared search paths.", style="green")
 
     else:
         raise ValueError(f"Unknown action: {action}")
@@ -115,7 +116,9 @@ def set_media_extensions(
 
     elif action == "clear":
         cfg["media_extensions"].clear()
-        console.print("✔  Cleared media extensions.", style="green")
+        console.print(
+            f"{STATUS_SYMBOLS['ok']}  Cleared media extensions.", style="green"
+        )
 
     else:
         raise ValueError(f"Unknown action: {action}.")
@@ -147,7 +150,7 @@ def set_match_extensions(
     if len(match_extensions) > 1:
         console.print(
             (
-                "❌ A single value is expected when setting match_extensions, "
+                f"{STATUS_SYMBOLS['error']} A single value is expected when setting match_extensions, "
                 f"got: {match_extensions}."
             ),
             style="red",
@@ -159,7 +162,8 @@ def set_match_extensions(
     if action == "set":
         cfg["match_extensions"] = bool_
         console.print(
-            f"✔  Set match_extensions to '{str(bool_).lower()}'.", style="green"
+            f"{STATUS_SYMBOLS['ok']}  Set match_extensions to '{str(bool_).lower()}'.",
+            style="green",
         )
         return cfg
     else:
@@ -223,7 +227,10 @@ def add(key: str, value: list[str]):
     if supports_action(setters[key], "add"):
         write_config(setters[key](read_config(), value, action="add"))
     else:
-        console.print(f"❌ 'add' action not supported for {key} setting.", style="red")
+        console.print(
+            f"{STATUS_SYMBOLS['error']} 'add' action not supported for {key} setting.",
+            style="red",
+        )
         raise typer.Exit(1)
 
 
@@ -234,7 +241,8 @@ def remove(key: str, value: list[str]):
         write_config(setters[key](read_config(), value, action="remove"))
     else:
         console.print(
-            f"❌ 'remove' action not supported for {key} setting.", style="red"
+            f"{STATUS_SYMBOLS['error']} 'remove' action not supported for {key} setting.",
+            style="red",
         )
         raise typer.Exit(1)
 
@@ -246,6 +254,7 @@ def clear(key: str):
         write_config(setters[key](read_config(), None, action="clear"))
     else:
         console.print(
-            f"❌ 'clear' action not supported for {key} setting.", style="red"
+            f"{STATUS_SYMBOLS['error']} 'clear' action not supported for {key} setting.",
+            style="red",
         )
         raise typer.Exit(1)

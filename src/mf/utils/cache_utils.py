@@ -6,6 +6,8 @@ from pathlib import Path
 
 import typer
 
+from mf.constants import STATUS_SYMBOLS
+
 from .console import console
 
 # Public API intentionally minimal; higher-level functions rely on these primitives.
@@ -69,7 +71,7 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
     except (json.JSONDecodeError, KeyError, FileNotFoundError):
         console.print(
             (
-                "❌ Cache is empty or doesn't exist. "
+                f"{STATUS_SYMBOLS['error']} Cache is empty or doesn't exist. "
                 "Please run 'mf find <pattern>' or 'mf new' first."
             ),
             style="red",

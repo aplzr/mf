@@ -10,6 +10,7 @@ from imdb import IMDb
 from ._app_cache import app_cache
 from ._app_config import app_config
 from ._version import __version__
+from .constants import STATUS_SYMBOLS
 from .utils import (
     console,
     find_media_files,
@@ -132,7 +133,8 @@ def imdb(
     parsed = guessit(filestem)
     if "title" not in parsed:
         console.print(
-            f"⚠  Could not parse a title from filename '{filestem}'.", style="yellow"
+            f"{STATUS_SYMBOLS['warn']}  Could not parse a title from filename '{filestem}'.",
+            style="yellow",
         )
         raise typer.Exit(1)
     title = parsed["title"]
@@ -140,12 +142,13 @@ def imdb(
     try:
         results = IMDb().search_movie(title)
     except Exception as e:  # Network or API error
-        console.print(f"❌ IMDb lookup failed: {e}", style="red")
+        console.print(f"{STATUS_SYMBOLS['error']} IMDb lookup failed: {e}", style="red")
         raise typer.Exit(1)
 
     if not results:
         console.print(
-            f"⚠  No IMDb results found for parsed title '{title}'.", style="yellow"
+            f"{STATUS_SYMBOLS['warn']}  No IMDb results found for parsed title '{title}'.",
+            style="yellow",
         )
         raise typer.Exit(1)
 

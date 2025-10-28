@@ -5,6 +5,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from mf.constants import FALLBACK_EDITORS_POSIX
+
 from .console import console
 
 __all__ = ["start_editor"]
@@ -22,7 +24,7 @@ def start_editor(file: Path):
         else:
             subprocess.run(["notepad", str(file)])
         return
-    for ed in ["nano", "vim", "vi"]:
+    for ed in FALLBACK_EDITORS_POSIX:
         if shutil.which(ed):
             subprocess.run([ed, str(file)])
             break
