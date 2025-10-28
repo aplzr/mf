@@ -72,7 +72,11 @@ def write_default_config() -> TOMLDocument:
     default_cfg.add(tomlkit.comment("Set to false if your search paths only contain media files and you don't want to manage media"))
     default_cfg.add(tomlkit.comment("extensions."))
     default_cfg.add("match_extensions", True)
+    default_cfg.add(tomlkit.nl())
+    default_cfg.add(tomlkit.comment("If true, files will be played in fullscreen mode"))
+    default_cfg.add("fullscreen_playback", True)
     # fmt: on
+
     write_config(default_cfg)
     console.print(
         f"{STATUS_SYMBOLS['ok']}  Written default configuration "
