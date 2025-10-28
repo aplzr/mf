@@ -150,7 +150,8 @@ def set_match_extensions(
     if len(match_extensions) > 1:
         console.print(
             (
-                f"{STATUS_SYMBOLS['error']} A single value is expected when setting match_extensions, "
+                f"{STATUS_SYMBOLS['error']} A single value is expected "
+                "when setting match_extensions, "
                 f"got: {match_extensions}."
             ),
             style="red",
@@ -241,7 +242,8 @@ def remove(key: str, value: list[str]):
         write_config(setters[key](read_config(), value, action="remove"))
     else:
         console.print(
-            f"{STATUS_SYMBOLS['error']} 'remove' action not supported for {key} setting.",
+            f"{STATUS_SYMBOLS['error']} 'remove' action "
+            f"not supported for {key} setting.",
             style="red",
         )
         raise typer.Exit(1)
@@ -254,7 +256,8 @@ def clear(key: str):
         write_config(setters[key](read_config(), None, action="clear"))
     else:
         console.print(
-            f"{STATUS_SYMBOLS['error']} 'clear' action not supported for {key} setting.",
+            f"{STATUS_SYMBOLS['error']} 'clear' action "
+            f"not supported for {key} setting.",
             style="red",
         )
         raise typer.Exit(1)

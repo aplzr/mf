@@ -75,7 +75,8 @@ def write_default_config() -> TOMLDocument:
     # fmt: on
     write_config(default_cfg)
     console.print(
-        f"{STATUS_SYMBOLS['ok']}  Written default configuration to '{get_config_file()}'.",
+        f"{STATUS_SYMBOLS['ok']}  Written default configuration "
+        f"to '{get_config_file()}'.",
         style="green",
     )
     return default_cfg
