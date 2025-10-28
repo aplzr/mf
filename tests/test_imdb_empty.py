@@ -1,8 +1,11 @@
 import os
-import pytest
+
 import click
+import pytest
+
 from mf._app_mf import imdb
-from mf.utils import read_config, add_search_path, write_config, save_search_results
+from mf.utils import add_search_path, read_config, save_search_results, write_config
+
 
 class DummyIMDb:
     def search_movie(self, title):
@@ -10,7 +13,9 @@ class DummyIMDb:
 
 
 def test_imdb_no_results(tmp_path, monkeypatch):
-    monkeypatch.setenv("LOCALAPPDATA" if os.name == "nt" else "XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setenv(
+        "LOCALAPPDATA" if os.name == "nt" else "XDG_CONFIG_HOME", str(tmp_path)
+    )
     cfg = read_config()
     media_dir = tmp_path / "media"
     media_dir.mkdir()
@@ -23,6 +28,7 @@ def test_imdb_no_results(tmp_path, monkeypatch):
 
     # Monkeypatch IMDb class used inside imdb command
     import mf._app_mf as app_mf_module
+
     app_mf_module.IMDb = lambda: DummyIMDb()
 
     # Monkeypatch guessit to ensure a parsed title is present so we test IMDb empty branch

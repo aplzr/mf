@@ -1,9 +1,12 @@
 import os
 import subprocess
 from pathlib import Path
+
 import pytest
+
 from mf._app_mf import play
-from mf.utils import read_config, add_search_path, write_config, save_search_results
+from mf.utils import add_search_path, read_config, save_search_results, write_config
+
 
 class DummyPopen:
     def __init__(self, *args, **kwargs):
@@ -12,7 +15,9 @@ class DummyPopen:
 
 
 def test_play_invokes_vlc(tmp_path, monkeypatch):
-    monkeypatch.setenv("LOCALAPPDATA" if os.name == "nt" else "XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setenv(
+        "LOCALAPPDATA" if os.name == "nt" else "XDG_CONFIG_HOME", str(tmp_path)
+    )
     cfg = read_config()
     media_dir = tmp_path / "media"
     media_dir.mkdir()
@@ -27,4 +32,3 @@ def test_play_invokes_vlc(tmp_path, monkeypatch):
     # Force windows path expectation independent of platform by monkeypatching os.name if needed
     # Not strictly necessary; simulate generic behavior
     play(index=1)
-
