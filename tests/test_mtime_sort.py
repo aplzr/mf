@@ -1,10 +1,14 @@
-import os, time
+import os
+import time
 from pathlib import Path
-from mf.utils import read_config, add_search_path, write_config, find_media_files
+
+from mf.utils import add_search_path, find_media_files, read_config, write_config
 
 
 def test_mtime_sort(tmp_path, monkeypatch):
-    monkeypatch.setenv("LOCALAPPDATA" if os.name == "nt" else "XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setenv(
+        "LOCALAPPDATA" if os.name == "nt" else "XDG_CONFIG_HOME", str(tmp_path)
+    )
     cfg = read_config()
     media_dir = tmp_path / "media"
     media_dir.mkdir()
