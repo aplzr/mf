@@ -129,8 +129,27 @@ def imdb(
 ):
     """Open IMDB entry of a search result."""
     filestem = get_file_by_index(index).stem
-    title = guessit(filestem)["title"]
-    imdb_entry = IMDb().search_movie(title)[0]
+    parsed = guessit(filestem)
+    if "title" not in parsed:
+        console.print(
+            f"⚠  Could not parse a title from filename '{filestem}'.", style="yellow"
+        )
+        raise typer.Exit(1)
+    title = parsed["title"]
+    # Gracefully handle no IMDb results
+    try:
+        results = IMDb().search_movie(title)
+    except Exception as e:  # Network or API error
+        console.print(f"❌ IMDb lookup failed: {e}", style="red")
+        raise typer.Exit(1)
+
+    if not results:
+        console.print(
+            f"⚠  No IMDb results found for parsed title '{title}'.", style="yellow"
+        )
+        raise typer.Exit(1)
+
+    imdb_entry = results[0]
     imdb_url = f"https://www.imdb.com/title/tt{imdb_entry.movieID}/"
     console.print(f"IMDB entry for [green]{imdb_entry['title']}[/green]: {imdb_url}")
     typer.launch(imdb_url)
