@@ -699,6 +699,7 @@ def find_media_files(
     # Parallel scanning over search paths
     with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
         if use_fd:
+            # Try fd for all paths; on any failure fall back to Python scanner for all paths
             try:
                 scanner = partial(
                     scan_path_with_fd,
@@ -706,14 +707,13 @@ def find_media_files(
                     media_extensions=media_extensions,
                     match_extensions=match_extensions,
                 )
-                path_results = executor.map(scanner, search_paths)
+                path_results = list(executor.map(scanner, search_paths))
             except (
                 FileNotFoundError,
                 subprocess.CalledProcessError,
                 OSError,
                 PermissionError,
             ):
-                # Fallback to python scanner
                 scanner = partial(
                     scan_path_with_python,
                     pattern=pattern,
@@ -721,9 +721,8 @@ def find_media_files(
                     match_extensions=match_extensions,
                     include_mtime=False,
                 )
-                path_results = executor.map(scanner, search_paths)
+                path_results = list(executor.map(scanner, search_paths))
         else:
-            # Use python scanner for mtime
             scanner = partial(
                 scan_path_with_python,
                 pattern=pattern,
@@ -731,7 +730,7 @@ def find_media_files(
                 match_extensions=match_extensions,
                 include_mtime=sort_by_mtime,
             )
-            path_results = executor.map(scanner, search_paths)
+            path_results = list(executor.map(scanner, search_paths))
 
     # Flatten results
     all_results = []
