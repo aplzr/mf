@@ -4,7 +4,7 @@ A cross-platform command-line tool for finding and managing video files in large
 
 ## Features
 
-- **🔍 Fast file search** - Uses optimized `fd` binary with automatic fallback to Python scanning
+- **🔍 Fast file search** - Uses vendored `fd` binary with automatic fallback to Python scanning
 - **🎯 Flexible pattern matching** - Glob-based search patterns with automatic wildcard wrapping
 - **📁 Multi-path scanning** - Search across multiple configured directories simultaneously
 - **🕒 Latest additions** - Find newest files by modification time
