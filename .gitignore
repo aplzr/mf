@@ -16,3 +16,5 @@ wheels/
 
 # Misc
 .coverage
+coverage.xml
+htmlcov/
