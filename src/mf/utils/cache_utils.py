@@ -6,7 +6,6 @@ from pathlib import Path
 
 import typer
 
-from .config_utils import get_config_file  # for message paths if needed
 from .console import console
 
 # Public API intentionally minimal; higher-level functions rely on these primitives.

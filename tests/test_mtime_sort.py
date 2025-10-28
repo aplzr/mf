@@ -1,6 +1,5 @@
 import os
 import time
-from pathlib import Path
 
 from mf.utils import add_search_path, find_media_files, read_config, write_config
 
