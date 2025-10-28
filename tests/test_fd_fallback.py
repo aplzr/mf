@@ -17,7 +17,7 @@ def test_fd_fallback_missing_binary(tmp_path, monkeypatch):
     write_config(cfg)
 
     # Monkeypatch get_fd_binary to raise FileNotFoundError
-    import mf.utils._utils as u
+    import mf.utils.scan_utils as u
 
     def raise_fn():
         raise FileNotFoundError
@@ -40,7 +40,7 @@ def test_fd_fallback_subprocess_error(tmp_path, monkeypatch):
     write_config(cfg)
 
     # Force get_fd_binary to return something but make subprocess run raise
-    import mf.utils._utils as u
+    import mf.utils.scan_utils as u
 
     monkeypatch.setattr(u, "get_fd_binary", lambda: media_dir / "fd")
 
