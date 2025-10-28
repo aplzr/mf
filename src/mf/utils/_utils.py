@@ -607,7 +607,7 @@ def scan_path_with_python(
                             if fnmatch(entry.name.lower(), pattern.lower()):
                                 if include_mtime:
                                     mtime = entry.stat().st_mtime
-                                    results.append((Path(entry), mtime))
+                                    results.append((Path(entry.path), mtime))
                                 else:
                                     results.append(Path(entry.path))
                     elif entry.is_dir(follow_symlinks=False):
@@ -684,6 +684,9 @@ def find_media_files(
     Returns:
         list[tuple[int, Path]]: List of indexed search results.
     """
+
+    # Normalize pattern for programmatic calls (CLI already does this but utilities may not)
+    pattern = normalize_pattern(pattern)
 
     # Get and validate config
     search_paths = get_validated_search_paths()
