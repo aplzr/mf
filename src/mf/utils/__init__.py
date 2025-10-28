@@ -28,7 +28,6 @@ __all__ = [
     "add_search_path",
     "console",
     "find_media_files",
-    "find_newest_media_files",
     "get_cache_file",
     "get_config_file",
     "get_fd_binary",
@@ -45,7 +44,6 @@ __all__ = [
     "remove_search_path",
     "save_search_results",
     "scan_path_with_python",
-    "find_media_files",
     "start_editor",
     "write_config",
 ]
