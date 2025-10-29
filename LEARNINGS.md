@@ -73,14 +73,14 @@ All numbers with a warm cache:
 | Optimization Step | Average Time (seconds) | Time Saved (seconds) | Improvement (%) | Cumulative Improvement (%) |
 |-------------------|------------------------|---------------------|-----------------|---------------------------|
 | First implementation | 14.55 | - | - | - |
-| Switch from Path.stat to DirEntry.stat | 13.08 | 1.47 | 10.1% | 10.1% |
-| More aggressive SMB caching (vers=3.1.1, cache=loose, actimeo=86400) | 10.97 | 2.11 | 16.2% | 24.6% |
+| Switch from `Path.stat` to `DirEntry.stat` | 13.08 | 1.47 | 10.1% | 10.1% |
+| More aggressive SMB caching (`vers=3.1.1`, `cache=loose`, `actimeo=86400`) | 10.97 | 2.11 | 16.2% | 24.6% |
 | Switch to NFS with standard caching | 3.74 | 7.22 | 65.9% | 74.3% |
-| Aggressive NFS caching (acdirmin=60, acregmin=3600) | 1.82 | 1.92 | 51.4% | 87.5% |
+| Aggressive NFS caching (`acdirmin=60`, `acregmin=3600`) | 1.82 | 1.92 | 51.4% | 87.5% |
 
 **Final result: 8x faster than original (14.55s → 1.82s), now 24% faster than Windows (2.4s).**
 
-Up to this point I had always been quite happy with SMB in my shared Windows/Linux environment, as both sides understand it, but these numbers make it absolutely clear that NFS is the way to go for Linux ↔ Linux file serving. The difference is particularly dramatic for metadata-heavy operations like directory scanning.
+Up to this point I had always been quite happy with SMB in my shared Windows/Linux environment, as both sides understand it, but these numbers make it absolutely clear that NFS is the way to go for Linux <-> Linux file serving. The difference is particularly dramatic for metadata-heavy operations like directory scanning.
 
 **Key takeaways:**
 - SMB on Linux is significantly slower than on Windows for metadata operations
