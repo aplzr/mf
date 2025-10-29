@@ -89,16 +89,16 @@ def apply_action(
                     f"a single value for set, got: {raw_values}."
                 )
 
-        new_value = spec.normalize(raw_values[0])
-        spec.validate_all(new_value)
-        cfg[key] = spec.before_write(new_value)
+            new_value = spec.normalize(raw_values[0])
+            spec.validate_all(new_value)
+            cfg[key] = spec.before_write(new_value)
 
-        print_ok(
-            f"{key}: set to {str(new_value).lower() if new_value in [True, False] else new_value}."
-        )
+            if spec.value_type is bool:
+                new_value = str(new_value).lower()  # Print as TOML
 
-        return cfg
+            print_ok(f"Set {key} to '{new_value}'.")
 
+            return cfg
     # List setting
     if action == "clear":
         cfg[key].clear()
