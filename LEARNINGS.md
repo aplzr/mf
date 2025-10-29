@@ -64,7 +64,7 @@ There's also a stark difference in `mf new` scan duration depending on the platf
 
 I initially thought this was `DirEntry` caching on Windows but not on Linux (see entry above), but at the time of writing the implementation uses `Path.stat()` which never caches. Cause currently unknown - possibly SMB client implementation differences, network stack optimizations, or the differnce between WIFI and wired network (although the AP is very close and no network contention to speak of).
 
-# 2025-10-29
+# 2025-10-28
 ## Platform performance difference - continued
 I looked more into why running `mf new` takes so much longer on my Linux desktop compared to my Windows desktop. Initial situation was this:
 
@@ -95,3 +95,23 @@ Up to this point I had always been quite happy with SMB in my shared Windows/Lin
 - NFS provides much better performance for Linux clients (65.9% improvement over optimized SMB)
 - Aggressive attribute caching is safe and effective for read-only static content
 - Using `acdirmin=60` allows new files to appear within 60 seconds while keeping fast scans
+
+# 2025-10-29
+## Unit tests
+Contrary to what I've written about using LLMs more as a personal tutor and not to have them do all the coding for me, today I've had Copilot set up a full unit test suite without me doing basically anything. I literally did not type a single character in any of those test definitions. I just told Copilot to write all tests that it can write without touching my code, let it install `pytest` and `pytest-cov`, let it add them to `pyproject.toml` as development dependencies with appropriate options and then let it have at it. Copilot wrote tests, checked coverage results to find out what was still missing, then added more tests, and so on. Sometimes it asked me if I would allow it to make small changes to `mf`'s code so it could test something more easily, and after each iteration it explained in detail which tests it had added, what was still missing, and asked whether to continue with more tests or do something else. After going back and forth like this for around 30 minutes, I had a suite of 65 tests covering 85% of my codebase. Pretty neat.
+
+As I've said before, I generally try to avoid having LLMs do all the work, but writing tests feels like it might be an exception to that rule. I don't know what the opinion about LLM-generated tests is in professional circles, but my assumption is that driving up coverage with LLM-generated tests is not the worst thing to do in the world.
+
+Let's go full circle and ask Claude about it:
+
+> There's pragmatic acceptance but not enthusiasm.
+> Most developers see LLM-generated tests as useful for boilerplate and scaffolding, but they require review because they often:
+>
+> - Test implementation details instead of behavior
+> - Miss important edge cases while catching trivial ones
+> - Create false confidence through high coverage numbers
+>
+> The consensus: helpful for getting started quickly, but don't commit them without reading and refining. They're seen as productivity boosters for grunt work, not replacements for thoughtful testing.
+
+That sounds like fair criticism, and I will admit that I actually _did_ feel confident because of the high coverage my LLM-tests achieved and that I _didn't_ properly review them before comitting. I feel like it's not much of an issue for my personal use project, but I understand that the situation changes when the stakes are higher.
+
