@@ -99,10 +99,11 @@ def apply_action(
             print_ok(f"Set {key} to '{new_value}'.")
 
             return cfg
+
     # List setting
     if action == "clear":
         cfg[key].clear()
-        print_ok(f"Cleared '{key}'.")
+        print_ok(f"Cleared {key}.")
         return cfg
 
     normalized_values = [spec.normalize(value) for value in raw_values]
@@ -110,23 +111,23 @@ def apply_action(
     if action == "set":
         cfg[key].clear()
         cfg[key].extend(normalized_values)
-        print_ok(f"{key}: set {normalized_values}.")
+        print_ok(f"Set {key} to {normalized_values}.")
 
     elif action == "add":
         for value in normalized_values:
             if value not in cfg[key]:
                 cfg[key].append(value)
-                print_ok(f"{key}: added '{value}'.")
+                print_ok(f"Added '{value}' to {key}.")
             else:
-                print_warn(f"{key}: already contains '{value}', skipping.")
+                print_warn(f"{key} already contains '{value}', skipping.")
 
     elif action == "remove":
         for value in normalized_values:
             if value in cfg[key]:
                 cfg[key].remove(value)
-                print_ok(f"{key}: removed '{value}'.")
+                print_ok(f"Removed '{value}' from {key}.")
             else:
-                print_warn(f"{key}: '{value}' not found, skipping.")
+                print_warn(f"'{value}' not found in {key}, skipping.")
 
     spec.validate_all(cfg[key])
 
