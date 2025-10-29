@@ -29,10 +29,12 @@ from .scan_utils import (
     scan_path_with_fd,
     scan_path_with_python,
 )
+from .settings_registry import apply_action
 
 __all__ = [
     "add_media_extension",
     "add_search_path",
+    "apply_action",
     "console",
     "find_media_files",
     "get_cache_file",
