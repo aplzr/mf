@@ -38,5 +38,5 @@ def print_error(msg: str):
     Args:
         msg (str): Error message.
     """
-    console.log(f"{STATUS_SYMBOLS['error']} {msg}.", style="red")
+    console.print(f"{STATUS_SYMBOLS['error']} {msg}.", style="red")
     raise typer.Exit(1)
