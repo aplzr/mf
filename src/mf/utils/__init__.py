@@ -20,7 +20,7 @@ from .config_utils import (
     write_config,
     write_default_config,
 )
-from .console import console
+from .console import console, print_error, print_ok, print_warn
 from .editor_utils import start_editor
 from .patterns import normalize_pattern
 from .scan_utils import (
@@ -45,7 +45,10 @@ __all__ = [
     "normalize_media_extension",
     "normalize_path",
     "normalize_pattern",
+    "print_error",
+    "print_ok",
     "print_search_results",
+    "print_warn",
     "read_config",
     "remove_media_extension",
     "remove_search_path",
