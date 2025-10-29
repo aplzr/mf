@@ -26,7 +26,7 @@ Note: [`Path` has started to cache some information in its new `info` attribute]
 ### Performance validation on Windows
 Switching from `Path(DirEntry).stat().st_mtime` to `DirEntry.stat().st_mtime` (see issue [#19](https://github.com/aplzr/mf/issues/19))
 
-- Numbers are `mf new` runtime duration with two configured search paths
+- Numbers are `mf new` scan duration with two configured search paths
 - Both are on seperate mechanical drives on a Linux file server, mounted via SMB on the clients
 - Total file volume ~17 TiB 
 
@@ -38,7 +38,7 @@ This confirms that Windows `DirEntry` caching provides substantial benefits
 even with warm filesystem caches.
 
 ### Performance validation on Linux
-Adding to the results above, running the same comparison on my Linux desktop I only see a slight improvement, with total runtime duration being 2.8 to 5.5 times that of the Windows desktop:
+Adding to the results above, running the same comparison on my Linux desktop I only see a slight improvement, with scan duration being 2.8 to 5.5 times that of the Windows desktop:
 
 | Platform | Method | Time | Improvement |
 |----------|---------|------|-------------|
@@ -50,7 +50,7 @@ Adding to the results above, running the same comparison on my Linux desktop I o
 The much smaller improvement is in line with `DirEntry` caching stat info on Windows, but always needing an additional syscall on Linux (which is effecively what the previous implementation was doing).
 
 ## Platform performance difference - unresolved
-There's also a stark difference in `mf new` runtime duration depending on the platform on which it is called:
+There's also a stark difference in `mf new` scan duration depending on the platform on which it is called:
 
 \[See table one entry up\]
 
