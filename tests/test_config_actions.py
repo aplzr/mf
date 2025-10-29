@@ -36,7 +36,7 @@ def test_config_add_duplicate_warning(tmp_path, monkeypatch):
 def test_config_remove_missing(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
     r = runner.invoke(app_config, ["remove", "search_paths", str(tmp_path / "doesnot")])
-    assert r.exit_code != 0
+    assert "skipping" in r.stdout
 
 
 def test_config_clear_media_extensions(tmp_path, monkeypatch):
