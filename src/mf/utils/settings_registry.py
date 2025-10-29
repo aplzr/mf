@@ -1,5 +1,5 @@
-from dataclasses import dataclass  # , field
-from typing import Any, Callable, Literal  # , Sequence
+from dataclasses import dataclass
+from typing import Any, Callable, Literal
 
 from tomlkit import TOMLDocument
 
