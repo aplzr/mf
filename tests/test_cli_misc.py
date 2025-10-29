@@ -80,7 +80,7 @@ def test_duplicate_media_extension_add(monkeypatch):
     result = runner.invoke(app_config, ["add", "media_extensions", ".mp4"])
     assert result.exit_code == 0
     # Output should indicate skipping
-    assert "already stored" in result.stdout
+    assert "already contains" in result.stdout
 
 
 def test_get_fd_binary_unsupported(monkeypatch):
