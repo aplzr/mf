@@ -22,7 +22,7 @@ def file():
 
 @app_config.command()
 def edit():
-    "Edit the config file."
+    "Edit the configuration file."
     start_editor(get_config_file())
 
 
@@ -41,7 +41,7 @@ def list_config():
 
 @app_config.command()
 def get(key: str):
-    """Get an mf setting."""
+    """Get a setting."""
     setting = read_config().get(key)
 
     if setting in [True, False]:
@@ -53,6 +53,7 @@ def get(key: str):
 
 @app_config.command()
 def set(key: str, values: list[str]):
+    """Set a setting."""
     cfg = read_config()
     cfg = apply_action(cfg, key, "set", values)
     write_config(cfg)
@@ -60,6 +61,7 @@ def set(key: str, values: list[str]):
 
 @app_config.command()
 def add(key: str, values: list[str]):
+    """Add value(s) to a list setting."""
     cfg = read_config()
     cfg = apply_action(cfg, key, "add", values)
     write_config(cfg)
@@ -67,6 +69,7 @@ def add(key: str, values: list[str]):
 
 @app_config.command()
 def remove(key: str, values: list[str]):
+    """Remove value(s) from a list setting."""
     cfg = read_config()
     cfg = apply_action(cfg, key, "remove", values)
     write_config(cfg)
@@ -74,6 +77,7 @@ def remove(key: str, values: list[str]):
 
 @app_config.command()
 def clear(key: str):
+    """Clear a setting."""
     cfg = read_config()
     cfg = apply_action(cfg, key, "clear", None)
     write_config(cfg)
