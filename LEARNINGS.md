@@ -96,7 +96,6 @@ Up to this point I had always been quite happy with SMB in my shared Windows/Lin
 - Aggressive attribute caching is safe and effective for read-only static content
 - Using `acdirmin=60` allows new files to appear within 60 seconds while keeping fast scans
 
-# 2025-10-29
 ## Unit tests
 Contrary to what I've written about using LLMs more as a personal tutor and not to have them do all the coding for me, today I've had Copilot set up a full unit test suite without me doing basically anything. I literally did not type a single character in any of those test definitions. I just told Copilot to write all tests that it can write without touching my code, let it install `pytest` and `pytest-cov`, let it add them to `pyproject.toml` as development dependencies with appropriate options and then let it have at it. Copilot wrote tests, checked coverage results to find out what was still missing, then added more tests, and so on. Sometimes it asked me if I would allow it to make small changes to `mf`'s code so it could test something more easily, and after each iteration it explained in detail which tests it had added, what was still missing, and asked whether to continue with more tests or do something else. After going back and forth like this for around 30 minutes, I had a suite of 65 tests covering 85% of my codebase. Pretty neat.
 
@@ -115,3 +114,67 @@ Let's go full circle and ask Claude about it:
 
 That sounds like fair criticism, and I will admit that I actually _did_ feel confident because of the high coverage my LLM-tests achieved and that I _didn't_ properly review them before comitting. I feel like it's not much of an issue for my personal use project, but I understand that the situation changes when the stakes are higher.
 
+# 2025-10-29
+## Simplifying configuration with setting specifications and a registry
+Going back to LLM-tutoring instead of LLM-developing, today I refactored the configuration component of `mf`'s CLI. `mf` has a git-style configuration system in place that lets you get and set all settings that are stored in a TOML configuration file directly on the command line. I defined actions (`get`, `set`, `add`, `remove`), wrote setters with identical signatures for each setting that defined which actions they support, and then mapped settings to setters with a simple dictionary. I initially thought I was being quite clever with this, and it did what it was supposed to do. But the setters where becoming long and boilerplatey rather quickly, they shared a lot of duplicated code, and were generally not very pleasant to work with. So I asked my trusty LLM to suggest a way to simplify this component in a way that makes it easier to maintain and extend in the future.
+
+Claude suggested a three-fold approach:
+
+A `SettingsSpec` dataclass that defines each setting's behaviour, actions, parameter normalization, etc, like so:
+
+```python
+from dataclasses import dataclass
+from typing import Callable, Literal, Any
+
+Action = Literal["set", "add", "remove", "clear"]
+
+@dataclass
+class SettingSpec:
+    key: str
+    kind: Literal["scalar", "list"]
+    value_type: type
+    actions: set[Action]
+    normalize: Callable[[str], Any]
+    display: Callable[[Any], str] = lambda v: str(v)
+    validate_all: Callable[[Any], None] = lambda v: None
+    help: str = ""
+    before_write: Callable[[Any], Any] = lambda v: 
+```
+
+A registry that collects instances of this spec (one per setting):
+
+```python
+from .config_utils import normalize_path
+
+REGISTRY: dict[str, SettingSpec] = {}
+
+REGISTRY.update({
+    "search_paths": SettingSpec(
+        key="search_paths",
+        kind="list",
+        value_type=str,
+        actions={"set", "add", "remove", "clear"},
+        normalize=normalize_path,
+        help="Directories scanned for media files."
+    ),
+    ...,
+}
+```
+
+The registry is then to be used by a generic `apply_action` function that replaces all the per-setting setters that I had written before:
+
+```python
+mf.utils.settings_registry.apply_action(
+    cfg: tomlkit.toml_document.TOMLDocument,
+    key: str,
+    action: Literal['set', 'add', 'remove', 'clear'],
+    raw_values: list[str] | None,
+) -> tomlkit.toml_document.TOMLDocument
+```
+
+Where before I had these big setters that individually defined all actions per setting, I now do it only once in `apply_action` in a generic way. The setting-specific behaviour is defined in small, concise functions that are passed as arguments to the respective instance of `SettingSpec`. Implementing this enabled me to reduce the size of the settings component and improve maintainability and extensibility at the same time.
+
+Takeaways:
+- dataclasses can be a convenient way of defining formalisms. I haven't used them much so far, and they do feel a bit sugary, but it's nice that I can just define attributes and get a ready-made `__init__` to fill those attributes.
+- Defining behaviour outside of where it's executed (normalization and validation functions, ...) and passing it as arguments (to the `SettingSpec`) is a form of __Inversion of Control__ called __Dependency Injection__. In this case here it is precisely what has enabled me to deduplicate code, generalize the generalizable parts, and only having to define the truly setting-specific portions in small, concise functions without any boilerplate.
+- This also enables a __separation of concerns__: `SettingSpec` handles structure in a declarative way, injected functions handle behaviour.
