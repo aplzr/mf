@@ -64,7 +64,18 @@ REGISTRY: dict[str, SettingSpec] = {
 
 def apply_action(
     cfg: TOMLDocument, key: str, action: Action, raw_values: list[str] | None
-):
+) -> TOMLDocument:
+    """Apply action to setting.
+
+    Args:
+        cfg (TOMLDocument): Current configuration.
+        key (str): Setting to apply action to.
+        action (Action): Action to perform.
+        raw_values (list[str] | None): Values to act with.
+
+    Returns:
+        TOMLDocument: Updated configuration.
+    """
     spec = REGISTRY[key]
 
     if action not in spec.actions:
