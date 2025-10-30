@@ -146,16 +146,14 @@ class SettingSpec:
 ```python
 from .config_utils import normalize_path
 
-REGISTRY: dict[str, SettingSpec] = {}
-
-REGISTRY.update({
+REGISTRY: dict[str, SettingSpec] = {
     "search_paths": SettingSpec(
         key="search_paths",
         kind="list",
         value_type=str,
         actions={"set", "add", "remove", "clear"},
         normalize=normalize_path,
-        help="Directories scanned for media files."
+        help="Directories scanned for media files.",
     ),
     ...,
 }
