@@ -159,7 +159,7 @@ REGISTRY: dict[str, SettingSpec] = {
 }
 ```
 
-The registry is then to be used by a generic `apply_action` function that replaces all the per-setting setters that I had written before:
+3: The registry is then to be used by a generic `apply_action` function that replaces all the per-setting setters that I had written before:
 
 ```python
 mf.utils.settings_registry.apply_action(
