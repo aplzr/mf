@@ -120,7 +120,7 @@ Going back to LLM-tutoring instead of LLM-developing, today I refactored the con
 
 Claude suggested a three-fold approach:
 
-A `SettingsSpec` dataclass that defines each setting's behaviour, actions, parameter normalization, etc, like so:
+1: A `SettingSpec` dataclass that defines a general structure shared by all settings:
 
 ```python
 from dataclasses import dataclass
@@ -141,7 +141,7 @@ class SettingSpec:
     before_write: Callable[[Any], Any] = lambda v: 
 ```
 
-A registry that collects instances of this spec (one per setting):
+2: A registry that collects instances of this spec (one per setting). Setting specifics are handled by functions passed as arguments to each instance. The `search_paths` setting, for example, gets as its `normalize` argument a normalization function that takes a relative or absolute path string with forward or backward slashes and returns an absolute path in a posix-like representation:
 
 ```python
 from .config_utils import normalize_path
