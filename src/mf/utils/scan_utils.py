@@ -10,14 +10,14 @@ from functools import partial
 from importlib.resources import files
 from pathlib import Path
 
-from mf.constants import FD_BINARIES, STATUS_SYMBOLS
+from mf.constants import FD_BINARIES
 
 from .config_utils import (
     get_media_extensions,
     get_validated_search_paths,
     read_config,
 )
-from .console import console, print_warn
+from .console import print_warn
 from .normalizers import normalize_pattern
 
 __all__ = [
