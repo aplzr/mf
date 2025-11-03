@@ -7,12 +7,9 @@ import tomlkit
 import typer
 from tomlkit import TOMLDocument
 
-from mf.constants import (
-    STATUS_SYMBOLS,
-)
-from mf.utils.normalizers import normalize_media_extension, normalize_path
+from mf.utils.normalizers import normalize_media_extension
 
-from .console import console, print_error, print_ok, print_warn
+from .console import print_error, print_ok, print_warn
 from .default_config import default_cfg
 
 __all__ = [
@@ -21,11 +18,7 @@ __all__ = [
     "read_config",
     "write_config",
     "get_validated_search_paths",
-    "add_search_path",
-    "remove_search_path",
     "get_media_extensions",
-    "add_media_extension",
-    "remove_media_extension",
     "normalize_media_extension",
 ]
 
@@ -120,104 +113,6 @@ def get_validated_search_paths() -> list[Path]:
         raise typer.Exit(1)
 
     return validated
-
-
-def add_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
-    """Add a search path to the configuration.
-
-    Args:
-        cfg (TOMLDocument): Current configuration.
-        path_str (str): Path to add.
-
-    Returns:
-        TOMLDocument: Updated configuration.
-    """
-    path_str = normalize_path(path_str)
-
-    if path_str not in cfg["search_paths"]:
-        if not Path(path_str).exists():
-            print_warn(f"Path '{path_str}' does not exist (storing anyway).")
-
-        cfg["search_paths"].append(path_str)
-        print_ok(f"Added search path: '{path_str}'.")
-    else:
-        print_warn(
-            f"Search path '{path_str}' already stored in configuration file, skipping."
-        )
-
-    return cfg
-
-
-def remove_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
-    """Remove a search path.
-
-    Args:
-        cfg (TOMLDocument): Current configuration.
-        path_str (str): Path to remove.
-
-    Raises:
-        typer.Exit: If the path is not configured.
-
-    Returns:
-        TOMLDocument: Updated configuration with path removed.
-    """
-    path_str = normalize_path(path_str)
-    try:
-        cfg["search_paths"].remove(path_str)
-        print_ok(f"Removed search path: '{path_str}'.")
-        return cfg
-    except ValueError:
-        print_error(f"Path '{path_str}' not found in configuration file.")
-        raise typer.Exit(1)
-
-
-def add_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
-    """Add a media extension.
-
-    Args:
-        cfg (TOMLDocument): Current configuration.
-        extension (str): Extension to add.
-
-    Returns:
-        TOMLDocument: Updated configuration.
-    """
-    normalized = normalize_media_extension(extension)
-    if normalized not in cfg["media_extensions"]:
-        cfg["media_extensions"].append(normalized)
-        print_error(f"Added media extension '{normalized}'.")
-    else:
-        print_warn(
-            f"Extension '{normalized}' already stored in configuration, skipping."
-        )
-    return cfg
-
-
-def remove_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
-    """Remove a media extension.
-
-    Args:
-        cfg (TOMLDocument): Current configuration.
-        extension (str): Extension to remove.
-
-    Raises:
-        typer.Exit: If the extension is not configured.
-
-    Returns:
-        TOMLDocument: Updated configuration.
-    """
-    extension = normalize_media_extension(extension)
-    if extension in cfg["media_extensions"]:
-        cfg["media_extensions"].remove(extension)
-        console.print(
-            f"{STATUS_SYMBOLS['ok']}  Extension '{extension}' removed from configuration.",
-            style="green",
-        )
-        return cfg
-    console.print(
-        f"{STATUS_SYMBOLS['error']} Extension '{extension}' not found in configuration.",
-        style="red",
-    )
-    raise typer.Exit(1)
 
 
 def get_media_extensions() -> set[str]:
