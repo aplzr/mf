@@ -165,14 +165,15 @@ def scan_path_with_fd(
 
 
 def find_media_files(
-    pattern: str, *, sort_by_mtime: bool = False, prefer_fd: bool = True
+    pattern: str, *, sort_by_mtime: bool = False, prefer_fd: bool | None = None
 ) -> list[tuple[int, Path]]:
     """Find media files across all search paths.
 
     Args:
         pattern (str): Search pattern.
         sort_by_mtime (bool): Sort by modification time (Python scan only).
-        prefer_fd (bool): Prefer fd unless mtime sorting is requested.
+        prefer_fd (bool): Prefer fd unless mtime sorting is requested. If None, value is
+            read from the configuration file.
 
     Raises:
         RuntimeError: From fd resolution if platform unsupported.
@@ -180,11 +181,14 @@ def find_media_files(
     Returns:
         list[tuple[int, Path]]: Indexed list of results starting at 1.
     """
+    cfg = read_config()
     pattern = normalize_pattern(pattern)
     search_paths = get_validated_search_paths()
-    match_extensions = read_config()["match_extensions"]
+    match_extensions = cfg["match_extensions"]
     media_extensions = get_media_extensions()
 
+    if prefer_fd is None:
+        prefer_fd = cfg["prefer_fd"]
 
     use_fd = prefer_fd and not sort_by_mtime
 
@@ -228,12 +232,12 @@ def find_media_files(
         all_results.extend(res)
 
     if sort_by_mtime:
-        all_results.sort(key=lambda item: item[1], reverse=True)  # type: ignore[index]
+        all_results.sort(key=lambda item: item[1], reverse=True)
         indexed = [
             (idx, path) for idx, (path, _mtime) in enumerate(all_results, start=1)
         ]
     else:
-        all_results.sort(key=lambda p: p.name.lower())  # type: ignore[attr-defined]
+        all_results.sort(key=lambda p: p.name.lower())
         indexed = [(idx, p) for idx, p in enumerate(all_results, start=1)]
 
     return indexed
