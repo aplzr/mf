@@ -141,7 +141,7 @@ def imdb(
     parsed = guessit(filestem)
 
     if "title" not in parsed:
-        print_warn("Could not parse a title from filename '{filestem}'.")
+        print_warn(f"Could not parse a title from filename '{filestem}'.")
         raise typer.Exit(1)
 
     title = parsed["title"]
@@ -150,10 +150,10 @@ def imdb(
     try:
         results = IMDb().search_movie(title)
     except Exception as e:  # Network or API error
-        print_error("IMDb lookup failed: {e}")
+        print_error(f"IMDb lookup failed: {e}.")
 
     if not results:
-        print_error("No IMDb results found for parsed title '{title}'")
+        print_error(f"No IMDb results found for parsed title '{title}'.")
 
     imdb_entry = results[0]
     imdb_url = f"https://www.imdb.com/title/tt{imdb_entry.movieID}/"

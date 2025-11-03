@@ -36,7 +36,7 @@ def print_error(msg: str):
     """Print error message and exit with status 1.
 
     Args:
-        msg (str): Error message.
+        msg (str): Error message (include trailing punctuation yourself).
     """
-    console.print(f"{STATUS_SYMBOLS['error']} {msg}.", style="red")
+    console.print(f"{STATUS_SYMBOLS['error']} {msg}", style="red")
     raise typer.Exit(1)
