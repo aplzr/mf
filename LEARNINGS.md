@@ -146,22 +146,20 @@ class SettingSpec:
 ```python
 from .config_utils import normalize_path
 
-REGISTRY: dict[str, SettingSpec] = {}
-
-REGISTRY.update({
+REGISTRY: dict[str, SettingSpec] = {
     "search_paths": SettingSpec(
         key="search_paths",
         kind="list",
         value_type=str,
         actions={"set", "add", "remove", "clear"},
         normalize=normalize_path,
-        help="Directories scanned for media files."
+        help="Directories scanned for media files.",
     ),
     ...,
 }
 ```
 
-The registry is then to be used by a generic `apply_action` function that replaces all the per-setting setters that I had written before:
+3: The registry is then to be used by a generic `apply_action` function that replaces all the per-setting setters that I had written before:
 
 ```python
 mf.utils.settings_registry.apply_action(
