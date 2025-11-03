@@ -15,11 +15,11 @@ from .utils import (
     console,
     find_media_files,
     get_file_by_index,
-    normalize_pattern,
     print_search_results,
     read_config,
     save_search_results,
 )
+from .utils.normalizers import normalize_pattern
 
 app_mf = typer.Typer(help="Media file finder and player")
 app_mf.add_typer(app_cache, name="cache")

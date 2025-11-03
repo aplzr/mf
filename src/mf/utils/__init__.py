@@ -11,9 +11,6 @@ from .config_utils import (
     get_config_file,
     get_media_extensions,
     get_validated_search_paths,
-    normalize_bool_str,
-    normalize_media_extension,
-    normalize_path,
     read_config,
     remove_media_extension,
     remove_search_path,
@@ -22,7 +19,11 @@ from .config_utils import (
 )
 from .console import console, print_error, print_ok, print_warn
 from .editor_utils import start_editor
-from .patterns import normalize_pattern
+from .normalizers import (
+    normalize_bool_str,
+    normalize_media_extension,
+    normalize_path,
+    normalize_pattern,
 from .scan_utils import (
     find_media_files,
     get_fd_binary,
@@ -44,9 +45,9 @@ __all__ = [
     "get_media_extensions",
     "get_validated_search_paths",
     "load_search_results",
-    "normalize_bool_str",
     "normalize_media_extension",
     "normalize_path",
+    "normalize_bool_str",
     "normalize_pattern",
     "print_error",
     "print_ok",

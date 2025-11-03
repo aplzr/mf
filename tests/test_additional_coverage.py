@@ -6,11 +6,11 @@ from typer.testing import CliRunner
 from mf._app_config import app_config
 from mf._app_mf import app_mf
 from mf.utils import (
-    normalize_media_extension,
     read_config,
     scan_path_with_python,
     write_config,
 )
+from mf.utils.normalizers import normalize_media_extension
 
 runner = CliRunner()
 

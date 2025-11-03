@@ -1,4 +1,8 @@
-from mf.utils import normalize_bool_str, normalize_media_extension, normalize_pattern
+from mf.utils.normalizers import (
+    normalize_bool_str,
+    normalize_media_extension,
+    normalize_pattern,
+)
 
 
 def test_normalize_pattern_wraps_simple_term():
