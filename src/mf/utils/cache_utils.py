@@ -141,14 +141,14 @@ def get_file_by_index(index: int) -> Path:
 
     if file is None:
         console.print(
-            f"Index {index} not found in last search results (pattern: '{pattern}')",
+            f"Index {index} not found in last search results (pattern: '{pattern}').",
             style="red",
         )
-        console.print(f"Valid indices: 1-{len(results)}", style="yellow")
+        console.print(f"Valid indices: 1-{len(results)}.", style="yellow")
         raise typer.Exit(1)
 
     if not file.exists():
-        console.print(f"[red]File no longer exists:[/red] {file}")
+        console.print(f"[red]File no longer exists:[/red] {file}.")
         raise typer.Exit(1)
 
     return file
