@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from mf.constants import BOOLEAN_FALSE_VALUES, BOOLEAN_TRUE_VALUES
-from mf.utils import print_error
+from mf.utils.console import print_error
 
 __all__ = [
     "normalize_bool_str",
