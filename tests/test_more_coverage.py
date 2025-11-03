@@ -7,13 +7,12 @@ import typer
 from mf.utils import (
     add_search_path,
     find_media_files,
-    normalize_bool_str,
-    normalize_media_extension,
     read_config,
     remove_search_path,
     start_editor,
     write_config,
 )
+from mf.utils.normalizers import normalize_bool_str, normalize_media_extension
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows-specific branch")

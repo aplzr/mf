@@ -18,7 +18,7 @@ from .config_utils import (
     read_config,
 )
 from .console import console
-from .patterns import normalize_pattern
+from .normalizers import normalize_pattern
 
 __all__ = [
     "get_fd_binary",
