@@ -28,7 +28,7 @@ def show():
 @app_cache.command()
 def file():
     """Print the cache file location."""
-    console.print(get_cache_file())
+    print(get_cache_file())
 
 
 @app_cache.command()
