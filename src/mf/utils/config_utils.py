@@ -13,6 +13,7 @@ from mf.constants import (
 from mf.utils.normalizers import normalize_media_extension, normalize_path
 
 from .console import console
+from .default_config import default_cfg
 
 __all__ = [
     "get_config_file",
@@ -55,24 +56,6 @@ def write_default_config() -> TOMLDocument:
     Returns:
         TOMLDocument: The default configuration document after writing.
     """
-    # fmt: off
-    default_cfg = tomlkit.document()
-    default_cfg.add(tomlkit.comment("Media file search paths"))
-    default_cfg.add("search_paths", [])
-    default_cfg.add(tomlkit.nl())
-    default_cfg.add(tomlkit.comment("Media file extensions matched by 'mf find' and 'mf new'."))
-    default_cfg.add("media_extensions", DEFAULT_MEDIA_EXTENSIONS.copy())
-    default_cfg.add(tomlkit.nl())
-    default_cfg.add(tomlkit.comment("If true, 'mf find' and 'mf new' will only return results that match one of the file extensions"))
-    default_cfg.add(tomlkit.comment("defined by media_extensions. Otherwise all files found in the search paths will be returned."))
-    default_cfg.add(tomlkit.comment("Set to false if your search paths only contain media files and you don't want to manage media"))
-    default_cfg.add(tomlkit.comment("extensions."))
-    default_cfg.add("match_extensions", True)
-    default_cfg.add(tomlkit.nl())
-    default_cfg.add(tomlkit.comment("If true, files will be played in fullscreen mode"))
-    default_cfg.add("fullscreen_playback", True)
-    # fmt: on
-
     write_config(default_cfg)
     console.print(
         f"{STATUS_SYMBOLS['ok']}  Written default configuration "
