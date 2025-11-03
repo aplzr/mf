@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
 import typer
+from rich.panel import Panel
+from rich.table import Table
 
 from .console import console, print_error
 
@@ -27,8 +30,6 @@ def get_cache_file() -> Path:
         Path: Location of the JSON cache file (platform aware; falls back to
         ~/.cache/mf on POSIX).
     """
-    import os
-
     cache_dir = (
         Path(
             os.environ.get(
@@ -102,9 +103,6 @@ def print_search_results(title: str, results: list[tuple[int, Path]]):
         title (str): Title displayed above table.
         results (list[tuple[int, Path]]): Indexed search results.
     """
-    from rich.panel import Panel
-    from rich.table import Table
-
     max_index_width = len(str(len(results))) if results else 1
     table = Table(show_header=False, box=None, padding=(0, 1))
     table.add_column("#", style="cyan", width=max_index_width, justify="right")
