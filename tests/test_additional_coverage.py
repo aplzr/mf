@@ -7,6 +7,7 @@ from mf._app_config import app_config
 from mf._app_mf import app_mf
 from mf.utils import (
     read_config,
+    save_search_results,
     scan_path_with_python,
     write_config,
 )
@@ -54,13 +55,12 @@ def test_play_random(monkeypatch, tmp_path):
 
 
 def test_play_vlc_not_found(monkeypatch, tmp_path):
-    # Ensure at least one file so play logic runs
+    # Seed cache with one file so get_file_by_index succeeds
     media_dir = tmp_path / "media"
     media_dir.mkdir()
-    (media_dir / "video.mkv").write_text("x")
-    cfg = read_config()
-    cfg["search_paths"] = [media_dir.resolve().as_posix()]
-    write_config(cfg)
+    target_file = media_dir / "video.mkv"
+    target_file.write_text("x")
+    save_search_results("*", [(1, target_file)])
     # Monkeypatch subprocess.Popen to raise FileNotFoundError simulating missing VLC
     import subprocess
 
@@ -76,10 +76,9 @@ def test_play_vlc_not_found(monkeypatch, tmp_path):
 def test_play_generic_exception(monkeypatch, tmp_path):
     media_dir = tmp_path / "media2"
     media_dir.mkdir()
-    (media_dir / "video2.mkv").write_text("x")
-    cfg = read_config()
-    cfg["search_paths"] = [media_dir.resolve().as_posix()]
-    write_config(cfg)
+    target_file = media_dir / "video2.mkv"
+    target_file.write_text("x")
+    save_search_results("*", [(1, target_file)])
     import subprocess
 
     def raise_gen(*args, **kwargs):
