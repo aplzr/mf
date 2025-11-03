@@ -6,14 +6,10 @@ from .cache_utils import (
     save_search_results,
 )
 from .config_utils import (
-    add_media_extension,
-    add_search_path,
     get_config_file,
     get_media_extensions,
     get_validated_search_paths,
     read_config,
-    remove_media_extension,
-    remove_search_path,
     write_config,
     write_default_config,
 )
@@ -35,8 +31,6 @@ from .scan_utils import (
 from .settings_registry import apply_action
 
 __all__ = [
-    "add_media_extension",
-    "add_search_path",
     "apply_action",
     "console",
     "default_cfg",
@@ -57,8 +51,6 @@ __all__ = [
     "print_search_results",
     "print_warn",
     "read_config",
-    "remove_media_extension",
-    "remove_search_path",
     "save_search_results",
     "scan_path_with_fd",
     "scan_path_with_python",
