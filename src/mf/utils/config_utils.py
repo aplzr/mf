@@ -12,7 +12,7 @@ from mf.constants import (
 )
 from mf.utils.normalizers import normalize_media_extension, normalize_path
 
-from .console import console
+from .console import console, print_error, print_ok, print_warn
 from .default_config import default_cfg
 
 __all__ = [
@@ -57,11 +57,8 @@ def write_default_config() -> TOMLDocument:
         TOMLDocument: The default configuration document after writing.
     """
     write_config(default_cfg)
-    console.print(
-        f"{STATUS_SYMBOLS['ok']}  Written default configuration "
-        f"to '{get_config_file()}'.",
-        style="green",
-    )
+    print_ok(f"Written default configuration to '{get_config_file()}'.")
+
     return default_cfg
 
 
@@ -77,11 +74,11 @@ def read_config() -> TOMLDocument:
         with open(get_config_file()) as f:
             cfg = tomlkit.load(f)
     except FileNotFoundError:
-        console.print(
-            f"{STATUS_SYMBOLS['warn']}  Configuration file doesn't exist, creating it with default settings.",
-            style="yellow",
+        print_warn(
+            "Configuration file doesn't exist, creating it with default settings."
         )
         cfg = write_default_config()
+
     return cfg
 
 
@@ -106,21 +103,22 @@ def get_validated_search_paths() -> list[Path]:
     """
     search_paths = read_config()["search_paths"]
     validated: list[Path] = []
+
     for search_path in search_paths:
         p = Path(search_path)
+
         if not p.exists():
-            console.print(
-                f"{STATUS_SYMBOLS['warn']}  Configured search path {search_path} does not exist.",
-                style="yellow",
-            )
+            print_warn(f"Configured search path {search_path} does not exist.")
         else:
             validated.append(p)
+
     if not validated:
-        console.print(
-            f"{STATUS_SYMBOLS['error']} List of search paths is empty or paths don't exist. Set search paths with 'mf config set search_paths'.",
-            style="red",
+        print_error(
+            "List of search paths is empty or paths don't exist. "
+            "Set search paths with 'mf config set search_paths'."
         )
         raise typer.Exit(1)
+
     return validated
 
 
@@ -135,22 +133,18 @@ def add_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
         TOMLDocument: Updated configuration.
     """
     path_str = normalize_path(path_str)
+
     if path_str not in cfg["search_paths"]:
         if not Path(path_str).exists():
-            console.print(
-                f"{STATUS_SYMBOLS['warn']}  Path '{path_str}' does not exist (storing anyway).",
-                style="yellow",
-            )
+            print_warn(f"Path '{path_str}' does not exist (storing anyway).")
+
         cfg["search_paths"].append(path_str)
-        console.print(
-            f"{STATUS_SYMBOLS['ok']}  Added search path: '{path_str}'",
-            style="green",
-        )
+        print_ok(f"Added search path: '{path_str}'.")
     else:
-        console.print(
-            f"{STATUS_SYMBOLS['warn']}  Search path '{path_str}' already stored in configuration file, skipping.",
-            style="yellow",
+        print_warn(
+            f"Search path '{path_str}' already stored in configuration file, skipping."
         )
+
     return cfg
 
 
@@ -170,16 +164,10 @@ def remove_search_path(cfg: TOMLDocument, path_str: str) -> TOMLDocument:
     path_str = normalize_path(path_str)
     try:
         cfg["search_paths"].remove(path_str)
-        console.print(
-            f"{STATUS_SYMBOLS['ok']}  Removed search path: '{path_str}'",
-            style="green",
-        )
+        print_ok(f"Removed search path: '{path_str}'.")
         return cfg
     except ValueError:
-        console.print(
-            f"{STATUS_SYMBOLS['error']} Path '{path_str}' not found in configuration file.",
-            style="red",
-        )
+        print_error(f"Path '{path_str}' not found in configuration file.")
         raise typer.Exit(1)
 
 
@@ -196,14 +184,10 @@ def add_media_extension(cfg: TOMLDocument, extension: str) -> TOMLDocument:
     normalized = normalize_media_extension(extension)
     if normalized not in cfg["media_extensions"]:
         cfg["media_extensions"].append(normalized)
-        console.print(
-            f"{STATUS_SYMBOLS['ok']}  Added media extension '{normalized}'.",
-            style="green",
-        )
+        print_error(f"Added media extension '{normalized}'.")
     else:
-        console.print(
-            f"{STATUS_SYMBOLS['warn']}  Extension '{normalized}' already stored in configuration, skipping.",
-            style="yellow",
+        print_warn(
+            f"Extension '{normalized}' already stored in configuration, skipping."
         )
     return cfg
 

@@ -1,9 +1,7 @@
 from pathlib import Path
 
-import typer
-
-from mf.constants import BOOLEAN_FALSE_VALUES, BOOLEAN_TRUE_VALUES, STATUS_SYMBOLS
-from mf.utils.console import console
+from mf.constants import BOOLEAN_FALSE_VALUES, BOOLEAN_TRUE_VALUES
+from mf.utils import print_error
 
 __all__ = [
     "normalize_bool_str",
@@ -33,16 +31,10 @@ def normalize_bool_str(bool_str: str) -> bool:
     if bool_str in BOOLEAN_FALSE_VALUES:
         return False
 
-    console.print(
-        f"{STATUS_SYMBOLS['error']} Invalid boolean value. Got: '{bool_str}'. "
-        "Expected one of:",
-        ", ".join(
-            repr(item) for item in sorted(BOOLEAN_TRUE_VALUES | BOOLEAN_FALSE_VALUES)
-        ),
-        style="red",
+    print_error(
+        f"Invalid boolean value. Got: '{bool_str}'. Expected one of: "
+        f"{', '.join(repr(item) for item in sorted(BOOLEAN_TRUE_VALUES | BOOLEAN_FALSE_VALUES))}"
     )
-
-    raise typer.Exit(1)
 
 
 def normalize_path(path_str: str) -> str:
@@ -76,11 +68,7 @@ def normalize_media_extension(extension: str) -> str:
     extension = extension.lower().strip().lstrip(".")
 
     if not extension:
-        console.print(
-            f"{STATUS_SYMBOLS['error']} Extension can't be empty after normalization.",
-            style="red",
-        )
-        raise typer.Exit(1)
+        print_error("Extension can't be empty after normalization.")
 
     return "." + extension
 

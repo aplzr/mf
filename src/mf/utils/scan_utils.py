@@ -17,7 +17,7 @@ from .config_utils import (
     get_validated_search_paths,
     read_config,
 )
-from .console import console
+from .console import console, print_warn
 from .normalizers import normalize_pattern
 
 __all__ = [
@@ -110,10 +110,7 @@ def scan_path_with_python(
                     elif entry.is_dir(follow_symlinks=False):
                         scan_dir(entry.path)
         except PermissionError:
-            console.print(
-                f"{STATUS_SYMBOLS['warn']}  Missing access permissions for directory {path}, skipping.",
-                style="yellow",
-            )
+            print_warn(f"Missing access permissions for directory {path}, skipping.")
 
     scan_dir(str(search_path))
     return results

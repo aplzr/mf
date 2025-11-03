@@ -1,7 +1,12 @@
 import typer
 
-from .constants import STATUS_SYMBOLS
-from .utils import console, get_cache_file, load_search_results, print_search_results
+from .utils import (
+    console,
+    get_cache_file,
+    load_search_results,
+    print_ok,
+    print_search_results,
+)
 
 app_cache = typer.Typer(
     help=(
@@ -35,10 +40,7 @@ def file():
 def clear():
     """Clear the cache."""
     get_cache_file().unlink(missing_ok=True)
-    console.print(
-        f"{STATUS_SYMBOLS['ok']}  Cache cleared.",
-        style="green",
-    )
+    print_ok("Cache cleared.")
 
 
 @app_cache.callback(invoke_without_command=True)
