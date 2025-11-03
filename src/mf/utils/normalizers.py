@@ -26,10 +26,13 @@ def normalize_bool_str(bool_str: str) -> bool:
         bool: Parsed boolean value.
     """
     bool_str = bool_str.strip().lower()
+
     if bool_str in BOOLEAN_TRUE_VALUES:
         return True
+
     if bool_str in BOOLEAN_FALSE_VALUES:
         return False
+
     console.print(
         f"{STATUS_SYMBOLS['error']} Invalid boolean value. Got: '{bool_str}'. "
         "Expected one of:",
@@ -38,6 +41,7 @@ def normalize_bool_str(bool_str: str) -> bool:
         ),
         style="red",
     )
+
     raise typer.Exit(1)
 
 
@@ -68,13 +72,16 @@ def normalize_media_extension(extension: str) -> str:
     """
     if not extension:
         raise ValueError("Extension can't be empty.")
+
     extension = extension.lower().strip().lstrip(".")
+
     if not extension:
         console.print(
             f"{STATUS_SYMBOLS['error']} Extension can't be empty after normalization.",
             style="red",
         )
         raise typer.Exit(1)
+
     return "." + extension
 
 
@@ -89,4 +96,5 @@ def normalize_pattern(pattern: str) -> str:
     """
     if not any(ch in pattern for ch in ["*", "?", "[", "]"]):
         return f"*{pattern}*"
+
     return pattern
