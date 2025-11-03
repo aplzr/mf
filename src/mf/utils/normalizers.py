@@ -9,6 +9,7 @@ __all__ = [
     "normalize_bool_str",
     "normalize_media_extension",
     "normalize_path",
+    "normalize_pattern",
 ]
 
 
