@@ -31,7 +31,8 @@ def normalize_bool_str(bool_str: str) -> bool:
     if bool_str in BOOLEAN_FALSE_VALUES:
         return False
     console.print(
-        f"{STATUS_SYMBOLS['error']} Invalid boolean value. Got: '{bool_str}'. Expected one of:",
+        f"{STATUS_SYMBOLS['error']} Invalid boolean value. Got: '{bool_str}'. "
+        "Expected one of:",
         ", ".join(
             repr(item) for item in sorted(BOOLEAN_TRUE_VALUES | BOOLEAN_FALSE_VALUES)
         ),
