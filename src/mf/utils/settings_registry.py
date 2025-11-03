@@ -3,12 +3,12 @@ from typing import Any, Callable, Literal
 
 from tomlkit import TOMLDocument
 
-from .config_utils import (
+from .console import print_error, print_ok, print_warn
+from .normalizers import (
     normalize_bool_str,
     normalize_media_extension,
     normalize_path,
 )
-from .console import print_error, print_ok, print_warn
 
 Action = Literal["set", "add", "remove", "clear"]
 
@@ -58,6 +58,14 @@ REGISTRY: dict[str, SettingSpec] = {
         actions={"set"},
         normalize=normalize_bool_str,
         help="If true, files are played in fullscreen mode.",
+    ),
+    "prefer_fd": SettingSpec(
+        key="prefer_fd",
+        kind="scalar",
+        value_type=bool,
+        actions={"set"},
+        normalize=normalize_bool_str,
+        help="If true, uses fd for file searches where possible.",
     ),
 }
 
