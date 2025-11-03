@@ -18,12 +18,14 @@ from .config_utils import (
     write_default_config,
 )
 from .console import console, print_error, print_ok, print_warn
+from .default_config import default_cfg
 from .editor_utils import start_editor
 from .normalizers import (
     normalize_bool_str,
     normalize_media_extension,
     normalize_path,
     normalize_pattern,
+)
 from .scan_utils import (
     find_media_files,
     get_fd_binary,
@@ -37,6 +39,7 @@ __all__ = [
     "add_search_path",
     "apply_action",
     "console",
+    "default_cfg",
     "find_media_files",
     "get_cache_file",
     "get_config_file",
