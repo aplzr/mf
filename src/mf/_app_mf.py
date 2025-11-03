@@ -10,12 +10,13 @@ from imdb import IMDb
 from ._app_cache import app_cache
 from ._app_config import app_config
 from ._version import __version__
-from .constants import STATUS_SYMBOLS
 from .utils import (
     console,
     find_media_files,
     get_file_by_index,
+    print_error,
     print_search_results,
+    print_warn,
     read_config,
     save_search_results,
 )
@@ -138,26 +139,21 @@ def imdb(
     """Open IMDB entry of a search result."""
     filestem = get_file_by_index(index).stem
     parsed = guessit(filestem)
+
     if "title" not in parsed:
-        console.print(
-            f"{STATUS_SYMBOLS['warn']}  Could not parse a title from filename '{filestem}'.",
-            style="yellow",
-        )
+        print_warn("Could not parse a title from filename '{filestem}'.")
         raise typer.Exit(1)
+
     title = parsed["title"]
+
     # Gracefully handle no IMDb results
     try:
         results = IMDb().search_movie(title)
     except Exception as e:  # Network or API error
-        console.print(f"{STATUS_SYMBOLS['error']} IMDb lookup failed: {e}", style="red")
-        raise typer.Exit(1)
+        print_error("IMDb lookup failed: {e}")
 
     if not results:
-        console.print(
-            f"{STATUS_SYMBOLS['warn']}  No IMDb results found for parsed title '{title}'.",
-            style="yellow",
-        )
-        raise typer.Exit(1)
+        print_error("No IMDb results found for parsed title '{title}'")
 
     imdb_entry = results[0]
     imdb_url = f"https://www.imdb.com/title/tt{imdb_entry.movieID}/"

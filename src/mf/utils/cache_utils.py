@@ -6,11 +6,7 @@ from pathlib import Path
 
 import typer
 
-from mf.constants import STATUS_SYMBOLS
-
-from .console import console
-
-# Public API intentionally minimal; higher-level functions rely on these primitives.
+from .console import console, print_error
 
 __all__ = [
     "get_cache_file",
@@ -63,7 +59,9 @@ def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
             {"index": idx, "path": str(file_path)} for idx, file_path in results
         ],
     }
+
     cache_file = get_cache_file()
+
     with open(cache_file, "w", encoding="utf-8") as f:
         json.dump(cache_data, f, indent=2)
 
@@ -81,19 +79,18 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
     try:
         with open(cache_file, "r", encoding="utf-8") as f:
             cache_data = json.load(f)
+
         pattern = cache_data["pattern"]
         results = [
             (item["index"], Path(item["path"])) for item in cache_data["results"]
         ]
         timestamp = datetime.fromisoformat(cache_data["timestamp"])
+
         return pattern, results, timestamp
     except (json.JSONDecodeError, KeyError, FileNotFoundError):
-        console.print(
-            (
-                f"{STATUS_SYMBOLS['error']} Cache is empty or doesn't exist. "
-                "Please run 'mf find <pattern>' or 'mf new' first."
-            ),
-            style="red",
+        print_error(
+            "Cache is empty or doesn't exist. "
+            "Please run 'mf find <pattern>' or 'mf new' first."
         )
         raise typer.Exit(1)
 
@@ -113,8 +110,10 @@ def print_search_results(title: str, results: list[tuple[int, Path]]):
     table.add_column("#", style="cyan", width=max_index_width, justify="right")
     table.add_column("File", style="green", overflow="fold")
     table.add_column("Location", style="blue", overflow="fold")
+
     for idx, path in results:
         table.add_row(str(idx), path.name, str(path.parent))
+
     panel = Panel(
         table, title=f"[bold]{title}[/bold]", title_align="left", padding=(1, 1)
     )
@@ -136,10 +135,12 @@ def get_file_by_index(index: int) -> Path:
     """
     pattern, results, _ = load_search_results()
     file = None
+
     for idx, path in results:
         if idx == index:
             file = path
             break
+
     if file is None:
         console.print(
             f"Index {index} not found in last search results (pattern: '{pattern}')",
@@ -147,7 +148,9 @@ def get_file_by_index(index: int) -> Path:
         )
         console.print(f"Valid indices: 1-{len(results)}", style="yellow")
         raise typer.Exit(1)
+
     if not file.exists():
         console.print(f"[red]File no longer exists:[/red] {file}")
         raise typer.Exit(1)
+
     return file
