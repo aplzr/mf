@@ -138,38 +138,35 @@ jobs:
         run: pip install uv
       - name: Install anybadge
         run: uv pip install --system anybadge tomlkit
-      - name: Generate python versions badge
+      - name: Generate minimum python version badge
         run: |
           set -euo pipefail
           mkdir -p static
-          if [ -f static/python_versions.json ]; then
-            PREV_VERS=$(python -c "import json; print(','.join(json.load(open('static/python_versions.json')).get('versions', [])))")
+          # Previous min version
+          if [ -f static/python_version_min.json ]; then
+            PREV_MIN=$(python -c "import json; print(json.load(open('static/python_version_min.json')).get('min',''))")
           else
-            PREV_VERS=""
+            PREV_MIN=""
           fi
-          VERSIONS=$(grep -oE 'Programming Language :: Python :: 3\.[0-9]+' pyproject.toml | awk '{print $NF}' | sort -u | paste -sd ',' -)
-          [ -z "$VERSIONS" ] && VERSIONS="none"
-          echo "Derived Python versions: $VERSIONS"
-          printf '{"versions": [' > static/python_versions.json
-          if [ "$VERSIONS" != "none" ]; then
-            IFS=',' read -ra VS <<< "$VERSIONS"
-            first=true
-            for v in "${VS[@]}"; do
-              $first || printf ',' >> static/python_versions.json
-              printf '"%s"' "$v" >> static/python_versions.json
-              first=false
-            done
+          # Extract requires-python (e.g. >=3.10) and parse minimum
+          REQUIRES=$(grep -E '^requires-python' pyproject.toml | head -1 | cut -d'=' -f2 | tr -d ' "')
+          # Fallback: parse project.requires-python via python if grep fails
+          if [ -z "$REQUIRES" ]; then
+            REQUIRES=$(python -c "import toml; import re; d=toml.load('pyproject.toml'); print(d['project']['requires-python'])") || true
           fi
-          printf ']}' >> static/python_versions.json
-          anybadge --label python --value "$VERSIONS" --file static/badge_python.svg --color '#3776AB'
-          CURR_VERS="$VERSIONS"
-          if [ "$PREV_VERS" = "$CURR_VERS" ]; then
-            echo "Versions unchanged; skipping commit."; exit 0; fi
+          MIN=$(echo "$REQUIRES" | sed -E 's/>=([0-9]+\.[0-9]+).*/\1/')
+          if [ -z "$MIN" ]; then echo "Could not determine min Python version"; exit 1; fi
+          BADGE_VALUE="${MIN}+"
+          echo "Minimum Python version: $MIN (badge: $BADGE_VALUE)"
+          printf '{"min": "%s"}' "$MIN" > static/python_version_min.json
+          anybadge --label python --value "$BADGE_VALUE" --file static/badge_python.svg --color '#3776AB'
+          if [ "$PREV_MIN" = "$MIN" ]; then
+            echo "Min version unchanged; skipping commit."; exit 0; fi
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add static/badge_python.svg static/python_versions.json
+          git add static/badge_python.svg static/python_version_min.json
           git diff --cached --quiet && echo "Nothing to commit" && exit 0
-          git commit -m "chore: update python versions badge ($CURR_VERS)"
+          git commit -m "chore: update python min version badge ($BADGE_VALUE)"
           git push
 
   lint:
