@@ -1,3 +1,5 @@
+"""media file finder and player."""
+
 from . import utils
 from ._app_mf import app_mf
 from ._version import __version__
