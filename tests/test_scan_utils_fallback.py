@@ -80,9 +80,8 @@ def test_permission_error_in_python_scanner(monkeypatch, tmp_path):
         # Only perform Path comparison for path-like inputs; some environments
         # may invoke os.scandir with non-path integers during teardown or plugin
         # activity. Guard to prevent TypeError when constructing Path(int).
-        if isinstance(path, (str, bytes, os.PathLike)):
-            if Path(path) == protected:
-                raise PermissionError("denied")
+        if isinstance(path, (str, bytes, os.PathLike)) and Path(path) == protected:
+            raise PermissionError("denied")
         return original_scandir(path)
 
     monkeypatch.setattr(os, "scandir", fake_scandir)
