@@ -20,8 +20,6 @@ jobs:
   tests:
     name: Tests (py${{ matrix.python }} - linux)
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # needed for coverage badge commit on main
     strategy:
       fail-fast: false
       matrix:
@@ -84,6 +82,8 @@ jobs:
     name: Update badges
     needs: tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write  # allow reusable workflow to push badge commits
     uses: ./.github/workflows/badges.yml
     with:
       python-version: '3.13'
