@@ -77,6 +77,17 @@ line-length = 88
 respect-gitignore = true
 src = ["src", "test"]
 exclude = ["docs"]
+ignore = [
+    "D100",  # Missing docstring in public module
+    "D205",  # Missing blank line between summary line and description
+    "E111",  # Indentation is not a multiple of four
+    "E114",  # Indentation is not a multiple of four (comment)
+    "E117",  # Over-indented
+    "D206",  # Docstring should be indented with spaces, not tabs
+    "D300",  # Triple single quotes
+    "B905",  # zip without explicit strict
+    "D103"   # Undocumented public function
+]
 
 [tool.ruff.lint]
 select = [
@@ -90,17 +101,6 @@ select = [
     "I",  # isort
 ]
 
-# For some of the following, see https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
-ignore = [
-    "D100",  # Missing docstring in public module
-    "D205",  # Missing blank line between summary line and description
-    "E111",  # Indentation is not a multiple of four
-    "E114",  # Indentation is not a multiple of four (comment)
-    "E117",  # Over-indented
-    "D206",  # Docstring should be indented with spaces, not tabs
-    "D300",  # Triple single quotes
-    "B905",  # zip without explicit strict
-]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
