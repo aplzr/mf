@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read  # default least privilege; jobs elevate if they push badges
+  contents: read  # default least privilege
   actions: read
   checks: write
 
@@ -80,93 +80,13 @@ jobs:
             coverage.xml
             htmlcov/
           if-no-files-found: error
-      - name: Generate coverage badge (anybadge)
-        if: env.COVERAGE == 'true'
-        run: |
-          uv pip install --system anybadge
-          mkdir -p static
-          PCT=$(python -c "import re,pathlib; xml=pathlib.Path('coverage.xml').read_text(); import re; m=re.search(r'line-rate=\"([0-9.]+)\"', xml); print(round(float(m.group(1))*100) if m else -1)")
-          anybadge --label coverage --value "$PCT%" --file static/badge_coverage.svg --color '#4c1' --overwrite
-      - name: Upload coverage badge artifact
-        if: env.COVERAGE == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-badge
-          path: static/badge_coverage.svg
-          if-no-files-found: error
-      - name: Commit updated badge if coverage changed
-        if: env.COVERAGE == 'true' && github.ref == 'refs/heads/main'
-        run: |
-          set -euo pipefail
-          # Extract current coverage percent
-          PCT=$(python -c "import re,pathlib; xml=pathlib.Path('coverage.xml').read_text(); m=re.search(r'line-rate=\"([0-9.]+)\"', xml); print(round(float(m.group(1))*100) if m else -1)")
-          # Read previous percent if exists
-          if [ -f static/coverage.json ]; then
-            PREV=$(python -c "import json,pathlib; p=pathlib.Path('static/coverage.json'); print(json.loads(p.read_text()).get('coverage',-1))")
-          else
-            PREV=-1
-          fi
-          echo "Previous coverage: $PREV%, Current coverage: $PCT%"
-          mkdir -p static
-          if [ "$PCT" = "-1" ] || [ "$PCT" = "$PREV" ]; then
-            echo "Coverage unchanged; skipping commit."
-            exit 0
-          fi
-          echo "{\"coverage\": $PCT}" > static/coverage.json
-          # Ensure python versions json already written by Python script
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add static/badge_coverage.svg static/coverage.json
-          git diff --cached --quiet && echo "Nothing to commit" && exit 0
-          git commit -m "chore: update coverage badge ($PCT%)"
-          git push
-
-  python-versions:
-    name: Python versions badge
-    runs-on: ubuntu-latest
+  badges:
+    name: Update badges
     needs: tests
-    # Run only on push events to main (avoid PR detached HEAD commits)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: write  # needed for python min version badge commit
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Install uv
-        run: pip install uv
-      - name: Install anybadge
-        run: uv pip install --system anybadge tomlkit
-      - name: Generate minimum python version badge
-        run: |
-          set -euo pipefail
-          mkdir -p static
-          # Previous min version
-          if [ -f static/python_version_min.json ]; then
-            PREV_MIN=$(python -c "import json; print(json.load(open('static/python_version_min.json')).get('min',''))")
-          else
-            PREV_MIN=""
-          fi
-          # Parse project.requires-python using python -c (extract first X.Y)
-          MIN=$(python -c "import tomlkit, re; spec=tomlkit.parse(open('pyproject.toml','r',encoding='utf-8').read())['project']['requires-python']; m=re.search(r'(\\d+\\.\\d+)', spec); print(m.group(1) if m else '')")
-          if [ -z "$MIN" ]; then echo "Could not determine min Python version"; exit 1; fi
-          BADGE_VALUE="${MIN}+"
-          echo "Minimum Python version: $MIN (badge: $BADGE_VALUE)"
-          printf '{"min": "%s"}' "$MIN" > static/python_version_min.json
-          anybadge --label python --value "$BADGE_VALUE" --file static/badge_python.svg --color '#3776AB' --overwrite
-          if [ "$PREV_MIN" = "$MIN" ]; then
-            echo "Min version unchanged; skipping commit."; exit 0; fi
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add static/badge_python.svg static/python_version_min.json
-          git diff --cached --quiet && echo "Nothing to commit" && exit 0
-          git commit -m "chore: update python min version badge ($BADGE_VALUE)"
-          git push
+    uses: ./.github/workflows/badges.yml
+    with:
+      python-version: '3.13'
 
   lint:
     name: Ruff lint
