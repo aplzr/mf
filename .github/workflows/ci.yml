@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write  # allow badge commit pushes
+  contents: read  # default least privilege; jobs elevate if they push badges
   actions: read
   checks: write
 
@@ -20,6 +20,8 @@ jobs:
   tests:
     name: Tests (py${{ matrix.python }} - linux)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # needed for coverage badge commit on main
     strategy:
       fail-fast: false
       matrix:
@@ -169,6 +171,8 @@ jobs:
   lint:
     name: Ruff lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # lint job does not push
     steps:
       - name: Checkout
         uses: actions/checkout@v4
