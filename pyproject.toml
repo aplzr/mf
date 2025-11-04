@@ -19,6 +19,8 @@ dependencies = [
 dev = [
     "pytest>=8.3.0",
     "pytest-cov>=5.0.0",
+    "pre-commit>=4.3.0",
+    "ruff>=0.14.3",
 ]
 
 [project.scripts]
@@ -67,3 +69,45 @@ exclude_lines = [
 [tool.coverage.html]
 directory = "htmlcov"
 
+[tool.ruff]
+target-version = "py310"
+fix = false  # Fix safely fixable errors automatically
+indent-width = 4
+line-length = 88
+respect-gitignore = true
+src = ["src", "test"]
+exclude = ["docs"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle
+    "D",  # pydocstyle
+    "F",  # Pyflakes
+    "UP",  # pyupgrade
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "I",  # isort
+]
+
+ignore = [
+    "D100",  # Missing docstring in public module
+    "D205",  # Missing blank line between summary line and description
+    "E111",  # Indentation is not a multiple of four
+    "E114",  # Indentation is not a multiple of four (comment)
+    "E117",  # Over-indented
+    "D206",  # Docstring should be indented with spaces, not tabs
+    "D300",  # Triple single quotes
+    "B905",  # zip without explicit strict
+    "D103"   # Undocumented public function
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/mf/utils/default_config.py" = ["E501"]  # Line too long
+"src/mf/utils/scan_utils.py" = ["SIM102"]  # Use of nested 'if' statements
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+indent-style = "space"

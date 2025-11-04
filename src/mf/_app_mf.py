@@ -119,15 +119,15 @@ def play(
 
         console.print("[green]✓[/green] VLC launched successfully")
 
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         console.print(
             "Error: VLC not found. Please install VLC media player.", style="red"
         )
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     except Exception as e:
         console.print(f"Error launching VLC: {e}", style="red")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app_mf.command()
