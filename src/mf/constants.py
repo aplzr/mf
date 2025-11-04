@@ -1,9 +1,3 @@
-"""Centralized project constants (policy values, defaults, mappings).
-
-Keep this module free of heavy imports and side effects. Only literals and
-trivial data structures so other modules can import cheaply.
-"""
-
 from __future__ import annotations
 
 # Default media file extensions included in a fresh config.

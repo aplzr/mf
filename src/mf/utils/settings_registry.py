@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 from tomlkit import TOMLDocument
 
@@ -15,6 +16,20 @@ Action = Literal["set", "add", "remove", "clear"]
 
 @dataclass
 class SettingSpec:
+    """Specification for a configurable setting.
+
+    Attributes:
+        key: Name of the setting in the configuration file.
+        kind: Kind of setting ('scalar' or 'list').
+        value_type: Python type of the normalized value(s).
+        actions: Allowed actions for this setting.
+        normalize: Function converting a raw string into the typed value.
+        display: Function producing a human readable representation.
+        validate_all: Function validating the (possibly list) value(s).
+        help: Human readable help text shown to the user.
+        before_write: Hook to transform value(s) before persisting.
+    """
+
     key: str
     kind: Literal["scalar", "list"]
     value_type: type
@@ -89,24 +104,23 @@ def apply_action(
     if action not in spec.actions:
         print_error(f"Action {action} not supported for {key}.")
 
-    if spec.kind == "scalar":
-        if action == "set":
-            if raw_values is None or len(raw_values) > 1:
-                print_error(
-                    f"Scalar setting {key} requires "
-                    f"a single value for set, got: {raw_values}."
-                )
+    if spec.kind == "scalar" and action == "set":
+        if raw_values is None or len(raw_values) > 1:
+            print_error(
+                f"Scalar setting {key} requires "
+                f"a single value for set, got: {raw_values}."
+            )
 
-            new_value = spec.normalize(raw_values[0])
-            spec.validate_all(new_value)
-            cfg[key] = spec.before_write(new_value)
+        new_value = spec.normalize(raw_values[0])
+        spec.validate_all(new_value)
+        cfg[key] = spec.before_write(new_value)
 
-            if spec.value_type is bool:
-                new_value = str(new_value).lower()  # Print as TOML
+        if spec.value_type is bool:
+            new_value = str(new_value).lower()  # Print as TOML
 
-            print_ok(f"Set {key} to '{new_value}'.")
+        print_ok(f"Set {key} to '{new_value}'.")
 
-            return cfg
+        return cfg
 
     # List setting
     if action == "clear":
