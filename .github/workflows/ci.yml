@@ -123,7 +123,8 @@ jobs:
     name: Python versions badge
     runs-on: ubuntu-latest
     needs: tests
-    if: github.ref == 'refs/heads/main'
+    # Run on main, the feature branch for testing, or pull_request targeting main
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/55-add-badges-for-coverage-latest-release-python-version-code-format' || (github.event_name == 'pull_request' && github.base_ref == 'main')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
