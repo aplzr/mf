@@ -20,8 +20,10 @@ def test_scalar_multi_value_error(monkeypatch):
     result = runner.invoke(app_config, ["set", "match_extensions", "true", "false"])
     assert result.exit_code != 0
     assert "requires a single value" in result.stdout
-    # Ensure original value not overwritten unpredictably; it should remain whatever single normalization of first value would have been if code proceeded.
+    # Ensure original value not overwritten unpredictably; it should remain whatever
+    # single normalization of first value would have been if code proceeded.
     # Config may be unchanged since exit occurred before write.
     cfg = read_config()
-    # Value should still be boolean (default) either True/False; we just assert key exists.
+    # Value should still be boolean (default) either True/False;
+    # we just assert key exists.
     assert "match_extensions" in cfg

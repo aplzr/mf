@@ -32,8 +32,12 @@ def normalize_bool_str(bool_str: str) -> bool:
         return False
 
     print_error(
-        f"Invalid boolean value. Got: '{bool_str}'. Expected one of: "
-        f"{', '.join(repr(item) for item in sorted(BOOLEAN_TRUE_VALUES | BOOLEAN_FALSE_VALUES))}."
+        f"Invalid boolean value. Got: '{bool_str}'. Expected one of: {{}}.".format(
+            ", ".join(
+                repr(item)
+                for item in sorted(BOOLEAN_TRUE_VALUES | BOOLEAN_FALSE_VALUES)
+            )
+        )
     )
 
 
