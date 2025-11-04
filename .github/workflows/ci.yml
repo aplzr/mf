@@ -51,8 +51,9 @@ jobs:
           restore-keys: |
             uv-${{ runner.os }}-
 
-      - name: Install project (with dev extras) using uv
-        run: uv pip install --system .[dev]
+      - name: Install project (editable, with dev extras) using uv
+        run: uv pip install --system -e .[dev]
+        # Editable install keeps package path under src/mf so coverage 'source' matching works.
 
       - name: Show environment
         run: |
