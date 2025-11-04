@@ -93,7 +93,7 @@ jobs:
           path: static/badge_coverage.svg
           if-no-files-found: error
       - name: Commit updated badge if coverage changed
-        if: env.COVERAGE == 'true' && github.ref == 'refs/heads/main'
+        if: env.COVERAGE == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/55-add-badges-for-coverage-latest-release-python-version-code-format')
         run: |
           set -euo pipefail
           # Extract current coverage percent
