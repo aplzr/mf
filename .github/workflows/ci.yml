@@ -149,7 +149,7 @@ jobs:
             PREV_MIN=""
           fi
           # Parse project.requires-python using python -c (extract first X.Y)
-          MIN=$(python -c "import toml, re; spec=toml.load('pyproject.toml')['project']['requires-python']; import sys; import re as _r; m=_r.search(r'(\\d+\\.\\d+)', spec); print(m.group(1) if m else '')")
+          MIN=$(python -c "import tomlkit, re; spec=tomlkit.parse(open('pyproject.toml','r',encoding='utf-8').read())['project']['requires-python']; m=re.search(r'(\\d+\\.\\d+)', spec); print(m.group(1) if m else '')")
           if [ -z "$MIN" ]; then echo "Could not determine min Python version"; exit 1; fi
           BADGE_VALUE="${MIN}+"
           echo "Minimum Python version: $MIN (badge: $BADGE_VALUE)"
