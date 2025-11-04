@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  tests:
+    name: Tests (py${{ matrix.python }} - linux)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    env:
+      # Generate & upload coverage only for latest stable Python (3.13) to reduce minutes
+      COVERAGE: ${{ matrix.python == '3.13' }}
+      PYTHONDONTWRITEBYTECODE: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Cache uv build artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+
+      - name: Install project (with dev extras) using uv
+        run: uv pip install --system .[dev]
+
+      - name: Show environment
+        run: |
+          python -V
+          uv pip list
+
+      - name: Run tests (with coverage if selected)
+        run: |
+          if [ "$COVERAGE" = "true" ]; then
+            echo "Running tests WITH coverage"
+            pytest
+          else
+            echo "Running tests WITHOUT coverage"
+            pytest -q --no-cov
+          fi
+
+      - name: Upload coverage artifacts
+        if: env.COVERAGE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            coverage.xml
+            htmlcov/
+          if-no-files-found: error
+
+  # Optional lint job (enable once you add ruff / mypy etc.)
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.12'
+  #     - name: Install lint deps
+  #       run: pip install ruff mypy .[dev]
+  #     - name: Ruff check
+  #       run: ruff check .
+  #     - name: Type check
+  #       run: mypy src/mf
+
+  # Example Codecov job (requires adding CODECOV_TOKEN secret)
+  # coverage-report:
+  #   needs: tests
+  #   if: always()  # still runs to annotate PR even if some matrix fail
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: coverage
+  #         path: coverage_artifacts
+  #     - name: Upload to Codecov
+  #       uses: codecov/codecov-action@v4
+  #       with:
+  #         files: coverage_artifacts/coverage.xml
+  #         fail_ci_if_error: true
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+  #     - name: List artifact contents
+  #       run: ls -R coverage_artifacts
