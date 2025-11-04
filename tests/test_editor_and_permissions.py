@@ -22,7 +22,8 @@ def test_start_editor_uses_visual(monkeypatch, tmp_path):
 
 
 def test_scan_permission_error(monkeypatch, tmp_path):
-    # Create directory and remove permissions (simulate by raising PermissionError in scandir)
+    # Create directory and remove permissions
+    # (simulate by raising PermissionError in scandir)
     target = tmp_path / "restricted"
     target.mkdir()
 
