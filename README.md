@@ -116,7 +116,7 @@ mf config set match_extensions false # Return all files matching pattern
 - Patterns without wildcards are automatically wrapped: `batman` becomes `*batman*`
 - Examples:
   - `mf find "*.mp4"` - All MP4 files
-  - `mf find batman` - Files containing "batman" 
+  - `mf find batman` - Files containing "batman"
   - `mf find "*2023*1080p*"` - 2023 releases in 1080p
   - `mf find "s01e??"` - Season 1 episodes
 
@@ -151,3 +151,28 @@ Copyright (c) 2017-present the fd developers.
 
 - MIT License: See `src/mf/bin/LICENSE-fd-MIT`
 - Apache License 2.0: See `src/mf/bin/LICENSE-fd-APACHE`
+
+## Development: Pre-commit Hooks
+
+This repo uses [pre-commit](https://pre-commit.com/) for fast linting & formatting with Ruff and basic hygiene checks.
+
+Enable locally:
+
+```bash
+pip install pre-commit  # or: uv pip install --system pre-commit
+pre-commit install      # sets up git hook
+```
+
+Run against all files manually:
+
+```bash
+pre-commit run --all-files
+```
+
+Update hook versions:
+
+```bash
+pre-commit autoupdate
+```
+
+If you prefer not to auto-fix code on commit, remove `args: ["--fix"]` from the `ruff` hook in `.pre-commit-config.yaml`.

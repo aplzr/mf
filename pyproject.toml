@@ -19,6 +19,7 @@ dependencies = [
 dev = [
     "pytest>=8.3.0",
     "pytest-cov>=5.0.0",
+    "pre-commit>=4.3.0",
 ]
 
 [project.scripts]
@@ -66,4 +67,3 @@ exclude_lines = [
 
 [tool.coverage.html]
 directory = "htmlcov"
-
