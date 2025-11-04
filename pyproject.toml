@@ -71,7 +71,9 @@ console_output_style = "progress"
 
 [tool.coverage.run]
 branch = true
-source = ["src/mf"]
+# Include both the src layout and the installed package path so coverage works
+# whether tests run against an editable install or a built wheel.
+source = ["mf", "src/mf"]
 omit = []
 data_file = ".coverage"
 
