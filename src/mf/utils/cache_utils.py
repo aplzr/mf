@@ -78,7 +78,7 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
     """
     cache_file = get_cache_file()
     try:
-        with open(cache_file, "r", encoding="utf-8") as f:
+        with open(cache_file, encoding="utf-8") as f:
             cache_data = json.load(f)
 
         pattern = cache_data["pattern"]
@@ -88,12 +88,12 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
         timestamp = datetime.fromisoformat(cache_data["timestamp"])
 
         return pattern, results, timestamp
-    except (json.JSONDecodeError, KeyError, FileNotFoundError):
+    except (json.JSONDecodeError, KeyError, FileNotFoundError) as e:
         print_error(
             "Cache is empty or doesn't exist. "
             "Please run 'mf find <pattern>' or 'mf new' first."
         )
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 def print_search_results(title: str, results: list[tuple[int, Path]]):
