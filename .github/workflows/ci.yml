@@ -77,6 +77,43 @@ jobs:
             coverage.xml
             htmlcov/
           if-no-files-found: error
+      - name: Generate coverage badge (genbadge)
+        if: env.COVERAGE == 'true'
+        run: |
+          uv pip install --system genbadge[coverage]
+          mkdir -p static
+          genbadge coverage -i coverage.xml -o static/badge_coverage.svg
+      - name: Upload coverage badge artifact
+        if: env.COVERAGE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badge
+          path: static/badge_coverage.svg
+          if-no-files-found: error
+      - name: Commit updated badge if coverage changed
+        if: env.COVERAGE == 'true' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          # Extract current coverage percent
+          PCT=$(python -c "import re,pathlib; xml=pathlib.Path('coverage.xml').read_text(); m=re.search(r'line-rate=\"([0-9.]+)\"', xml); print(round(float(m.group(1))*100) if m else -1)")
+          # Read previous percent if exists
+          if [ -f static/coverage.json ]; then
+            PREV=$(python -c "import json,pathlib; p=pathlib.Path('static/coverage.json'); print(json.loads(p.read_text()).get('coverage',-1))")
+          else
+            PREV=-1
+          fi
+          echo "Previous: $PREV%, Current: $PCT%"
+          if [ "$PCT" = "-1" ] || [ "$PCT" = "$PREV" ]; then
+            echo "Coverage unchanged; skipping commit."
+            exit 0
+          fi
+          echo "{\"coverage\": $PCT}" > static/coverage.json
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add static/badge_coverage.svg static/coverage.json
+          git diff --cached --quiet && echo "Nothing to commit" && exit 0
+          git commit -m "chore: update coverage badge ($PCT%)"
+          git push
 
   lint:
     name: Ruff lint
@@ -94,22 +131,3 @@ jobs:
         run: uv pip install --system ruff
       - name: Run ruff checks
         run: ruff check .
-
-  # Example Codecov job (requires adding CODECOV_TOKEN secret)
-  # coverage-report:
-  #   needs: tests
-  #   if: always()  # still runs to annotate PR even if some matrix fail
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/download-artifact@v4
-  #       with:
-  #         name: coverage
-  #         path: coverage_artifacts
-  #     - name: Upload to Codecov
-  #       uses: codecov/codecov-action@v4
-  #       with:
-  #         files: coverage_artifacts/coverage.xml
-  #         fail_ci_if_error: true
-  #         token: ${{ secrets.CODECOV_TOKEN }}
-  #     - name: List artifact contents
-  #       run: ls -R coverage_artifacts
