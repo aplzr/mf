@@ -148,18 +148,13 @@ jobs:
           else
             PREV_MIN=""
           fi
-          # Extract requires-python (e.g. >=3.10) and parse minimum
-          REQUIRES=$(grep -E '^requires-python' pyproject.toml | head -1 | cut -d'=' -f2 | tr -d ' "')
-          # Fallback: parse project.requires-python via python if grep fails
-          if [ -z "$REQUIRES" ]; then
-            REQUIRES=$(python -c "import toml; import re; d=toml.load('pyproject.toml'); print(d['project']['requires-python'])") || true
-          fi
-          MIN=$(echo "$REQUIRES" | sed -E 's/>=([0-9]+\.[0-9]+).*/\1/')
+          # Parse project.requires-python using python -c (extract first X.Y)
+          MIN=$(python -c "import toml, re; spec=toml.load('pyproject.toml')['project']['requires-python']; import sys; import re as _r; m=_r.search(r'(\\d+\\.\\d+)', spec); print(m.group(1) if m else '')")
           if [ -z "$MIN" ]; then echo "Could not determine min Python version"; exit 1; fi
           BADGE_VALUE="${MIN}+"
           echo "Minimum Python version: $MIN (badge: $BADGE_VALUE)"
           printf '{"min": "%s"}' "$MIN" > static/python_version_min.json
-          anybadge --label python --value "$BADGE_VALUE" --file static/badge_python.svg --color '#3776AB'
+          anybadge --label python --value "$BADGE_VALUE" --file static/badge_python.svg --color '#3776AB' --overwrite
           if [ "$PREV_MIN" = "$MIN" ]; then
             echo "Min version unchanged; skipping commit."; exit 0; fi
           git config user.name "github-actions"
