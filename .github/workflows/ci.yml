@@ -23,10 +23,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.10", "3.11", "3.12", "3.13"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     env:
-      # Generate & upload coverage only for latest stable Python (3.13) to reduce minutes
-      COVERAGE: ${{ matrix.python == '3.13' }}
+      # Generate & upload coverage only for latest stable Python to reduce minutes
+      COVERAGE: ${{ matrix.python == '3.14' }}
       PYTHONDONTWRITEBYTECODE: 1
     steps:
       - name: Checkout
