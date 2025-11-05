@@ -78,6 +78,7 @@ jobs:
             coverage.xml
             htmlcov/
           if-no-files-found: error
+          retention-days: 3
   badges:
     name: Update badges
     needs: tests
