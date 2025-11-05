@@ -1,6 +1,8 @@
 import tomlkit
 import typer
+from rich.panel import Panel
 from rich.syntax import Syntax
+from rich.table import Column, Table
 
 from .utils import (
     apply_action,
@@ -10,6 +12,7 @@ from .utils import (
     start_editor,
     write_config,
 )
+from .utils.settings_registry import REGISTRY
 
 app_config = typer.Typer(help="Manage mf configuration.")
 
@@ -81,3 +84,33 @@ def clear(key: str):
     cfg = read_config()
     cfg = apply_action(cfg, key, "clear", None)
     write_config(cfg)
+
+
+@app_config.command()
+def settings():
+    "List all available settings."
+    table = Table(
+        Column("Setting", style="cyan", no_wrap=True),
+        Column("Type", style="magenta", no_wrap=True),
+        Column("Actions", style="green"),
+        Column("Description", style="white"),
+        show_header=True,
+        box=None,
+        padding=(0, 1),
+    )
+
+    for key, spec in REGISTRY.items():
+        actions = ", ".join(spec.actions)
+        table.add_row(
+            key, f"{spec.kind}, {spec.value_type.__name__}", actions, spec.help
+        )
+
+    panel = Panel(
+        table,
+        title="[bold]Available settings[/bold]",
+        title_align="left",
+        padding=(1, 1),
+    )
+
+    console.print()
+    console.print(panel)
