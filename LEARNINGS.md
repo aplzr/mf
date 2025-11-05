@@ -176,3 +176,28 @@ Takeaways:
 - dataclasses can be a convenient way of defining formalisms. I haven't used them much so far, and they do feel a bit sugary, but it's nice that I can just define attributes and get a ready-made `__init__` to fill those attributes.
 - Defining behaviour outside of where it's executed (normalization and validation functions, ...) and passing it as arguments (to the `SettingSpec`) is a form of __Inversion of Control__ called __Dependency Injection__. In this case here it is precisely what has enabled me to deduplicate code, generalize the generalizable parts, and only having to define the truly setting-specific portions in small, concise functions without any boilerplate.
 - This also enables a __separation of concerns__: `SettingSpec` handles structure in a declarative way, injected functions handle behaviour.
+
+# 2025-11-05
+## Benchmarking `mf`
+I wasn't quite sure whether the `fd` scanner is actually faster than the pure python one, i.e. whether it's worth the effort of bundling `fd` for various platforms with `mf`, so today I've tested it. I used [`hyperfine`](https://github.com/sharkdp/hyperfine) for benchmarking, which incidentally comes from the same person that created `fd`.
+
+- All tests with warm caches: `hyperfine --warmup 3 --runs 10 "mf find test" "mf new"`.
+- Media collection on two separate, mechanical USB drives in a file server on the local network, served via SMB for Windows and NFS for Linux clients, 16.3 TiB / 3540 files total.
+- Tested on the file server itself with local file access as well as on a Linux and a Windows desktop with network file access.
+- `mf find` can use both the `fd` scanner as well as the pure python one. First run was with the default setting `prefer_fd = true`. After that I switched to the python scanner via `mf config set prefer_fd false` and tested again.
+- For the sake of completeness I also benchmarked `mf new`, which always uses the pure python scanner, as `fd` can't report the last modified time necessary for sorting files by new.
+
+
+| Platform | Command | Pure Python (ms) | FD Scanner (ms) | Improvement |
+|:---------|:--------|------------------:|----------------:|------------:|
+| **Linux Server** | `mf find test` | 697.9 ± 17.1 | 443.5 ± 2.6 | **36% faster** |
+| | `mf new` | 855.2 ± 33.5 | — | — |
+| **Linux Desktop (NFS)** | `mf find test` | 1,618.0 ± 28.0 | 478.2 ± 21.2 | **70% faster** |
+| | `mf new` | 1,712.0 ± 36.0 | — | — |
+| **Windows Desktop (SMB)** | `mf find test` | 2,371.0 ± 90.0 | 1,601.0 ± 94.0 | **32% faster** |
+| | `mf new` | 2,371.0 ± 37.0 | — | — |
+
+**Takeaways:**
+- If available, the `fd` scanner provides 32-70% performance improvement for search operations over pure python file scanning. Quite happy with this.
+- Platform-specific `DirEntry.stat()` caching behaviour validated: The benchmarks confirm the caching behaviour previously discussed [here](https://github.com/aplzr/mf/blob/main/LEARNINGS.md#direntrystat-caching-behaviour). On Windows, `mf find test` and `mf new` take the exact same time, whereas on Linux `mf new` always takes longer than `mf find test`. `DirEntry` caches metadata on Windows, but not on Linux. This means that modification time lookups via `DirEntry.stat()` on Linux always need an additional syscall, which makes `mf new` 13-23% slower than `mf find test`, which doesn't call `stat()`. On Windows, `stat()` gets the metadata for free from `DirEntry`'s cache without an additional syscall, resulting in `mf new` not being slower than `mf find test`.
+- File scanning takes more time over the network (no surprise there). [Here](https://github.com/aplzr/mf/blob/main/LEARNINGS.md#platform-performance-difference---continued) I had already compared NFS vs SMB shares on a Linux desktop, and that same pattern repeats when comparing a Windows desktop accessing files via SMB with a Linux desktop accessing them via NFS: NFS provides much better performance. It would be interesting to see how NFS on the Windows desktop compares to NFS on the Linux desktop, but I haven't tested that.
