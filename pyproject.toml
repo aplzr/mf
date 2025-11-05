@@ -44,6 +44,7 @@ dev = [
 
 [project.scripts]
 mf = "mf:main"
+mediafinder = "mf:main"
 
 [build-system]
 requires = ["hatchling"]
