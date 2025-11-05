@@ -34,6 +34,8 @@ uv tool install .
 
 ## Quick Start
 
+💡 **Note:** If `mf` is shadowed by another command on your system (e.g., Metafont), use `mediafinder` instead — it's already installed and works exactly the same way.
+
 1. **Configure search paths** where your media files are located:
 
 ```bash
