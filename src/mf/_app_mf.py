@@ -142,11 +142,23 @@ def imdb(
     ),
 ):
     """Open IMDB entry of a search result."""
+    # First derive metadata from filename. Tests expect a parse failure
+    # to be reported even if the IMDb library could not be imported.
+    filestem = get_file_by_index(index).stem
+    parsed = guessit(filestem)
+
+    if "title" not in parsed:
+        print_warn(f"Could not parse a title from filename '{filestem}'.")
+        raise typer.Exit(1)
+
+    title = parsed["title"]
+
     # Lazy import to avoid failing package import on Python versions where imdb package
     # still uses deprecated APIs (e.g., pkgutil.find_loader removed in 3.14, see issue
-    # #60).
+    # #60). Import only after we know we have a title; avoids aborting before
+    # parse-related error paths are exercised in tests and in real usage.
     # Provide the global for assignment
-    global IMDb  # noqa: PLW0603  (explicit mutation of global sentinel)
+    global IMDb  # noqa: PLW0603
     if IMDb is None:  # First use: attempt real import
         try:
             from imdb import IMDb as _IMDb  # type: ignore
@@ -158,14 +170,6 @@ def imdb(
                 "or missing dependency."
             )
             raise typer.Exit(1) from e
-    filestem = get_file_by_index(index).stem
-    parsed = guessit(filestem)
-
-    if "title" not in parsed:
-        print_warn(f"Could not parse a title from filename '{filestem}'.")
-        raise typer.Exit(1)
-
-    title = parsed["title"]
 
     # Gracefully handle no IMDb results
     try:
