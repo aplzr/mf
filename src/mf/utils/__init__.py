@@ -20,6 +20,7 @@ from .default_config import default_cfg
 from .editor_utils import start_editor
 from .normalizers import (
     normalize_bool_str,
+    normalize_bool_to_toml,
     normalize_media_extension,
     normalize_path,
     normalize_pattern,
@@ -45,6 +46,7 @@ __all__ = [
     "get_validated_search_paths",
     "load_search_results",
     "normalize_media_extension",
+    "normalize_bool_to_toml",
     "normalize_path",
     "normalize_bool_str",
     "normalize_pattern",
