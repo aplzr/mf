@@ -137,24 +137,22 @@ mf config set match_extensions false # Return all files matching pattern
 - Parallel scanning across multiple search paths
 - Efficient caching of file modification times for "newest" searches
 
-### Benchmarking
-- All tests with `hyperfine` and warm caches: `hyperfine --warmup 3 --runs 10 "mf find test" "mf new"`
-- Media collection in two search paths on a file server on the local network, served via SMB for Windows and NFS for Linux clients, 16.3 TiB / 3540 files total
-- Tested on the file server itself with local file access as well as on a Linux and a Windows desktop with network file access
-- `mf find` can use both the `fd` scanner as well as the pure python one, so both were tested
-- `mf new` always uses the python scanner because `fd` can't return the last modified time necessary for sorting by new
+### Benchmarking `fd` vs pure python file scanning
+- All tests with [`hyperfine`](https://github.com/sharkdp/hyperfine) and warm caches: `hyperfine --warmup 3 --runs 10 "mf find test"`.
+- Media collection on two separate, mechanical USB drives in a file server on the local network, served via SMB for Windows and NFS for Linux clients, 16.3 TiB / 3540 files total.
+- Tested on the file server itself with local file access as well as on a Linux and a Windows desktop with network file access.
+- `mf find` can use both the `fd` scanner as well as the pure python one. First run was with the default setting `prefer_fd = true`. After that I switched to the python scanner via `mf config set prefer_fd false` and tested again.
 
 
-| Platform | Command | Pure Python (ms) | FD Scanner (ms) | Improvement |
-|:---------|:--------|------------------:|----------------:|------------:|
-| **Linux Server** | `mf find test` | 697.9 ± 17.1 | 443.5 ± 2.6 | **36% faster** |
-| | `mf new` | 855.2 ± 33.5 | — | — |
-| **Linux Desktop (NFS)** | `mf find test` | 1,618.0 ± 28.0 | 478.2 ± 21.2 | **70% faster** |
-| | `mf new` | 1,712.0 ± 36.0 | — | — |
-| **Windows Desktop (SMB)** | `mf find test` | 2,371.0 ± 90.0 | 1,601.0 ± 94.0 | **32% faster** |
-| | `mf new` | 2,371.0 ± 37.0 | — | — |
+| Platform | Pure Python (ms) | `fd` Scanner (ms) | Improvement |
+|:---------|------------------:|----------------:|------------:|
+| **Linux Server (local file access)** | 697.9 ± 17.1 | 443.5 ± 2.6 | **36% faster** |
+| **Linux Desktop (NFS)** | 1,618.0 ± 28.0 | 478.2 ± 21.2 | **70% faster** |
+| **Windows Desktop (SMB)** | 2,371.0 ± 90.0 | 1,601.0 ± 94.0 | **32% faster** |
 
-💡 If available, the `fd` scanner provides 32-70% performance improvement for search operations over pure python file scanning
+
+- The `fd` scanner provides 32-70% performance improvement for search operations over pure python file scanning.
+- Unsurprisingly, scanning files over the network takes more time than direct, local file access (this has nothing to do with `mf`). File scanning on NFS-based shares from Linux to Linux is much faster than on SMB-based shares from Windows to Linux.
 
 ## Requirements
 
