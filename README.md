@@ -5,6 +5,8 @@
 
 A cross-platform command-line tool for finding and playing video files in large collections
 
+![](static/mf.svg)
+
 ## Features
 
 - **🔍 Fast file search** - Uses vendored `fd` binary with automatic fallback to Python scanning
