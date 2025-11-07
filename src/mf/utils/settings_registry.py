@@ -103,6 +103,11 @@ def apply_action(
     Returns:
         TOMLDocument: Updated configuration.
     """
+    if key not in REGISTRY:
+        print_error(
+            f"Unknown configuration key: {key}. Available keys: {list(REGISTRY)}"
+        )
+
     spec = REGISTRY[key]
 
     if action not in spec.actions:
