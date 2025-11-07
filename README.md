@@ -161,7 +161,6 @@ If no editor is found, it prints the path so you can edit manually.
 - Uses bundled `fd` binary for fast file scanning when possible
 - Automatic fallback to Python scanning if `fd` unavailable
 - Parallel scanning across multiple search paths
-- Efficient caching of file modification times for "newest" searches
 
 ### Benchmarking `fd` vs pure python file scanning
 - All tests with [`hyperfine`](https://github.com/sharkdp/hyperfine) and warm caches: `hyperfine --warmup 3 --runs 10 "mf find test"`.
