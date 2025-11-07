@@ -18,6 +18,7 @@ from .config_utils import (
 from .console import console, print_error, print_ok, print_warn
 from .default_config import default_cfg
 from .editor_utils import start_editor
+from .generate_dummy_media import generate_dummy_media
 from .normalizers import (
     normalize_bool_str,
     normalize_bool_to_toml,
@@ -38,6 +39,7 @@ __all__ = [
     "console",
     "default_cfg",
     "find_media_files",
+    "generate_dummy_media",
     "get_cache_file",
     "get_config_file",
     "get_fd_binary",
@@ -45,10 +47,10 @@ __all__ = [
     "get_media_extensions",
     "get_validated_search_paths",
     "load_search_results",
-    "normalize_media_extension",
-    "normalize_bool_to_toml",
-    "normalize_path",
     "normalize_bool_str",
+    "normalize_bool_to_toml",
+    "normalize_media_extension",
+    "normalize_path",
     "normalize_pattern",
     "print_error",
     "print_ok",
