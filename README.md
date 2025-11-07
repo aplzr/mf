@@ -89,9 +89,14 @@ Cached indices remain valid until you run another `find` or `new` command that o
 
 ## Configuration
 
-The tool uses a TOML configuration file with the following settings:
+`mf` can be configured directly on the command line. For a table of all available settings:
+
+```
+mf config settings
+```
 
 ### Search Paths
+Add multiple paths of a (scattered) collection:
 
 ```bash
 mf config set search_paths "/movies" "/tv-shows" "/documentaries"
@@ -115,18 +120,7 @@ mf config set match_extensions false # Return all files matching pattern
 ### Other Settings
 
 - `fullscreen_playback` (bool): If true, `mf play` launches VLC with `--fullscreen --no-video-title-show`.
-  Toggle: `mf config set fullscreen_playback false`
 - `prefer_fd` (bool): Use the bundled `fd` scanner when possible. Automatically ignored for mtime-sorted searches (`mf new`) which always use the Python scanner.
-  Toggle: `mf config set prefer_fd false`
-- `match_extensions` (bool): Already shown above; restrict results to configured extensions.
-
-View a table of all available settings and their allowed actions:
-
-```
-mf config settings
-```
-
-Scalar settings only support the `set` action. List settings (`search_paths`, `media_extensions`) support: `set`, `add`, `remove`, `clear`.
 
 ### Editing the Config
 
