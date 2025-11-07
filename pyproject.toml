@@ -1,5 +1,5 @@
 [project]
-name = "mf"
+name = "mediafinder"
 dynamic = ["version"]
 description = "Media file finder and player"
 readme = "README.md"
