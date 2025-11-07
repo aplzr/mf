@@ -91,6 +91,11 @@ mf new 50 # Show 50 newest files
 - `mf cache file` - Print cache file location
 - `mf cache clear` - Clear the cache
 
+The plain command `mf cache` (with no subcommand) runs the default `show` action.
+
+
+Cached indices remain valid until you run another `find` or `new` command that overwrites the cache.
+
 ## Configuration
 
 The tool uses a TOML configuration file with the following settings:
@@ -116,10 +121,42 @@ mf config set match_extensions true # Only return configured media types
 mf config set match_extensions false # Return all files matching pattern
 ```
 
+### Other Settings
+
+- `fullscreen_playback` (bool): If true, `mf play` launches VLC with `--fullscreen --no-video-title-show`.
+  Toggle: `mf config set fullscreen_playback false`
+- `prefer_fd` (bool): Use the bundled `fd` scanner when possible. Automatically ignored for mtime-sorted searches (`mf new`) which always use the Python scanner.
+  Toggle: `mf config set prefer_fd false`
+- `match_extensions` (bool): Already shown above; restrict results to configured extensions.
+
+View a table of all available settings and their allowed actions:
+
+```
+mf config settings
+```
+
+Scalar settings only support the `set` action. List settings (`search_paths`, `media_extensions`) support: `set`, `add`, `remove`, `clear`.
+
+### Editing the Config
+
+`mf config edit` resolves an editor in this order:
+1. `$VISUAL` or `$EDITOR`
+2. Windows: Notepad++ if present else Notepad
+3. POSIX: first available of `nano`, `vim`, `vi`
+
+If no editor is found, it prints the path so you can edit manually.
+
+### Input Normalization
+
+- Boolean values accept: `true`, `false`, `yes`, `no`, `y`, `n`, `on`, `off`, `1`, `0` (case-insensitive; synonyms normalized to true/false).
+- Media extensions are normalized to lowercase with a leading dot (`mkv` → `.mkv`).
+- Paths are stored as absolute POSIX-style strings.
+
 ## Search Patterns
 
 - Use quotes around patterns with wildcards to prevent shell expansion
 - Patterns without wildcards are automatically wrapped: `batman` becomes `*batman*`
+- Automatic wildcard wrapping only happens if the pattern contains none of: `* ? [ ]`.
 - Examples:
   - `mf find "*.mp4"` - All MP4 files
   - `mf find batman` - Files containing "batman"
@@ -132,6 +169,7 @@ mf config set match_extensions false # Return all files matching pattern
 - **IMDB Lookup**: Uses filename parsing to find matching IMDB entries
 - **Smart Caching**: Search results are cached for quick index-based access
 - **Cross-platform paths**: Handles Windows and Unix path conventions
+- **Random Playback**: `mf play` (without index) randomly selects a file by scanning all configured paths (not just the last cached search).
 
 ## Performance
 
@@ -157,11 +195,17 @@ mf config set match_extensions false # Return all files matching pattern
 - The `fd` scanner provides 32-70% performance improvement for search operations over pure python file scanning.
 - Unsurprisingly, scanning files over the network takes more time than direct, local file access (this has nothing to do with `mf`). File scanning on NFS-based shares from Linux to Linux is much faster than on SMB-based shares from Windows to Linux.
 
+If `fd` is unavailable or errors, the tool transparently falls back to Python scanning. Missing permissions for directories are skipped with a warning.
+
 ## Requirements
 
 - Python 3.10+
 - VLC media player (for `play` command)
 - Internet connection (for IMDB lookup)
+
+### Python & IMDb Notes
+
+Tested on Python 3.10–3.14. IMDb lookups rely on the `cinemagoer` library (`imdb` module). On Python versions where upstream deprecations make the import fail, `mf imdb` exits gracefully without affecting other commands.
 
 ## License
 
