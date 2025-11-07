@@ -36,12 +36,12 @@ uv tool install mediafinder
 ```bash
 mf config set search_paths "/path/to/movies" "/path/to/tv-shows"
 ```
-2. **Find media files** matching a pattern:
+2. **Find media files** matching a filename pattern:
 
 ```bash
 mf find "batman" # Finds files containing "batman"
 mf find "*.mp4" # Finds all MP4 files
-mf find "2023" # Finds files from 2023 (if the year is in the filename)
+mf find "2023" # Finds files from 2023
 ```
 
 3. **Play a file** from search results:
@@ -66,18 +66,10 @@ mf new 50 # Show 50 newest files
 - `mf play [index]` - Play a file by index, or random file if no index given
 - `mf imdb <index>` - Open IMDB page for a media file
 - `mf filepath <index>` - Print full path of a search result
+- `mf config` - Configure `mf`
 - `mf version` - Print version information
 - `mf` or `mf --help` - Print help
 
-### Configuration Management
-
-- `mf config set <key> <values>` - Set configuration values
-- `mf config add <key> <values>` - Add values to list settings
-- `mf config remove <key> <values>` - Remove values from list settings
-- `mf config get <key>` - Get configuration value
-- `mf config list` - Show all configuration
-- `mf config edit` - Edit config file in default editor
-- `mf config file` - Print config file location
 
 ### Cache Management
 
@@ -87,29 +79,33 @@ mf new 50 # Show 50 newest files
 
 Cached indices remain valid until you run another `find` or `new` command that overwrites the cache.
 
-## Configuration
+### Configuration Management
+`mf` can be configured directly on the command line:
 
-`mf` can be configured directly on the command line. For a table of all available settings:
+- `mf config set <key> <values>` - Set configuration values
+- `mf config add <key> <values>` - Add values to list settings
+- `mf config remove <key> <values>` - Remove values from list settings
+- `mf config get <key>` - Get configuration value
+- `mf config list` - Show the current configuration
+- `mf config edit` - Edit config file in default editor
+- `mf config file` - Print config file location
+- `mf config settings` - Print a table of all available settings
 
-```
-mf config settings
-```
-
-### Search Paths
+#### Search Paths
 Add multiple paths of a (scattered) collection:
 
 ```bash
 mf config set search_paths "/movies" "/tv-shows" "/documentaries"
 ```
 
-### Media Extensions
+#### Media Extensions
 Control which file types are considered media files:
 
 ```
 mf config set media_extensions ".mp4" ".mkv" ".avi" ".mov" ".wmv"
 ```
 
-### Extension Matching
+#### Extension Matching
 Toggle whether to filter results by media extensions:
 
 ```bash
@@ -117,12 +113,13 @@ mf config set match_extensions true # Only return configured media types
 mf config set match_extensions false # Return all files matching pattern
 ```
 
-### Other Settings
+#### Other Settings
 
 - `fullscreen_playback` (bool): If true, `mf play` launches VLC with `--fullscreen --no-video-title-show`.
 - `prefer_fd` (bool): Use the bundled `fd` scanner when possible. Automatically ignored for mtime-sorted searches (`mf new`) which always use the Python scanner.
 
-### Editing the Config
+
+#### Editing the Config
 
 `mf config edit` resolves an editor in this order:
 1. `$VISUAL` or `$EDITOR`
@@ -131,7 +128,7 @@ mf config set match_extensions false # Return all files matching pattern
 
 If no editor is found, it prints the path so you can edit manually.
 
-### Input Normalization
+#### Input Normalization
 
 - Boolean values accept: `true`, `false`, `yes`, `no`, `y`, `n`, `on`, `off`, `1`, `0` (case-insensitive; synonyms normalized to true/false).
 - Media extensions are normalized to lowercase with a leading dot (`mkv` → `.mkv`).
@@ -160,7 +157,7 @@ If no editor is found, it prints the path so you can edit manually.
 
 - Uses bundled `fd` binary for fast file scanning when possible
 - Automatic fallback to Python scanning if `fd` unavailable
-- Parallel scanning across multiple search paths
+- Parallel scanning across multiple search paths  
 
 ### Benchmarking `fd` vs pure python file scanning
 - All tests with [`hyperfine`](https://github.com/sharkdp/hyperfine) and warm caches: `hyperfine --warmup 3 --runs 10 "mf find test"`.
