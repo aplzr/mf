@@ -18,15 +18,16 @@ permissions:
 
 jobs:
   tests:
-    name: Tests (py${{ matrix.python }} - linux)
-    runs-on: ubuntu-latest
+    name: Tests (py${{ matrix.python }} - ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     env:
-      # Generate & upload coverage only for latest stable Python to reduce minutes
-      COVERAGE: ${{ matrix.python == '3.14' }}
+      # Generate & upload coverage only for latest stable Python on Linux to reduce minutes
+      COVERAGE: ${{ matrix.python == '3.14' && matrix.os == 'ubuntu-latest' }}
       PYTHONDONTWRITEBYTECODE: 1
     steps:
       - name: Checkout
@@ -52,7 +53,6 @@ jobs:
 
       - name: Install project (editable, with dev extras) using uv
         run: uv pip install --system -e .[dev]
-        # Editable install keeps package path under src/mf so coverage 'source' matching works.
 
       - name: Show environment
         run: |
@@ -60,6 +60,7 @@ jobs:
           uv pip list
 
       - name: Run tests (with coverage if selected)
+        shell: bash  # Ensures bash on all OSes
         run: |
           if [ "$COVERAGE" = "true" ]; then
             echo "Running tests WITH coverage"
@@ -79,6 +80,7 @@ jobs:
             htmlcov/
           if-no-files-found: error
           retention-days: 3
+          
   badges:
     name: Update badges
     needs: tests
