@@ -87,7 +87,7 @@ def play(
         _, file_to_play = all_files[randrange(len(all_files))]
 
     console.print(f"[green]Playing:[/green] {file_to_play.name}")
-    console.print(f"[blue]Location:[/blue] {file_to_play.parent}")
+    console.print(f"[blue]Location:[/blue] [white]{file_to_play.parent}[/white]")
 
     # Launch VLC with the file
     try:
