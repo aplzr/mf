@@ -7,6 +7,7 @@ from tomlkit import TOMLDocument
 from .console import print_error, print_ok, print_warn
 from .normalizers import (
     normalize_bool_str,
+    normalize_bool_to_toml,
     normalize_media_extension,
     normalize_path,
 )
@@ -64,6 +65,7 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=bool,
         actions={"set"},
         normalize=normalize_bool_str,
+        display=normalize_bool_to_toml,
         help="If true, filter results by media_extensions.",
     ),
     "fullscreen_playback": SettingSpec(
@@ -72,6 +74,7 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=bool,
         actions={"set"},
         normalize=normalize_bool_str,
+        display=normalize_bool_to_toml,
         help="If true, files are played in fullscreen mode.",
     ),
     "prefer_fd": SettingSpec(
@@ -80,6 +83,7 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=bool,
         actions={"set"},
         normalize=normalize_bool_str,
+        display=normalize_bool_to_toml,
         help="If true, uses fd for file searches where possible.",
     ),
 }
@@ -114,11 +118,7 @@ def apply_action(
         new_value = spec.normalize(raw_values[0])
         spec.validate_all(new_value)
         cfg[key] = spec.before_write(new_value)
-
-        if spec.value_type is bool:
-            new_value = str(new_value).lower()  # Print as TOML
-
-        print_ok(f"Set {key} to '{new_value}'.")
+        print_ok(f"Set {key} to '{spec.display(new_value)}'.")
 
         return cfg
 

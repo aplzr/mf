@@ -90,3 +90,15 @@ def normalize_pattern(pattern: str) -> str:
         return f"*{pattern}*"
 
     return pattern
+
+
+def normalize_bool_to_toml(bool_: bool) -> str:
+    """Normalize bool value to a TOML-like string representation.
+
+    Args:
+        bool_ (bool): Boolean value.
+
+    Returns:
+        str: TOML-like representation.
+    """
+    return str(bool_).lower()

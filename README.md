@@ -34,6 +34,9 @@ uv tool install .
 
 ## Quick Start
 
+> [!NOTE]
+> If `mf` is shadowed by another command on your system (e.g., Metafont), use `mediafinder` instead — it's already installed and works exactly the same way.
+
 1. **Configure search paths** where your media files are located:
 
 ```bash
@@ -136,6 +139,23 @@ mf config set match_extensions false # Return all files matching pattern
 - Automatic fallback to Python scanning if `fd` unavailable
 - Parallel scanning across multiple search paths
 - Efficient caching of file modification times for "newest" searches
+
+### Benchmarking `fd` vs pure python file scanning
+- All tests with [`hyperfine`](https://github.com/sharkdp/hyperfine) and warm caches: `hyperfine --warmup 3 --runs 10 "mf find test"`.
+- Media collection on two separate, mechanical USB drives in a file server on the local network, served via SMB for Windows and NFS for Linux clients, 16.3 TiB / 3540 files total.
+- Tested on the file server itself with local file access as well as on a Linux and a Windows desktop with network file access.
+- `mf find` can use both the `fd` scanner as well as the pure python one. First run was with the default setting `prefer_fd = true`. After that I switched to the python scanner via `mf config set prefer_fd false` and tested again.
+
+
+| Platform | Pure Python (ms) | `fd` Scanner (ms) | Improvement |
+|:---------|------------------:|----------------:|------------:|
+| **Linux Server (local file access)** | 697.9 ± 17.1 | 443.5 ± 2.6 | **36% faster** |
+| **Linux Desktop (NFS)** | 1,618.0 ± 28.0 | 478.2 ± 21.2 | **70% faster** |
+| **Windows Desktop (SMB)** | 2,371.0 ± 90.0 | 1,601.0 ± 94.0 | **32% faster** |
+
+
+- The `fd` scanner provides 32-70% performance improvement for search operations over pure python file scanning.
+- Unsurprisingly, scanning files over the network takes more time than direct, local file access (this has nothing to do with `mf`). File scanning on NFS-based shares from Linux to Linux is much faster than on SMB-based shares from Windows to Linux.
 
 ## Requirements
 
