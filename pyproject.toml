@@ -32,6 +32,7 @@ classifiers = [
   "Topic :: Multimedia :: Video",
   "Topic :: System :: Filesystems"
 ]
+license = {file = "LICENSE-MIT"}
 
 [project.urls]
 Homepage = "https://github.com/aplzr/mf"
