@@ -5,7 +5,9 @@
 
 A cross-platform command-line tool for finding and playing video files in large collections
 
-![](static/mf.svg){width=90%}
+<div align="center">
+  <img src="static/mf.svg" width="90%">
+</div>
 
 ## Features
 
