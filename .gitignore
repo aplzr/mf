@@ -19,3 +19,5 @@ wheels/
 coverage.xml
 htmlcov/
 db.py
+dummy_movies/
+dummy_shows/
