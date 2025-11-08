@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from mf.constants import BOOLEAN_FALSE_VALUES, BOOLEAN_TRUE_VALUES
@@ -8,6 +9,7 @@ __all__ = [
     "normalize_media_extension",
     "normalize_path",
     "normalize_pattern",
+    "normalize_timedelta_str",
 ]
 
 
@@ -102,3 +104,16 @@ def normalize_bool_to_toml(bool_: bool) -> str:
         str: TOML-like representation.
     """
     return str(bool_).lower()
+
+
+def normalize_timedelta_str(timedelta_str: str) -> str:
+    pattern = r"^(\d+)([smhdw])$"
+    match = re.match(pattern, timedelta_str.lower())
+
+    if not match:
+        print_error(
+            f"Invalid format: '{timedelta_str}'. Expected format: "
+            "<number><unit>, where unit is s/m/h/d/w."
+        )
+
+    return timedelta_str.lower()

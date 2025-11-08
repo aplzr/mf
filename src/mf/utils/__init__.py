@@ -27,6 +27,7 @@ from .normalizers import (
     normalize_media_extension,
     normalize_path,
     normalize_pattern,
+    normalize_timedelta_str,
 )
 from .scan_utils import (
     find_media_files,
@@ -56,6 +57,7 @@ __all__ = [
     "normalize_media_extension",
     "normalize_path",
     "normalize_pattern",
+    "normalize_timedelta_str",
     "print_error",
     "print_ok",
     "print_search_results",
