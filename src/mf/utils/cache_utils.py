@@ -12,7 +12,7 @@ from rich.table import Table
 from .console import console, print_error
 
 __all__ = [
-    "get_cache_file",
+    "get_search_cache_file",
     "save_search_results",
     "load_search_results",
     "print_search_results",
@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-def get_cache_file() -> Path:
+def get_search_cache_file() -> Path:
     """Return path to cache file.
 
     Args:
@@ -56,7 +56,7 @@ def save_search_results(pattern: str, results: list[Path]) -> None:
         "results": [file_path.as_posix() for file_path in results],
     }
 
-    cache_file = get_cache_file()
+    cache_file = get_search_cache_file()
 
     with open(cache_file, "w", encoding="utf-8") as f:
         json.dump(cache_data, f, indent=2)
@@ -71,7 +71,7 @@ def load_search_results() -> tuple[str, list[Path], datetime]:
     Returns:
         tuple[str, list[Path], datetime]: Pattern, results, timestamp.
     """
-    cache_file = get_cache_file()
+    cache_file = get_search_cache_file()
     try:
         with open(cache_file, encoding="utf-8") as f:
             cache_data = json.load(f)

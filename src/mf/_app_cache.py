@@ -2,7 +2,7 @@ import typer
 
 from .utils import (
     console,
-    get_cache_file,
+    get_search_cache_file,
     load_search_results,
     print_ok,
     print_search_results,
@@ -20,7 +20,7 @@ app_cache = typer.Typer(
 def show():
     """Print cache contents."""
     pattern, results, timestamp = load_search_results()
-    console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
+    console.print(f"[yellow]Cache file:[/yellow] {get_search_cache_file()}")
     console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
     console.print("[yellow]Cached results:[/yellow]")
 
@@ -33,13 +33,13 @@ def show():
 @app_cache.command()
 def file():
     """Print the cache file location."""
-    print(get_cache_file())
+    print(get_search_cache_file())
 
 
 @app_cache.command()
 def clear():
     """Clear the cache."""
-    get_cache_file().unlink(missing_ok=True)
+    get_search_cache_file().unlink(missing_ok=True)
     print_ok("Cache cleared.")
 
 
