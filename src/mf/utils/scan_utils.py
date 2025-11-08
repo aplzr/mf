@@ -183,7 +183,7 @@ def scan_path_with_fd(
 def scan_for_media_files(
     pattern: str, *, sort_by_mtime: bool = False, prefer_fd: bool | None = None
 ) -> list[Path]:
-    """Find media files across all search paths.
+    """Find media files by scanning all search paths.
 
     Args:
         pattern (str): Search pattern.
