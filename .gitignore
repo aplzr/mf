@@ -21,3 +21,4 @@ htmlcov/
 db.py
 dummy_movies/
 dummy_shows/
+.genie/
