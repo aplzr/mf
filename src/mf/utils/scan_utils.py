@@ -94,7 +94,7 @@ def filter_scan_results(
         ]
     else:
         # Sort alphabetically
-        results.sort()
+        results.sort(key=lambda path: path.name.lower())
 
     # Filter by extension
     if match_extensions and media_extensions:
