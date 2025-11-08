@@ -100,6 +100,16 @@ REGISTRY: dict[str, SettingSpec] = {
         display=normalize_bool_to_toml,
         help="If true, uses fd for file searches where possible.",
     ),
+    "cache_library": SettingSpec(
+        key="cache_library",
+        kind="scalar",
+        value_type=bool,
+        actions={"set"},
+        normalize=normalize_bool_str,
+        default=False,
+        display=normalize_bool_to_toml,
+        help="Cache library metadata locally.",
+    ),
 }
 
 
