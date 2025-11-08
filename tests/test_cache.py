@@ -11,12 +11,12 @@ def test_save_and_load_cache(tmp_path, monkeypatch):
     cache_file = get_cache_file()
     assert cache_file.parent.exists()
 
-    results = [(1, Path("/tmp/movie1.mp4")), (2, Path("/tmp/movie2.mkv"))]
+    results = [Path("/tmp/movie1.mp4"), Path("/tmp/movie2.mkv")]
     save_search_results("*movie*", results)
 
     pattern, loaded_results, timestamp = load_search_results()
     assert pattern == "*movie*"
-    assert [p for _, p in loaded_results] == [
+    assert loaded_results == [
         Path("/tmp/movie1.mp4"),
         Path("/tmp/movie2.mkv"),
     ]

@@ -10,7 +10,7 @@ def test_get_file_by_index_valid(tmp_path, monkeypatch):
     )
     movie_path = tmp_path / "some_movie.mp4"
     movie_path.write_text("data")
-    save_search_results("*", [(1, movie_path)])
+    save_search_results("*", [movie_path])
     assert get_file_by_index(1) == movie_path
 
 
@@ -19,7 +19,7 @@ def test_get_file_by_index_invalid(tmp_path, monkeypatch):
         "LOCALAPPDATA" if os.name == "nt" else "XDG_CACHE_HOME", str(tmp_path)
     )
     movie_path = Path("/tmp/some_movie.mp4")
-    save_search_results("*", [(1, movie_path)])
+    save_search_results("*", [movie_path])
     import click
     import pytest
 

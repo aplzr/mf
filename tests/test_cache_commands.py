@@ -23,7 +23,7 @@ def test_cache_show_empty_exits(tmp_path, monkeypatch):
 
 def test_cache_show_after_save(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
-    save_search_results("*foo*", [(1, Path("/tmp/foo.mp4"))])
+    save_search_results("*foo*", [Path("/tmp/foo.mp4")])
     r = runner.invoke(app_cache, ["show"])
     assert r.exit_code == 0
     assert "*foo*" in r.stdout
@@ -42,7 +42,7 @@ def test_cache_file_outputs_path(tmp_path, monkeypatch):
 
 def test_cache_clear_removes_file(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
-    save_search_results("x", [(1, Path("/tmp/x.mp4"))])
+    save_search_results("x", [Path("/tmp/x.mp4")])
     assert get_cache_file().exists()
     r = runner.invoke(app_cache, ["clear"])
     assert r.exit_code == 0
@@ -51,7 +51,7 @@ def test_cache_clear_removes_file(tmp_path, monkeypatch):
 
 def test_cache_default_invokes_show(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
-    save_search_results("pattern", [(1, Path("/tmp/a.mp4"))])
+    save_search_results("pattern", [Path("/tmp/a.mp4")])
     r = runner.invoke(app_cache, [])
     assert r.exit_code == 0
     assert "Cached results:" in r.stdout

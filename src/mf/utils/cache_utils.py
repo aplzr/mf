@@ -43,22 +43,17 @@ def get_cache_file() -> Path:
     return cache_dir / "last_search.json"
 
 
-def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
+def save_search_results(pattern: str, results: list[Path]) -> None:
     """Persist search results to cache.
 
     Args:
         pattern (str): Search pattern used.
-        results (list[tuple[int, Path]]): Indexed file path results.
-
-    Returns:
-        None
+        results (list[Path]): Search results.
     """
     cache_data = {
         "pattern": pattern,
         "timestamp": datetime.now().isoformat(),
-        "results": [
-            {"index": idx, "path": file_path.as_posix()} for idx, file_path in results
-        ],
+        "results": [file_path.as_posix() for file_path in results],
     }
 
     cache_file = get_cache_file()
@@ -67,14 +62,14 @@ def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
         json.dump(cache_data, f, indent=2)
 
 
-def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
+def load_search_results() -> tuple[str, list[Path], datetime]:
     """Load cached search results.
 
     Raises:
         typer.Exit: If cache is missing or invalid.
 
     Returns:
-        tuple[str, list[tuple[int, Path]], datetime]: Pattern, results, timestamp.
+        tuple[str, list[Path], datetime]: Pattern, results, timestamp.
     """
     cache_file = get_cache_file()
     try:
@@ -82,9 +77,7 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
             cache_data = json.load(f)
 
         pattern = cache_data["pattern"]
-        results = [
-            (item["index"], Path(item["path"])) for item in cache_data["results"]
-        ]
+        results = [Path(path_str) for path_str in cache_data["results"]]
         timestamp = datetime.fromisoformat(cache_data["timestamp"])
 
         return pattern, results, timestamp
@@ -96,12 +89,12 @@ def load_search_results() -> tuple[str, list[tuple[int, Path]], datetime]:
         raise typer.Exit(1) from e
 
 
-def print_search_results(title: str, results: list[tuple[int, Path]]):
+def print_search_results(title: str, results: list[Path]):
     """Render a table of search results.
 
     Args:
         title (str): Title displayed above table.
-        results (list[tuple[int, Path]]): Indexed search results.
+        results (list[Path]): Search results.
     """
     max_index_width = len(str(len(results))) if results else 1
     table = Table(show_header=False, box=None, padding=(0, 1))
@@ -109,7 +102,7 @@ def print_search_results(title: str, results: list[tuple[int, Path]]):
     table.add_column("File", style="green", overflow="fold")
     table.add_column("Location", style="blue", overflow="fold")
 
-    for idx, path in results:
+    for idx, path in enumerate(results, start=1):
         table.add_row(str(idx), path.name, str(path.parent))
 
     panel = Panel(
@@ -132,23 +125,18 @@ def get_file_by_index(index: int) -> Path:
         Path: File path for the given index.
     """
     pattern, results, _ = load_search_results()
-    file = None
 
-    for idx, path in results:
-        if idx == index:
-            file = path
-            break
-
-    if file is None:
+    try:
+        file = results[index - 1]
+    except IndexError as e:
         console.print(
-            f"Index {index} not found in last search results (pattern: '{pattern}').",
+            f"Index {index} not found in last search results (pattern: '{pattern}'). "
+            f"Valid indices: 1-{len(results)}.",
             style="red",
         )
-        console.print(f"Valid indices: 1-{len(results)}.", style="yellow")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     if not file.exists():
-        console.print(f"[red]File no longer exists:[/red] {file}.")
-        raise typer.Exit(1)
+        print_error(f"File no longer exists: {file}.")
 
     return file
