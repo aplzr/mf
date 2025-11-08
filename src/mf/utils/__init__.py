@@ -2,6 +2,7 @@
 
 from .cache_utils import (
     get_file_by_index,
+    get_library_cache_file,
     get_search_cache_file,
     load_search_results,
     print_search_results,
@@ -39,11 +40,12 @@ __all__ = [
     "default_cfg",
     "find_media_files",
     "generate_dummy_media",
-    "get_search_cache_file",
     "get_config_file",
     "get_fd_binary",
     "get_file_by_index",
+    "get_library_cache_file",
     "get_media_extensions",
+    "get_search_cache_file",
     "get_validated_search_paths",
     "load_search_results",
     "normalize_bool_str",

@@ -12,23 +12,22 @@ from rich.table import Table
 from .console import console, print_error
 
 __all__ = [
+    "get_file_by_index",
+    "get_library_cache_file",
     "get_search_cache_file",
-    "save_search_results",
     "load_search_results",
     "print_search_results",
-    "get_file_by_index",
+    "save_search_results",
 ]
 
 
-def get_search_cache_file() -> Path:
-    """Return path to cache file.
+def get_cache_dir() -> Path:
+    """Return path to the cache directory.
 
-    Args:
-        None
+    Platform aware with fallback to ~/.cache.
 
     Returns:
-        Path: Location of the JSON cache file (platform aware; falls back to
-        ~/.cache/mf on POSIX).
+        Path: Cache directory.
     """
     cache_dir = (
         Path(
@@ -40,7 +39,26 @@ def get_search_cache_file() -> Path:
         / "mf"
     )
     cache_dir.mkdir(parents=True, exist_ok=True)
-    return cache_dir / "last_search.json"
+
+    return cache_dir
+
+
+def get_search_cache_file() -> Path:
+    """Return path to the search cache file.
+
+    Returns:
+        Path: Location of the JSON search cache file.
+    """
+    return get_cache_dir() / "last_search.json"
+
+
+def get_library_cache_file() -> Path:
+    """Return path to the library cache file.
+
+    Returns:
+        Path: Location of the JSON library cache file.
+    """
+    return get_cache_dir() / "library.json"
 
 
 def save_search_results(pattern: str, results: list[Path]) -> None:
