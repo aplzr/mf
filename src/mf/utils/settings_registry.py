@@ -10,6 +10,7 @@ from .normalizers import (
     normalize_bool_to_toml,
     normalize_media_extension,
     normalize_path,
+    normalize_timedelta_str,
 )
 
 __all__ = [
@@ -109,6 +110,20 @@ REGISTRY: dict[str, SettingSpec] = {
         default=False,
         display=normalize_bool_to_toml,
         help="Cache library metadata locally.",
+    ),
+    "library_cache_interval": SettingSpec(
+        key="library_cache_interval",
+        kind="scalar",
+        value_type=str,
+        actions={"set"},
+        normalize=normalize_timedelta_str,
+        default="1d",
+        help=(
+            "Time after which the library cache is automatically rebuilt if "
+            "cache_library is set to true. Format: '<number><unit>', with unit one of "
+            "s, m, h, d, w. Set to '0d' (or any other unit) to turn off automatic "
+            "cache rebuilding."
+        ),
     ),
 }
 
