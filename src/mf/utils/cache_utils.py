@@ -165,8 +165,8 @@ def get_file_by_index(index: int) -> Path:
 def rebuild_library_cache():
     """Rebuild the local library cache.
 
-    Builds a mtime-sorted index (descending / newest first) of all media files in the
-    configures search paths.
+    Builds an mtime-sorted index (descending / newest first) of all media files in the
+    configured search paths.
     """
     files = find_media_files("*", sort_by_mtime=True)
     cache_data = {
