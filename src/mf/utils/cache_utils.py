@@ -9,18 +9,21 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
+from .config_utils import parse_timedelta_str, read_config
 from .console import console, print_error
 from .scan_utils import find_media_files
 
 __all__ = [
     "get_file_by_index",
     "get_library_cache_file",
+    "get_library_cache_interval",
     "get_search_cache_file",
     "load_library_cache",
     "load_search_results",
     "print_search_results",
     "rebuild_library_cache",
     "save_search_results",
+    "use_library_cache",
 ]
 
 
@@ -200,3 +203,21 @@ def load_library_cache() -> tuple[list[Path], datetime]:
         # TODO
         print_error(...)
         raise typer.Exit(1) from e
+
+
+def use_library_cache() -> bool:
+    """Check if library cache is configured.
+
+    Returns:
+        bool: True if library cache should be used, False otherwise.
+    """
+    return read_config()["cache_library"]
+
+
+def get_library_cache_interval() -> datetime:
+    """Get the library cache interval from the configuration.
+
+    Returns:
+        datetime: Interval after which cache is rebuilt.
+    """
+    return parse_timedelta_str(read_config()["library_cache_interval"])

@@ -3,12 +3,14 @@
 from .cache_utils import (
     get_file_by_index,
     get_library_cache_file,
+    get_library_cache_interval,
     get_search_cache_file,
     load_library_cache,
     load_search_results,
     print_search_results,
     rebuild_library_cache,
     save_search_results,
+    use_library_cache,
 )
 from .config_utils import (
     get_config_file,
@@ -50,6 +52,7 @@ __all__ = [
     "get_fd_binary",
     "get_file_by_index",
     "get_library_cache_file",
+    "get_library_cache_interval",
     "get_media_extensions",
     "get_search_cache_file",
     "get_validated_search_paths",
@@ -72,6 +75,7 @@ __all__ = [
     "scan_path_with_fd",
     "scan_path_with_python",
     "start_editor",
+    "use_library_cache",
     "write_config",
     "write_default_config",
 ]
