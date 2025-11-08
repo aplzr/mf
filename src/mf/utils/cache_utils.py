@@ -10,6 +10,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .console import console, print_error
+from .scan_utils import find_media_files
 
 __all__ = [
     "get_file_by_index",
@@ -17,6 +18,7 @@ __all__ = [
     "get_search_cache_file",
     "load_search_results",
     "print_search_results",
+    "rebuild_library_cache",
     "save_search_results",
 ]
 
@@ -158,3 +160,19 @@ def get_file_by_index(index: int) -> Path:
         print_error(f"File no longer exists: {file}.")
 
     return file
+
+
+def rebuild_library_cache():
+    """Rebuild the local library cache.
+
+    Builds a mtime-sorted index (descending / newest first) of all media files in the
+    configures search paths.
+    """
+    files = find_media_files("*", sort_by_mtime=True)
+    cache_data = {
+        "timestamp": datetime.now().isoformat(),
+        "files": [file.as_posix() for file in files],
+    }
+
+    with open(get_library_cache_file(), "w", encoding="utf-8") as f:
+        json.dump(cache_data, f, indent=2)

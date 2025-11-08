@@ -6,6 +6,7 @@ from .cache_utils import (
     get_search_cache_file,
     load_search_results,
     print_search_results,
+    rebuild_library_cache,
     save_search_results,
 )
 from .config_utils import (
@@ -58,6 +59,7 @@ __all__ = [
     "print_search_results",
     "print_warn",
     "read_config",
+    "rebuild_library_cache",
     "save_search_results",
     "scan_path_with_fd",
     "scan_path_with_python",
