@@ -57,7 +57,7 @@ def save_search_results(pattern: str, results: list[tuple[int, Path]]) -> None:
         "pattern": pattern,
         "timestamp": datetime.now().isoformat(),
         "results": [
-            {"index": idx, "path": str(file_path)} for idx, file_path in results
+            {"index": idx, "path": file_path.as_posix()} for idx, file_path in results
         ],
     }
 
