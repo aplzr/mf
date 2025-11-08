@@ -10,7 +10,7 @@ I'm having quite a bit of help from Copilot (in VSC) and Claude (in the browser)
 ## Caching `stat` info and `os.scandir`, `os.DirEntry`, and `pathlib.Path`
 The list of files is currently built by traversing the search paths with `os.scandir`, then converting each resulting `DirEntry` object to `pathlib.Path` and calling `stat().st_mtime` to get the last modified time for sorting. This is much faster (around 5 s for all files on my two network search paths) than getting the file list with something other than `os.scandir` and then converting that to `pathlib.Path` followed by `stat().st_mtime` (around 26 s for the same file list).
 
-I had assumed the reason for this difference is that `os.scandir` directly caches the stat info in its `DirEntry` objects and that this cached info is passed on when converting to `pathlib.Path`, so that the subsequent call to `stat().st_mtime` does not result in an additional syscall that needs to traverse the network. 
+I had assumed the reason for this difference is that `os.scandir` directly caches the stat info in its `DirEntry` objects and that this cached info is passed on when converting to `pathlib.Path`, so that the subsequent call to `stat().st_mtime` does not result in an additional syscall that needs to traverse the network.
 
 But looking at the [`pathlib.Path.stat` documentation](https://docs.python.org/3/library/pathlib.html#pathlib.Path.stat) reveals it never caches the stat info, so converting a `DirEntry` with cached info to `Path` means the cache is lost:
 
@@ -20,7 +20,7 @@ But looking at the [`pathlib.Path.stat` documentation](https://docs.python.org/3
 
 Takeaways:
 - `Path.stat` never caches.
-- The 5 s vs 26 s difference suggests filesystem/network-level caching might 
+- The 5 s vs 26 s difference suggests filesystem/network-level caching might
 be providing the speedup, not Python-level caching. Needs further investigation.
 - In cases where `mtime` is needed I should grab it directly from `DirEntry.stat` (which I already have and which _might_ have a cached result), not from `Path(DirEntry).stat` (which always makes a syscall).
 
@@ -36,13 +36,13 @@ Switching from `Path(DirEntry).stat().st_mtime` to `DirEntry.stat().st_mtime` (s
 
 - Numbers are `mf new` scan duration with two configured search paths
 - Both are on seperate mechanical drives on a Linux file server, mounted via SMB on the clients
-- Total file volume ~17 TiB 
+- Total file volume ~17 TiB
 
-**Before**: 5199 ms average (warm cache)  
-**After**: 2378 ms average (warm cache)  
+**Before**: 5199 ms average (warm cache)
+**After**: 2378 ms average (warm cache)
 **Improvement**: 2.2x speedup
 
-This confirms that Windows `DirEntry` caching provides substantial benefits 
+This confirms that Windows `DirEntry` caching provides substantial benefits
 even with warm filesystem caches.
 
 ### Performance validation on Linux
@@ -138,7 +138,7 @@ class SettingSpec:
     display: Callable[[Any], str] = lambda v: str(v)
     validate_all: Callable[[Any], None] = lambda v: None
     help: str = ""
-    before_write: Callable[[Any], Any] = lambda v: 
+    before_write: Callable[[Any], Any] = lambda v:
 ```
 
 2: A registry that collects instances of this spec (one per setting). Setting specifics are handled by functions passed as arguments to each instance. The `search_paths` setting, for example, gets as its `normalize` argument a normalization function that takes a relative or absolute path string with forward or backward slashes and returns an absolute path in a posix-like representation:
