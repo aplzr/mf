@@ -109,7 +109,7 @@ REGISTRY: dict[str, SettingSpec] = {
         normalize=normalize_bool_str,
         default=False,
         display=normalize_bool_to_toml,
-        help="Cache library metadata locally.",
+        help="If true, caches library metadata locally.",
     ),
     "library_cache_interval": SettingSpec(
         key="library_cache_interval",
