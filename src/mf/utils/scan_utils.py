@@ -111,9 +111,6 @@ def filter_scan_results(
 
 def scan_path_with_python(
     search_path: Path,
-    # pattern: str,
-    # media_extensions: set[str],
-    # match_extensions: bool,
     include_mtime: bool = False,
 ) -> list[Path] | list[tuple[Path, float]]:
     """Recursively scan a directory using Python.
