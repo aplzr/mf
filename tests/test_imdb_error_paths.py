@@ -9,7 +9,7 @@ runner = CliRunner()
 def _seed_cache(tmp_path):
     f = tmp_path / "movie.mkv"
     f.write_text("x")
-    save_search_results("*", [(1, f)])
+    save_search_results("*", [f])
 
 
 def test_imdb_parse_failure(monkeypatch, tmp_path):

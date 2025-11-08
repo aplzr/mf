@@ -11,7 +11,7 @@ runner = CliRunner()
 def test_play_no_fullscreen(monkeypatch, tmp_path):
     media = tmp_path / "video.mp4"
     media.write_text("x")
-    save_search_results("*", [(1, media)])
+    save_search_results("*", [media])
     cfg = read_config()
     cfg["fullscreen_playback"] = False
     write_config(cfg)

@@ -60,7 +60,7 @@ def test_play_vlc_not_found(monkeypatch, tmp_path):
     media_dir.mkdir()
     target_file = media_dir / "video.mkv"
     target_file.write_text("x")
-    save_search_results("*", [(1, target_file)])
+    save_search_results("*", [target_file])
     # Monkeypatch subprocess.Popen to raise FileNotFoundError simulating missing VLC
     import subprocess
 
@@ -78,7 +78,7 @@ def test_play_generic_exception(monkeypatch, tmp_path):
     media_dir.mkdir()
     target_file = media_dir / "video2.mkv"
     target_file.write_text("x")
-    save_search_results("*", [(1, target_file)])
+    save_search_results("*", [target_file])
     import subprocess
 
     def raise_gen(*args, **kwargs):

@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fnmatch import fnmatch
 from functools import partial
 from importlib.resources import files
+from operator import itemgetter
 from pathlib import Path
 
 from mf.constants import FD_BINARIES
@@ -163,7 +164,7 @@ def scan_path_with_fd(
 
 def find_media_files(
     pattern: str, *, sort_by_mtime: bool = False, prefer_fd: bool | None = None
-) -> list[tuple[int, Path]]:
+) -> list[Path]:
     """Find media files across all search paths.
 
     Args:
@@ -176,7 +177,8 @@ def find_media_files(
         RuntimeError: From fd resolution if platform unsupported.
 
     Returns:
-        list[tuple[int, Path]]: Indexed list of results starting at 1.
+        list[Path]: Results sorted by mtime if sort_by_mtime, sorted alphabetically
+            otherwise.
     """
     cfg = read_config()
     pattern = normalize_pattern(pattern)
@@ -229,12 +231,10 @@ def find_media_files(
         all_results.extend(res)
 
     if sort_by_mtime:
-        all_results.sort(key=lambda item: item[1], reverse=True)
-        indexed = [
-            (idx, path) for idx, (path, _mtime) in enumerate(all_results, start=1)
+        all_results = [
+            item[0] for item in sorted(all_results, key=itemgetter(1), reverse=True)
         ]
     else:
-        all_results.sort(key=lambda p: p.name.lower())
-        indexed = [(idx, p) for idx, p in enumerate(all_results, start=1)]
+        all_results.sort(key=lambda path: path.name.lower())
 
-    return indexed
+    return all_results
