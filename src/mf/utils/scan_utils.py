@@ -71,6 +71,7 @@ def filter_scan_results(
     results: list[Path] | list[tuple[Path, float]],
     media_extensions: set[str],
     match_extensions: bool,
+    sort_alphabetically: bool = False,
 ) -> list[Path]:
     """Filter search results.
 
@@ -80,22 +81,21 @@ def filter_scan_results(
             mtimes.
         media_extensions (set[str]): Media extensions to match against.
         match_extensions (bool): Whether to match media extensions or not.
+        sort_alphabetically (bool, optional): Sorts results alphabetivally if True.
 
     Returns:
-        list[Path]: Filtered results, sorted alphabetically or by modiffication time,
+        list[Path]: Filtered results, sorted alphabetically or by modification time,
             depending on the type of results.
     """
     if not results:
         return []
 
     if isinstance(results[0], tuple):
-        # Sort by mtime, extract paths
+        # Search results from the python scanner with sort_by_time, so we know we need
+        # to sort by new. Discard mtimes after sorting and only return the sorted list.
         results = [
             item[0] for item in sorted(results, key=lambda item: item[1], reverse=True)
         ]
-    else:
-        # Sort alphabetically
-        results.sort(key=lambda path: path.name.lower())
 
     # Filter by extension
     if match_extensions and media_extensions:
@@ -106,6 +106,12 @@ def filter_scan_results(
         results = [
             path for path in results if fnmatch(path.name.lower(), pattern.lower())
         ]
+
+    if sort_alphabetically:
+        # Can either be from the file scanners (unordered list) or from the library
+        # cache (already sorted by mtime). Wether we need to sort alphabetically depends
+        # on the context of the call.
+        results.sort(key=lambda path: path.name.lower())
 
     return results
 
