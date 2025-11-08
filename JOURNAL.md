@@ -201,3 +201,23 @@ I wasn't quite sure whether the `fd` scanner is actually faster than the pure py
 - If available, the `fd` scanner provides 32-70% performance improvement for search operations over pure python file scanning. Quite happy with this.
 - Platform-specific `DirEntry.stat()` caching behaviour validated: The benchmarks confirm the caching behaviour previously discussed [here](https://github.com/aplzr/mf/blob/main/LEARNINGS.md#direntrystat-caching-behaviour). On Windows, `mf find test` and `mf new` take the exact same time, whereas on Linux `mf new` always takes longer than `mf find test`. `DirEntry` caches metadata on Windows, but not on Linux. This means that modification time lookups via `DirEntry.stat()` on Linux always need an additional syscall, which makes `mf new` 13-23% slower than `mf find test`, which doesn't call `stat()`. On Windows, `stat()` gets the metadata for free from `DirEntry`'s cache without an additional syscall, resulting in `mf new` not being slower than `mf find test`.
 - File scanning takes more time over the network (no surprise there). [Here](https://github.com/aplzr/mf/blob/main/LEARNINGS.md#platform-performance-difference---continued) I had already compared NFS vs SMB shares on a Linux desktop, and that same pattern repeats when comparing a Windows desktop accessing files via SMB with a Linux desktop accessing them via NFS: NFS provides much better performance. It would be interesting to see how NFS on the Windows desktop compares to NFS on the Linux desktop, but I haven't tested that.
+
+# 2025-11-08
+## Scanner refactoring
+In preparing for a new library cache feature, today I factored the file filtering (by search pattern and file extensions) out of the file scanners. Now they only return a list of all files in the search path, which is then filtered by a new filter function afterwards. This way I can get the list of files either from a fresh scan or from the (soon to come) library cache.
+
+I was wondering if this would have a significant performance impact on the `fd` scanner, as now I'm doing the filtering in (supposedly) slow python, whereas before it was done in Rust. So once again I did some benchmarking, this time on Windows only:
+
+| Approach | Performance (Windows SMB) | vs Pure Python | vs Old FD | Notes |
+|:---------|:--------------------------|:---------------|:----------|:------|
+| **Old FD Scanner** | 1,601 ms ± 94 ms | **32% faster** | — | Uses `fd`'s built-in pattern + extension filtering |
+| **New FD Scanner** | 1,745 ms ± 128 ms | **27% faster** | **9% slower** | `fd` returns all files, filtering in Python |
+| **Pure Python** | 2,392 ms ± 43 ms | — | **49% slower** | Baseline |
+
+**Takeaways:**
+
+- Unified filtering logic for cache + direct search leads to 9% slower file searching
+- But still 27% faster than pure Python
+- Trade-off: Simplicity and maintainability vs. micro-optimization
+- The scanners are much simpler (especially the python one) and now have a clear, single responsibility, which makes them easier to maintain and debug
+- Altogether a bearable loss in speed for simplicity gained
