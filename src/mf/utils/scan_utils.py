@@ -24,7 +24,7 @@ __all__ = [
     "get_fd_binary",
     "scan_path_with_python",
     "scan_path_with_fd",
-    "find_media_files",
+    "scan_for_media_files",
     "filter_scan_results",
 ]
 
@@ -183,7 +183,7 @@ def scan_path_with_fd(
     return files
 
 
-def find_media_files(
+def scan_for_media_files(
     pattern: str, *, sort_by_mtime: bool = False, prefer_fd: bool | None = None
 ) -> list[Path]:
     """Find media files across all search paths.

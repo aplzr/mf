@@ -11,13 +11,13 @@ from ._app_config import app_config
 from ._version import __version__
 from .utils import (
     console,
-    find_media_files,
     get_file_by_index,
     print_error,
     print_search_results,
     print_warn,
     read_config,
     save_search_results,
+    scan_for_media_files,
 )
 from .utils.normalizers import normalize_pattern
 
@@ -49,7 +49,7 @@ def find(
     """
     # Find, cache, and print media file paths
     pattern = normalize_pattern(pattern)
-    results = find_media_files(pattern)
+    results = scan_for_media_files(pattern)
 
     if not results:
         console.print(f"No media files found matching '{pattern}'", style="yellow")
@@ -64,7 +64,7 @@ def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
 ):
     """Find the latest additions to the media database."""
-    newest_files = find_media_files("*", sort_by_mtime=True)[:n]
+    newest_files = scan_for_media_files("*", sort_by_mtime=True)[:n]
     pattern = f"{n} latest additions"
     save_search_results(pattern, newest_files)
     print_search_results(pattern, newest_files)
@@ -83,7 +83,7 @@ def play(
 
     else:
         # Play random file
-        all_files = find_media_files("*")
+        all_files = scan_for_media_files("*")
         _, file_to_play = all_files[randrange(len(all_files))]
 
     console.print(f"[green]Playing:[/green] {file_to_play.name}")

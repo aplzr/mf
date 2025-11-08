@@ -3,7 +3,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from mf.utils import find_media_files, read_config, write_config
+from mf.utils import read_config, scan_for_media_files, write_config
 
 
 def _set_search_paths(tmp_path: Path, paths: list[Path], prefer_fd: bool = True):
@@ -28,7 +28,7 @@ def test_fd_fallback_calledprocesserror(monkeypatch, tmp_path):
         raise subprocess.CalledProcessError(returncode=1, cmd=["fd"])  # noqa: F841
 
     monkeypatch.setattr(scan_utils, "scan_path_with_fd", raise_cpe)
-    results = find_media_files("*.mp4")
+    results = scan_for_media_files("*.mp4")
     assert any(path.name == "a.mp4" for path in results)
 
 
@@ -45,7 +45,7 @@ def test_fd_fallback_file_not_found(monkeypatch, tmp_path):
         raise FileNotFoundError("fd")
 
     monkeypatch.setattr(scan_utils, "scan_path_with_fd", raise_fnf)
-    results = find_media_files("*.mp4")
+    results = scan_for_media_files("*.mp4")
     assert any(path.name == "b.mp4" for path in results)
 
 
@@ -59,7 +59,7 @@ def test_mtime_sorting(tmp_path):
     time.sleep(0.01)  # ensure distinct mtime
     second.write_text("y")
     _set_search_paths(tmp_path, [media_dir], prefer_fd=False)
-    sorted_results = find_media_files("*.mp4", sort_by_mtime=True)
+    sorted_results = scan_for_media_files("*.mp4", sort_by_mtime=True)
     # Expect second first (newest)
     assert [p.name for p in sorted_results] == ["second.mp4", "first.mp4"]
 
@@ -85,5 +85,5 @@ def test_permission_error_in_python_scanner(monkeypatch, tmp_path):
         return original_scandir(path)
 
     monkeypatch.setattr(os, "scandir", fake_scandir)
-    results = find_media_files("*.mp4")
+    results = scan_for_media_files("*.mp4")
     assert any(p.name == "ok.mp4" for p in results)

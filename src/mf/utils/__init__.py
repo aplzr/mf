@@ -34,8 +34,8 @@ from .normalizers import (
 )
 from .scan_utils import (
     filter_scan_results,
-    find_media_files,
     get_fd_binary,
+    scan_for_media_files,
     scan_path_with_fd,
     scan_path_with_python,
 )
@@ -46,7 +46,7 @@ __all__ = [
     "console",
     "default_cfg",
     "filter_scan_results",
-    "find_media_files",
+    "scan_for_media_files",
     "generate_dummy_media",
     "get_config_file",
     "get_fd_binary",

@@ -11,7 +11,7 @@ from rich.table import Table
 
 from .config_utils import parse_timedelta_str, read_config
 from .console import console, print_error
-from .scan_utils import find_media_files
+from .scan_utils import scan_for_media_files
 
 __all__ = [
     "get_file_by_index",
@@ -172,7 +172,7 @@ def rebuild_library_cache():
     Builds an mtime-sorted index (descending / newest first) of all media files in the
     configured search paths.
     """
-    files = find_media_files("*", sort_by_mtime=True)
+    files = scan_for_media_files("*", sort_by_mtime=True)
     cache_data = {
         "timestamp": datetime.now().isoformat(),
         "files": [file.as_posix() for file in files],
