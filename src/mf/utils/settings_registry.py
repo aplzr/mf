@@ -32,6 +32,7 @@ class SettingSpec:
         value_type: Python type of the normalized value(s).
         actions: Allowed actions for this setting.
         normalize: Function converting a raw string into the typed value.
+        default: Default value(s), used in the default configuration.
         display: Function producing a human readable representation.
         validate_all: Function validating the (possibly list) value(s).
         help: Human readable help text shown to the user.
@@ -43,7 +44,7 @@ class SettingSpec:
     value_type: type
     actions: set[Action]
     normalize: Callable[[str], Any]
-    default: Any = field(default_factory=lambda: [])
+    default: Any
     display: Callable[[Any], str] = lambda value: str(value)
     validate_all: Callable[[Any], None] = lambda value: None
     help: str = ""
@@ -57,6 +58,7 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=str,
         actions={"set", "add", "remove", "clear"},
         normalize=normalize_path,
+        default=[],
         help="Directories scanned for media files.",
     ),
     "media_extensions": SettingSpec(
