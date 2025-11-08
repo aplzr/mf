@@ -10,7 +10,7 @@ from tomlkit import TOMLDocument
 from mf.utils.normalizers import normalize_media_extension
 
 from .console import print_error, print_ok, print_warn
-from .default_config import default_cfg
+from .settings_registry import default_cfg
 
 __all__ = [
     "get_config_file",

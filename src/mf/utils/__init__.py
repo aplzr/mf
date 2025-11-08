@@ -16,7 +16,6 @@ from .config_utils import (
     write_default_config,
 )
 from .console import console, print_error, print_ok, print_warn
-from .default_config import default_cfg
 from .editor_utils import start_editor
 from .generate_dummy_media import generate_dummy_media
 from .normalizers import (
@@ -32,7 +31,7 @@ from .scan_utils import (
     scan_path_with_fd,
     scan_path_with_python,
 )
-from .settings_registry import apply_action
+from .settings_registry import apply_action, default_cfg
 
 __all__ = [
     "apply_action",

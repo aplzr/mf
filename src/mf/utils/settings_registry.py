@@ -2,7 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from tomlkit import TOMLDocument
+from tomlkit import TOMLDocument, comment, document, nl
 
 from .console import print_error, print_ok, print_warn
 from .normalizers import (
@@ -11,6 +11,13 @@ from .normalizers import (
     normalize_media_extension,
     normalize_path,
 )
+
+__all__ = [
+    "apply_action",
+    "default_cfg",
+    "REGISTRY",
+    "SettingSpec",
+]
 
 Action = Literal["set", "add", "remove", "clear"]
 
@@ -92,6 +99,15 @@ REGISTRY: dict[str, SettingSpec] = {
         help="If true, uses fd for file searches where possible.",
     ),
 }
+
+
+default_cfg = document()
+
+for setting in REGISTRY:
+    spec = REGISTRY[setting]
+    default_cfg.add(comment(spec.help))
+    default_cfg.add(setting, spec.default)
+    default_cfg.add(nl())
 
 
 def apply_action(
