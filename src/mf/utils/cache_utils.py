@@ -16,6 +16,7 @@ __all__ = [
     "get_file_by_index",
     "get_library_cache_file",
     "get_search_cache_file",
+    "load_library_cache",
     "load_search_results",
     "print_search_results",
     "rebuild_library_cache",
@@ -176,3 +177,26 @@ def rebuild_library_cache():
 
     with open(get_library_cache_file(), "w", encoding="utf-8") as f:
         json.dump(cache_data, f, indent=2)
+
+
+def load_library_cache() -> tuple[list[Path], datetime]:
+    """Load cached library metadata.
+
+    Raises:
+        typer.Exit: Cache empty or doesn't exist.
+
+    Returns:
+        tuple[list[Path], datetime]: Cached file paths and cache timestamp.
+    """
+    try:
+        with open(get_library_cache_file(), encoding="utf-8") as f:
+            cache_data = json.load(f)
+
+        files = [Path(path_str) for path_str in cache_data["files"]]
+        timestamp = datetime.fromisoformat(cache_data["timestamp"])
+
+        return files, timestamp
+    except (json.JSONDecodeError, KeyError, FileNotFoundError) as e:
+        # TODO
+        print_error(...)
+        raise typer.Exit(1) from e
