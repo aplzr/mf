@@ -216,7 +216,7 @@ I was wondering if this would have a significant performance impact on the `fd` 
 
 **Takeaways:**
 
-- Unified filtering logic for cache + direct search leads to 9% slower file searching
+- Unified filtering logic for cache + direct search in the new `fd` scanner leads to 9% slower file searching compared to the old one
 - But still 27% faster than pure Python
 - Trade-off: Simplicity and maintainability vs. micro-optimization
 - The scanners are much simpler (especially the python one) and now have a clear, single responsibility, which makes them easier to maintain and debug
