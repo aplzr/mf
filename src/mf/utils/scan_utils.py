@@ -82,7 +82,8 @@ def filter_scan_results(
         match_extensions (bool): Whether to match media extensions or not.
 
     Returns:
-        list[Path]: Filtered results.
+        list[Path]: Filtered results, sorted alphabetically or by modiffication time,
+            depending on the type of results.
     """
     if not results:
         return []
