@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal
 
 from tomlkit import TOMLDocument
@@ -36,6 +36,7 @@ class SettingSpec:
     value_type: type
     actions: set[Action]
     normalize: Callable[[str], Any]
+    default: Any = field(default_factory=lambda: [])
     display: Callable[[Any], str] = lambda value: str(value)
     validate_all: Callable[[Any], None] = lambda value: None
     help: str = ""
@@ -57,6 +58,7 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=str,
         actions={"set", "add", "remove", "clear"},
         normalize=normalize_media_extension,
+        default=[".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"],
         help="Allowed media file extensions.",
     ),
     "match_extensions": SettingSpec(
@@ -65,6 +67,7 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=bool,
         actions={"set"},
         normalize=normalize_bool_str,
+        default=True,
         display=normalize_bool_to_toml,
         help="If true, filter results by media_extensions.",
     ),
@@ -74,6 +77,7 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=bool,
         actions={"set"},
         normalize=normalize_bool_str,
+        default=True,
         display=normalize_bool_to_toml,
         help="If true, files are played in fullscreen mode.",
     ),
@@ -83,6 +87,7 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=bool,
         actions={"set"},
         normalize=normalize_bool_str,
+        default=True,
         display=normalize_bool_to_toml,
         help="If true, uses fd for file searches where possible.",
     ),
