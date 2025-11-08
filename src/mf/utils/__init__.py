@@ -30,6 +30,7 @@ from .normalizers import (
     normalize_timedelta_str,
 )
 from .scan_utils import (
+    filter_scan_results,
     find_media_files,
     get_fd_binary,
     scan_path_with_fd,
@@ -41,6 +42,7 @@ __all__ = [
     "apply_action",
     "console",
     "default_cfg",
+    "filter_scan_results",
     "find_media_files",
     "generate_dummy_media",
     "get_config_file",

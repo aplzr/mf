@@ -26,6 +26,7 @@ __all__ = [
     "scan_path_with_python",
     "scan_path_with_fd",
     "find_media_files",
+    "filter_scan_results",
 ]
 
 
@@ -64,6 +65,46 @@ def get_fd_binary() -> Path:
             bin_path.chmod(current_perms | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     return bin_path
+
+
+def filter_scan_results(
+    pattern: str,
+    results: list[Path] | list[tuple[Path, float]],
+    media_extensions: set[str],
+    match_extensions: bool,
+) -> list[Path]:
+    """Filter search results.
+
+    Args:
+        pattern (str): Glob pattern to match filenames against.
+        results (list[Path] | list[tuple[Path, float]]): Paths, optionally paired with
+            mtimes.
+        media_extensions (set[str]): Media extensions to match against.
+        match_extensions (bool): Whether to match media extensions or not.
+
+    Returns:
+        list[Path]: Filtered results.
+    """
+    if not results:
+        return []
+
+    # Sort by mtime if present, extract paths
+    if isinstance(results[0], tuple):
+        results = [
+            item[0] for item in sorted(results, key=lambda item: item[1], reverse=True)
+        ]
+
+    # Filter by extension
+    if match_extensions and media_extensions:
+        results = [path for path in results if path.suffix.lower() in media_extensions]
+
+    # Filter by pattern
+    if pattern != "*":
+        results = [
+            path for path in results if fnmatch(path.name.lower(), pattern.lower())
+        ]
+
+    return results
 
 
 def scan_path_with_python(
