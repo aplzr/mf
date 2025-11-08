@@ -31,7 +31,7 @@ def test_scan_permission_error(monkeypatch, tmp_path):
         raise PermissionError
 
     monkeypatch.setattr(os, "scandir", fake_scandir)
-    res = scan_path_with_python(target, "*", set(), False, include_mtime=False)
+    res = scan_path_with_python(target, include_mtime=False)
     assert res == []
 
 
@@ -40,5 +40,5 @@ def test_scan_include_mtime(monkeypatch, tmp_path):
     d.mkdir()
     f = d / "vid.mp4"
     f.write_text("x")
-    res = scan_path_with_python(d, "*", {".mp4"}, True, include_mtime=True)
+    res = scan_path_with_python(d, include_mtime=True)
     assert res and isinstance(res[0], tuple) and len(res[0]) == 2

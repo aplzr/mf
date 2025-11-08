@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor
 from fnmatch import fnmatch
 from functools import partial
 from importlib.resources import files
-from operator import itemgetter
 from pathlib import Path
 
 from mf.constants import FD_BINARIES
@@ -88,11 +87,14 @@ def filter_scan_results(
     if not results:
         return []
 
-    # Sort by mtime if present, extract paths
     if isinstance(results[0], tuple):
+        # Sort by mtime, extract paths
         results = [
             item[0] for item in sorted(results, key=lambda item: item[1], reverse=True)
         ]
+    else:
+        # Sort alphabetically
+        results.sort()
 
     # Filter by extension
     if match_extensions and media_extensions:
@@ -109,23 +111,20 @@ def filter_scan_results(
 
 def scan_path_with_python(
     search_path: Path,
-    pattern: str,
-    media_extensions: set[str],
-    match_extensions: bool,
+    # pattern: str,
+    # media_extensions: set[str],
+    # match_extensions: bool,
     include_mtime: bool = False,
 ) -> list[Path] | list[tuple[Path, float]]:
     """Recursively scan a directory using Python.
 
     Args:
         search_path (Path): Root directory to scan.
-        pattern (str): Case-insensitive glob pattern.
-        media_extensions (set[str]): Extensions allowed when filtering.
-        match_extensions (bool): Whether to restrict by extensions.
         include_mtime (bool): Include modification time in results.
 
     Returns:
-        list[Path] | list[tuple[Path, float]]: Matching files, optionally paired with
-            mtime.
+        list[Path] | list[tuple[Path, float]]: All files in the search path, optionally
+            paired with mtime.
     """
     results: list[Path] | list[tuple[Path, float]] = []
 
@@ -134,21 +133,11 @@ def scan_path_with_python(
             with os.scandir(path) as entries:
                 for entry in entries:
                     if entry.is_file(follow_symlinks=False):
-                        if match_extensions and media_extensions:
-                            if Path(entry.name).suffix.lower() in media_extensions:
-                                if fnmatch(entry.name.lower(), pattern.lower()):
-                                    if include_mtime:
-                                        mtime = entry.stat().st_mtime
-                                        results.append((Path(entry.path), mtime))
-                                    else:
-                                        results.append(Path(entry.path))
+                        if include_mtime:
+                            mtime = entry.stat().st_mtime
+                            results.append((Path(entry.path), mtime))
                         else:
-                            if fnmatch(entry.name.lower(), pattern.lower()):
-                                if include_mtime:
-                                    mtime = entry.stat().st_mtime
-                                    results.append((Path(entry.path), mtime))
-                                else:
-                                    results.append(Path(entry.path))
+                            results.append(Path(entry.path))
                     elif entry.is_dir(follow_symlinks=False):
                         scan_dir(entry.path)
         except PermissionError:
@@ -160,40 +149,31 @@ def scan_path_with_python(
 
 def scan_path_with_fd(
     search_path: Path,
-    pattern: str,
-    media_extensions: set[str],
-    match_extensions: bool,
 ) -> list[Path]:
     """Scan a directory using fd.
 
     Args:
         search_path (Path): Directory to scan.
-        pattern (str): Pattern passed to fd.
-        media_extensions (set[str]): Extensions used for -e filters.
-        match_extensions (bool): Whether to apply extension filtering.
 
     Raises:
         subprocess.CalledProcessError: If fd exits with non-zero status.
 
     Returns:
-        list[Path]: Matching file paths.
+        list[Path]: All files in search path.
     """
     cmd = [
         str(get_fd_binary()),
-        "--glob",
         "--type",
         "f",
         "--absolute-path",
         "--hidden",
-        pattern,
+        ".",
         str(search_path),
     ]
 
-    if match_extensions and media_extensions:
-        for ext in media_extensions:
-            cmd.extend(["-e", ext.lstrip(".")])
-
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        cmd, capture_output=True, text=True, check=True, encoding="utf-8"
+    )
     files: list[Path] = []
 
     for line in result.stdout.strip().split("\n"):
@@ -235,47 +215,29 @@ def find_media_files(
     with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
         if use_fd:
             try:
-                scanner = partial(
-                    scan_path_with_fd,
-                    pattern=pattern,
-                    media_extensions=media_extensions,
-                    match_extensions=match_extensions,
-                )
-                path_results = list(executor.map(scanner, search_paths))
+                path_results = list(executor.map(scan_path_with_fd, search_paths))
             except (
                 FileNotFoundError,
                 subprocess.CalledProcessError,
                 OSError,
                 PermissionError,
             ):
-                scanner = partial(
-                    scan_path_with_python,
-                    pattern=pattern,
-                    media_extensions=media_extensions,
-                    match_extensions=match_extensions,
-                    include_mtime=False,
-                )
-                path_results = list(executor.map(scanner, search_paths))
+                # Do full scan with python scanner if fd fails for any reason
+                partial_fd_scanner = partial(scan_path_with_python, include_mtime=False)
+                path_results = list(executor.map(partial_fd_scanner, search_paths))
         else:
-            scanner = partial(
-                scan_path_with_python,
-                pattern=pattern,
-                media_extensions=media_extensions,
-                match_extensions=match_extensions,
-                include_mtime=sort_by_mtime,
+            partial_python_scanner = partial(
+                scan_path_with_python, include_mtime=sort_by_mtime
             )
-            path_results = list(executor.map(scanner, search_paths))
+            path_results = list(executor.map(partial_python_scanner, search_paths))
 
     all_results: list = []
 
     for res in path_results:
         all_results.extend(res)
 
-    if sort_by_mtime:
-        all_results = [
-            item[0] for item in sorted(all_results, key=itemgetter(1), reverse=True)
-        ]
-    else:
-        all_results.sort(key=lambda path: path.name.lower())
+    all_results = filter_scan_results(
+        pattern, all_results, media_extensions, match_extensions
+    )
 
     return all_results

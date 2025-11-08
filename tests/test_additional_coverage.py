@@ -118,9 +118,7 @@ def test_scan_path_python_permission(monkeypatch, tmp_path):
         raise PermissionError("denied")
 
     monkeypatch.setattr(os, "scandir", fake_scandir)
-    results = scan_path_with_python(
-        target_dir, pattern="*", media_extensions={".mkv"}, match_extensions=True
-    )
+    results = scan_path_with_python(target_dir)
     assert results == []  # skipped
 
 
