@@ -10,7 +10,7 @@ I'm having quite a bit of help from Copilot (in VSC) and Claude (in the browser)
 ## Caching `stat` info and `os.scandir`, `os.DirEntry`, and `pathlib.Path`
 The list of files is currently built by traversing the search paths with `os.scandir`, then converting each resulting `DirEntry` object to `pathlib.Path` and calling `stat().st_mtime` to get the last modified time for sorting. This is much faster (around 5 s for all files on my two network search paths) than getting the file list with something other than `os.scandir` and then converting that to `pathlib.Path` followed by `stat().st_mtime` (around 26 s for the same file list).
 
-I had assumed the reason for this difference is that `os.scandir` directly caches the stat info in its `DirEntry` objects and that this cached info is passed on when converting to `pathlib.Path`, so that the subsequent call to `stat().st_mtime` does not result in an additional syscall that needs to traverse the network. 
+I had assumed the reason for this difference is that `os.scandir` directly caches the stat info in its `DirEntry` objects and that this cached info is passed on when converting to `pathlib.Path`, so that the subsequent call to `stat().st_mtime` does not result in an additional syscall that needs to traverse the network.
 
 But looking at the [`pathlib.Path.stat` documentation](https://docs.python.org/3/library/pathlib.html#pathlib.Path.stat) reveals it never caches the stat info, so converting a `DirEntry` with cached info to `Path` means the cache is lost:
 
@@ -20,7 +20,7 @@ But looking at the [`pathlib.Path.stat` documentation](https://docs.python.org/3
 
 Takeaways:
 - `Path.stat` never caches.
-- The 5 s vs 26 s difference suggests filesystem/network-level caching might 
+- The 5 s vs 26 s difference suggests filesystem/network-level caching might
 be providing the speedup, not Python-level caching. Needs further investigation.
 - In cases where `mtime` is needed I should grab it directly from `DirEntry.stat` (which I already have and which _might_ have a cached result), not from `Path(DirEntry).stat` (which always makes a syscall).
 
@@ -36,13 +36,13 @@ Switching from `Path(DirEntry).stat().st_mtime` to `DirEntry.stat().st_mtime` (s
 
 - Numbers are `mf new` scan duration with two configured search paths
 - Both are on seperate mechanical drives on a Linux file server, mounted via SMB on the clients
-- Total file volume ~17 TiB 
+- Total file volume ~17 TiB
 
-**Before**: 5199 ms average (warm cache)  
-**After**: 2378 ms average (warm cache)  
+**Before**: 5199 ms average (warm cache)
+**After**: 2378 ms average (warm cache)
 **Improvement**: 2.2x speedup
 
-This confirms that Windows `DirEntry` caching provides substantial benefits 
+This confirms that Windows `DirEntry` caching provides substantial benefits
 even with warm filesystem caches.
 
 ### Performance validation on Linux
@@ -138,7 +138,7 @@ class SettingSpec:
     display: Callable[[Any], str] = lambda v: str(v)
     validate_all: Callable[[Any], None] = lambda v: None
     help: str = ""
-    before_write: Callable[[Any], Any] = lambda v: 
+    before_write: Callable[[Any], Any] = lambda v:
 ```
 
 2: A registry that collects instances of this spec (one per setting). Setting specifics are handled by functions passed as arguments to each instance. The `search_paths` setting, for example, gets as its `normalize` argument a normalization function that takes a relative or absolute path string with forward or backward slashes and returns an absolute path in a posix-like representation:
@@ -201,3 +201,23 @@ I wasn't quite sure whether the `fd` scanner is actually faster than the pure py
 - If available, the `fd` scanner provides 32-70% performance improvement for search operations over pure python file scanning. Quite happy with this.
 - Platform-specific `DirEntry.stat()` caching behaviour validated: The benchmarks confirm the caching behaviour previously discussed [here](https://github.com/aplzr/mf/blob/main/LEARNINGS.md#direntrystat-caching-behaviour). On Windows, `mf find test` and `mf new` take the exact same time, whereas on Linux `mf new` always takes longer than `mf find test`. `DirEntry` caches metadata on Windows, but not on Linux. This means that modification time lookups via `DirEntry.stat()` on Linux always need an additional syscall, which makes `mf new` 13-23% slower than `mf find test`, which doesn't call `stat()`. On Windows, `stat()` gets the metadata for free from `DirEntry`'s cache without an additional syscall, resulting in `mf new` not being slower than `mf find test`.
 - File scanning takes more time over the network (no surprise there). [Here](https://github.com/aplzr/mf/blob/main/LEARNINGS.md#platform-performance-difference---continued) I had already compared NFS vs SMB shares on a Linux desktop, and that same pattern repeats when comparing a Windows desktop accessing files via SMB with a Linux desktop accessing them via NFS: NFS provides much better performance. It would be interesting to see how NFS on the Windows desktop compares to NFS on the Linux desktop, but I haven't tested that.
+
+# 2025-11-08
+## Scanner refactoring
+In preparing for a new library cache feature, today I factored the file filtering (by search pattern and file extensions) out of the file scanners. Now they only return a list of all files in the search path, which is then filtered by a new filter function afterwards. This way I can get the list of files either from a fresh scan or from the (soon to come) library cache.
+
+I was wondering if this would have a significant performance impact on the `fd` scanner, as now I'm doing the filtering in (supposedly) slow python, whereas before it was done in Rust. So once again I did some benchmarking, this time on Windows only:
+
+| Approach | Performance (Windows SMB) | vs Pure Python | vs Old FD | Notes |
+|:---------|:--------------------------|:---------------|:----------|:------|
+| **Old FD Scanner** | 1,601 ms ± 94 ms | **32% faster** | — | Uses `fd`'s built-in pattern + extension filtering |
+| **New FD Scanner** | 1,745 ms ± 128 ms | **27% faster** | **9% slower** | `fd` returns all files, filtering in Python |
+| **Pure Python** | 2,392 ms ± 43 ms | — | **49% slower** | Baseline |
+
+**Takeaways:**
+
+- Unified filtering logic for cache + direct search in the new `fd` scanner leads to 9% slower file searching compared to the old one
+- But still 27% faster than pure Python
+- Trade-off: Simplicity and maintainability vs. micro-optimization
+- The scanners are much simpler (especially the python one) and now have a clear, single responsibility, which makes them easier to maintain and debug
+- Altogether a bearable loss in speed for simplicity gained
