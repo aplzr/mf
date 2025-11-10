@@ -19,7 +19,7 @@ from .utils import (
     save_search_results,
     scan_for_media_files,
 )
-from .utils.normalizers import normalize_pattern
+from .utils.scan_utils import FindQuery, NewQuery
 
 # Module-level placeholder so tests can monkeypatch `IMDb` even before the
 # actual dependency import succeeds. We assign the real class lazily inside
@@ -48,8 +48,7 @@ def find(
     Finds matching files and prints an indexed list.
     """
     # Find, cache, and print media file paths
-    pattern = normalize_pattern(pattern)
-    results = scan_for_media_files(pattern)
+    results = FindQuery(pattern).execute()
 
     if not results:
         console.print(f"No media files found matching '{pattern}'", style="yellow")
@@ -64,7 +63,7 @@ def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
 ):
     """Find the latest additions to the media database."""
-    newest_files = scan_for_media_files("*", sort_by_mtime=True)[:n]
+    newest_files = NewQuery(n).execute()
     pattern = f"{n} latest additions"
     save_search_results(pattern, newest_files)
     print_search_results(pattern, newest_files)

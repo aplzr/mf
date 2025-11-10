@@ -1,19 +1,24 @@
 from __future__ import annotations
 
+import json
 import os
 import platform
 import stat
 import subprocess
+from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from fnmatch import fnmatch
 from functools import partial
 from importlib.resources import files
+from operator import itemgetter
 from pathlib import Path
 
 from mf.constants import FD_BINARIES
+from mf.utils.cache_utils import get_library_cache_file
 
+from .cache_utils import load_library_cache
 from .config_utils import (
-    get_media_extensions,
     get_validated_search_paths,
     read_config,
 )
@@ -21,11 +26,14 @@ from .console import print_warn
 from .normalizers import normalize_pattern
 
 __all__ = [
-    "get_fd_binary",
-    "scan_path_with_python",
-    "scan_path_with_fd",
-    "scan_for_media_files",
     "filter_scan_results",
+    "FindQuery",
+    "get_fd_binary",
+    "NewQuery",
+    "rebuild_library_cache",
+    "scan_for_media_files",
+    "scan_path_with_fd",
+    "scan_path_with_python",
 ]
 
 
@@ -67,11 +75,10 @@ def get_fd_binary() -> Path:
 
 
 def filter_scan_results(
-    pattern: str,
+    pattern: str,  # TODO: make results first argument
     results: list[Path] | list[tuple[Path, float]],
     media_extensions: set[str],
     match_extensions: bool,
-    sort_alphabetically: bool = False,
 ) -> list[Path]:
     """Filter search results.
 
@@ -90,13 +97,6 @@ def filter_scan_results(
     if not results:
         return []
 
-    if isinstance(results[0], tuple):
-        # Search results from the python scanner with sort_by_time, so we know we need
-        # to sort by new. Discard mtimes after sorting and only return the sorted list.
-        results = [
-            item[0] for item in sorted(results, key=lambda item: item[1], reverse=True)
-        ]
-
     # Filter by extension
     if match_extensions and media_extensions:
         results = [path for path in results if path.suffix.lower() in media_extensions]
@@ -107,11 +107,38 @@ def filter_scan_results(
             path for path in results if fnmatch(path.name.lower(), pattern.lower())
         ]
 
+    return results
+
+
+def sort_scan_results(
+    results: list[Path] | list[tuple[Path, float]], sort_alphabetically: bool = False
+) -> list[Path]:
+    """Sort combined results from all search paths.
+
+    Args:
+        results (list[Path] | list[tuple[Path, float]]): List of paths, optionally
+            paired with mtimes.
+        sort_alphabetically (bool, optional): Sorts results alphabetically if True.
+
+    Returns:
+        list[Path]: Results sorted alphabetically or by mtime, depending on the input
+            type.
+    """
+    if not results:
+        return []
+
+    if isinstance(results[0], tuple):
+        # Results for `mf new` from a scan. Always sort by mtime when it is present.
+        results = [item[0] for item in sorted(results, key=itemgetter(1), reverse=True)]
+        return results
+
     if sort_alphabetically:
-        # Can either be from the file scanners (unordered list) or from the library
-        # cache (already sorted by mtime). Wether we need to sort alphabetically depends
-        # on the context of the call.
-        results.sort(key=lambda path: path.name.lower())
+        # Whether results without mtime should be sorted alphabetically depends on the
+        # context of the call:
+        # - Results for `mf find` (scan or cache) must always be sorted alphabetically
+        # - Results for `mf new` from the cache are already sorted by mtime and must
+        #   stay that way.
+        results.sort(key=lambda path: path.name.lower(), reverse=True)
 
     return results
 
@@ -189,7 +216,7 @@ def scan_path_with_fd(
 
 def scan_for_media_files(
     pattern: str, *, sort_by_mtime: bool = False, prefer_fd: bool | None = None
-) -> list[Path]:
+) -> list[Path] | list[tuple[Path, float]]:
     """Find media files by scanning all search paths.
 
     Args:
@@ -202,14 +229,11 @@ def scan_for_media_files(
         RuntimeError: From fd resolution if platform unsupported.
 
     Returns:
-        list[Path]: Results sorted by mtime if sort_by_mtime, sorted alphabetically
-            otherwise.
+        list[Path] | list[tuple[Path, float]]: Results, optionally paired with mtimes.
     """
     cfg = read_config()
     pattern = normalize_pattern(pattern)
     search_paths = get_validated_search_paths()
-    match_extensions = cfg["match_extensions"]
-    media_extensions = get_media_extensions()
 
     if prefer_fd is None:
         prefer_fd = cfg["prefer_fd"]
@@ -240,8 +264,127 @@ def scan_for_media_files(
     for res in path_results:
         all_results.extend(res)
 
-    all_results = filter_scan_results(
-        pattern, all_results, media_extensions, match_extensions
-    )
-
     return all_results
+
+
+def rebuild_library_cache():
+    """Rebuild the local library cache.
+
+    Builds an mtime-sorted index (descending / newest first) of all media files in the
+    configured search paths.
+    """
+    files = scan_for_media_files("*", sort_by_mtime=True)
+    files = sort_scan_results(files)
+    cache_data = {
+        "timestamp": datetime.now().isoformat(),
+        "files": [file.as_posix() for file in files],
+    }
+
+    with open(get_library_cache_file(), "w", encoding="utf-8") as f:
+        json.dump(cache_data, f, indent=2)
+
+
+class Query(ABC):
+    def __init__(self):
+        config = read_config()
+        self.cache_library = config["cache_library"]
+        self.prefer_fd = config["prefer_fd"]
+        self.media_extensions = config["media_extensions"]
+        self.match_extensions = config["match_extensions"]
+
+    @abstractmethod
+    def execute(self) -> list[Path]:
+        """Execute the query.
+
+        Returns:
+            list[Path]: Search results.
+        """
+        ...
+
+
+class FindQuery(Query):
+    """Query for finding files matching a glob pattern, sorted alphabetically.
+
+    This query searches for media files matching the specified pattern and returns
+    results sorted by filename. Uses cached library data when configured /  available
+    for better performance, otherwise performs a fresh filesystem scan.
+
+    Attributes:
+        pattern: Normalized glob pattern to search for.
+    """
+
+    def __init__(self, pattern: str):
+        """Initialize the find query.
+
+        Args:
+            pattern (str): Glob pattern to search for (e.g., "*.mp4", "*2023*").
+        """
+        self.pattern = normalize_pattern(pattern)
+        super().__init__()
+
+    def execute(self) -> list[Path]:
+        """Execute the query.
+
+        Returns:
+            list[Path]: Search results sorted alphabetically by filename.
+        """
+        if self.cache_library:
+            files, timestamp = load_library_cache()
+        else:
+            files = scan_for_media_files(self.pattern)
+
+        files = filter_scan_results(
+            self.pattern,
+            files,
+            self.media_extensions,
+            self.match_extensions,
+        )
+        files = sort_scan_results(files, sort_alphabetically=True)
+
+        return files
+
+
+class NewQuery(Query):
+    """Query for finding the newest files in the collection, sorted by modification
+    time.
+
+    This query returns the most recently modified media files in the collection,
+    regardless of filename or pattern. Uses cached library data when configured /
+    available for better performance, otherwise performs a fresh filesystem scan with
+    mtime collection.
+
+    Attributes:
+        pattern: Always "*" (searches all files).
+        n: Maximum number of results to return.
+    """
+
+    pattern = "*"
+
+    def __init__(self, n: int = 20):
+        """Initialize the new files query.
+
+        Args:
+            n: Maximum number of newest files to return. Defaults to 20.
+        """
+        self.n = n
+        super().__init__()
+
+    def execute(self):
+        """Execute the query.
+
+        Returns:
+            list[Path]: Up to n newest files, sorted by modification time (newest
+            first).
+        """
+        if self.cache_library:
+            # list[Path], already sorted by mtime
+            files, timestamp = load_library_cache()
+        else:
+            # list[tuple[Path, float]], not sorted yet
+            files = scan_for_media_files(self.pattern, sort_by_mtime=True)
+            files = sort_scan_results(files)
+
+        files = filter_scan_results(
+            self.pattern, files, self.media_extensions, self.match_extensions
+        )
+        return files[: self.n]
