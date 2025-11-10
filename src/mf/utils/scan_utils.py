@@ -302,6 +302,8 @@ class Query(ABC):
         ...
 
 
+# TODO: Add cache invalidation
+# TODO: Add FileResult type
 class FindQuery(Query):
     """Query for finding files matching a glob pattern, sorted alphabetically.
 
