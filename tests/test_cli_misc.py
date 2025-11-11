@@ -3,8 +3,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from mf._app_config import app_config
-from mf._app_mf import app_mf
+from mf.cli_config import app_config
+from mf.cli_main import app_mf
 from mf.utils import read_config, write_config
 
 runner = CliRunner()

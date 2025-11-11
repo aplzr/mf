@@ -3,7 +3,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from mf._app_last import app_last
+from mf.cli_last import app_last
 from mf.utils import get_search_cache_file, save_search_results
 from mf.utils.file_utils import FileResult
 

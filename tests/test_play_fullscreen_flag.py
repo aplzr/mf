@@ -2,7 +2,7 @@ import subprocess
 
 from typer.testing import CliRunner
 
-from mf._app_mf import app_mf
+from mf.cli_main import app_mf
 from mf.utils import read_config, save_search_results, write_config
 from mf.utils.file_utils import FileResult
 

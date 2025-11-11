@@ -6,10 +6,10 @@ from random import randrange
 import typer
 from guessit import guessit
 
-from ._app_cache import app_cache
-from ._app_config import app_config
-from ._app_last import app_last
 from ._version import __version__
+from .cli_cache import app_cache
+from .cli_config import app_config
+from .cli_last import app_last
 from .utils import (
     console,
     get_result_by_index,

@@ -3,8 +3,8 @@ import os
 import pytest
 from typer.testing import CliRunner
 
-from mf._app_config import app_config
-from mf._app_mf import app_mf
+from mf.cli_config import app_config
+from mf.cli_main import app_mf
 from mf.utils import (
     read_config,
     save_search_results,
@@ -31,8 +31,8 @@ def test_find_no_results(monkeypatch, tmp_path):
 
 
 def test_play_random(monkeypatch, tmp_path):
-    # Monkeypatch find_media_files used in _app_mf to return deterministic files
-    from mf import _app_mf as app_module
+    # Monkeypatch find_media_files used in cli_main to return deterministic files
+    from mf import cli_main as app_module
 
     fake_path = tmp_path / "movie.mkv"
     fake_path.write_text("x")

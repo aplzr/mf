@@ -1,6 +1,6 @@
 from typer.testing import CliRunner
 
-from mf._app_mf import app_mf
+from mf.cli_main import app_mf
 from mf.utils import save_search_results
 from mf.utils.file_utils import FileResult
 
@@ -15,7 +15,7 @@ def _seed_cache(tmp_path):
 
 def test_imdb_parse_failure(monkeypatch, tmp_path):
     _seed_cache(tmp_path)
-    import mf._app_mf as app_mod
+    import mf.cli_main as app_mod
 
     monkeypatch.setattr(app_mod, "guessit", lambda _name: {})  # no 'title'
     r = runner.invoke(app_mf, ["imdb", "1"])
@@ -25,7 +25,7 @@ def test_imdb_parse_failure(monkeypatch, tmp_path):
 
 def test_imdb_network_exception(monkeypatch, tmp_path):
     _seed_cache(tmp_path)
-    import mf._app_mf as app_mod
+    import mf.cli_main as app_mod
 
     class FakeIMDb:
         def search_movie(self, title):  # noqa: D401
@@ -40,7 +40,7 @@ def test_imdb_network_exception(monkeypatch, tmp_path):
 
 def test_imdb_no_results(monkeypatch, tmp_path):
     _seed_cache(tmp_path)
-    import mf._app_mf as app_mod
+    import mf.cli_main as app_mod
 
     class FakeIMDbEmpty:
         def search_movie(self, title):  # noqa: D401
