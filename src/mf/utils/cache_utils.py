@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import typer
@@ -196,10 +196,10 @@ def use_library_cache() -> bool:
     return read_config()["cache_library"]
 
 
-def get_library_cache_interval() -> datetime:
+def get_library_cache_interval() -> timedelta:
     """Get the library cache interval from the configuration.
 
     Returns:
-        datetime: Interval after which cache is rebuilt.
+        timedelta: Interval after which cache is rebuilt.
     """
     return parse_timedelta_str(read_config()["library_cache_interval"])
