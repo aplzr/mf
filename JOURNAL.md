@@ -221,3 +221,34 @@ I was wondering if this would have a significant performance impact on the `fd` 
 - Trade-off: Simplicity and maintainability vs. micro-optimization
 - The scanners are much simpler (especially the python one) and now have a clear, single responsibility, which makes them easier to maintain and debug
 - Altogether a bearable loss in speed for simplicity gained
+
+# 2025-11-11
+## Benchmarking the new library cache
+Same benchmarking setup as described [here](#benchmarking-mf).
+
+Today I added an option to cache the library's metadata locally. My collection is stored on the network, so traversing the whole library tree on every invocation of `mf find` or `mf new` can take quite a while. Local caching of the remote file paths speeds things up nicely:
+
+| System | Command | `cache_library == false` | `cache_library == true` | Speedup |
+|--------|---------|--------------:|-----------:|--------:|
+| **Linux file server (direct file access)** | `mf find test` | 747.6 ± 10.4ms | 691.3 ± 8.0ms | **1.1x** |
+| | `mf new` | 1031.3 ± 14.5ms | 694.2 ± 6.9ms | **1.5x** |
+| **Linux desktop (NFS)** | `mf find test` | 564.2 ± 17.5ms | 253.6 ± 0.7ms | **2.2x** |
+| | `mf new` | 1839.3 ± 23.5ms | 260.4 ± 0.4ms | **7.1x** |
+| **Windows desktop (SMB)** | `mf find test` | 1797 ± 85ms | 333.8 ± 2.9ms | **5.4x** |
+| | `mf new` | 2375 ± 36ms | 333.2 ± 2.3ms | **7.1x** |
+
+I was slightly puzzled at first by the fact that uncached `mf find` is faster on the Linux desktop with network file access than on the file server with local access, but then I remembered that I configured the NFS shares on the Linux desktop to employ aggressive attribute caching (as previously discussed [here](#platform-performance-difference---continued)). This means that:
+
+- Linux desktop (NFS): `mf find` mostly reads cached file attributes from RAM
+- Linux file server: `mf find` reads actual file attributes from slow USB drives every time
+
+This explains the counterintuitive result and serves as a reminder that there are additional variables besides the variable under test which confound these benchmark results when comparing across platforms. The differences between cache and no cache per platform (i.e. the rows of the table) are interpretable though and show that the cache feature is doing what it's supposed to do, i.e. make file searches snappier in cases where the file system is slow to respond, e.g. because it's accessed via the network.
+
+Library caching is turned off by default and can be turned on via `mf config set cache_library true`. The default cache expiry period is one day (changeable), which seems sensible for media collections that are mostly static. A cache rebuild can always be triggered manually by running the `mf cache rebuild` command.
+
+**Takeaways:**
+- Linux file server (local): Modest improvement due to direct USB drive access being the bottleneck. With my slow USB drives caching can even make sense for direct file access, but I'm assuming that for faster drives, caching might be detrimental (although I could not test this).
+- Linux desktop (NFS): Significant gains despite aggressive NFS client caching (1-hour file attribute cache).
+- Windows desktop (SMB): Largest absolute improvement, likely due to slower SMB protocol overhead.
+- `mf new` command: Consistently shows the biggest speedup across all systems (1.5x - 7.1x). Caching eliminates the expensive modification time lookups that are necessary for sorting by new.
+- Network-attached systems: Both show dramatic improvements (5.4x - 7.1x speedup), confirming cache effectiveness for remote file access.
