@@ -10,7 +10,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .config_utils import parse_timedelta_str, read_config
-from .console import console, print_error
+from .console import console, print_error, print_warn
 
 __all__ = [
     "get_file_by_index",
@@ -184,10 +184,11 @@ def load_library_cache() -> list[Path]:
                 cache_data = json.load(f)
 
             files = [Path(path_str) for path_str in cache_data["files"]]
-        except (json.JSONDecodeError, KeyError, FileNotFoundError) as e:
-            # TODO
-            print_error(...)
-            raise typer.Exit(1) from e
+        except (json.JSONDecodeError, KeyError):
+            from .scan_utils import rebuild_library_cache
+
+            print_warn("Cache corrupted.")
+            files = rebuild_library_cache()
 
     return files
 
