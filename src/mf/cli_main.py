@@ -10,16 +10,15 @@ from ._version import __version__
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
-from .utils import (
-    console,
+from .utils.console import console, print_error, print_warn
+from .utils.file_utils import (
+    FindQuery,
+    NewQuery,
     get_result_by_index,
-    print_error,
     print_search_results,
-    print_warn,
     read_config,
     save_search_results,
 )
-from .utils.file_utils import FindQuery, NewQuery
 
 # Module-level placeholder so tests can monkeypatch `IMDb` even before the
 # actual dependency import succeeds. We assign the real class lazily inside

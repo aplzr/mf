@@ -1,8 +1,7 @@
 import os
 from pathlib import Path
 
-from mf.utils import get_result_by_index, save_search_results
-from mf.utils.file_utils import FileResult
+from mf.utils.file_utils import FileResult, get_result_by_index, save_search_results
 
 
 def test_get_file_by_index_valid(tmp_path, monkeypatch):

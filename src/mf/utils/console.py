@@ -1,7 +1,7 @@
 import typer
 from rich.console import Console
 
-from mf.constants import STATUS_SYMBOLS
+from ..constants import STATUS_SYMBOLS
 
 __all__ = [
     "console",

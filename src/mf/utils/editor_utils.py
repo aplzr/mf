@@ -5,8 +5,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from mf.constants import FALLBACK_EDITORS_POSIX
-
+from ..constants import FALLBACK_EDITORS_POSIX
 from .console import console
 
 __all__ = ["start_editor"]

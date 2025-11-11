@@ -1,6 +1,6 @@
 import os
 
-from mf.utils import get_config_file, read_config
+from mf.utils.config_utils import get_config_file, read_config
 
 
 def test_config_file_creation(tmp_path, monkeypatch):

@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from mf.utils import start_editor
+from mf.utils.editor_utils import start_editor
 
 
 def test_start_editor_visual(monkeypatch, tmp_path):

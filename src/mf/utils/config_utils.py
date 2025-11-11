@@ -9,9 +9,8 @@ import tomlkit
 import typer
 from tomlkit import TOMLDocument
 
-from mf.utils.normalizers import normalize_media_extension
-
 from .console import print_error, print_ok, print_warn
+from .normalizers import normalize_media_extension
 from .settings_registry import default_cfg
 
 __all__ = [

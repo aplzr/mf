@@ -1,7 +1,7 @@
 from typer.testing import CliRunner
 
 from mf.cli_config import app_config
-from mf.utils import read_config
+from mf.utils.config_utils import read_config
 
 runner = CliRunner()
 

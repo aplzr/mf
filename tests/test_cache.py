@@ -1,8 +1,12 @@
 import os
 from pathlib import Path
 
-from mf.utils import get_search_cache_file, load_search_results, save_search_results
-from mf.utils.file_utils import FileResult
+from mf.utils.file_utils import (
+    FileResult,
+    get_search_cache_file,
+    load_search_results,
+    save_search_results,
+)
 
 
 def test_save_and_load_cache(tmp_path, monkeypatch):

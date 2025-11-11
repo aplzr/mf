@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from mf.utils import read_config, write_config
+from mf.utils.config_utils import read_config, write_config
 from mf.utils.file_utils import (
     FileResult,
     FindQuery,

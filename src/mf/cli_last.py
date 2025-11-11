@@ -1,10 +1,9 @@
 import typer
 
-from .utils import (
-    console,
+from .utils.console import console, print_ok
+from .utils.file_utils import (
     get_search_cache_file,
     load_search_results,
-    print_ok,
     print_search_results,
 )
 

@@ -3,8 +3,8 @@ import subprocess
 import time
 from pathlib import Path
 
-from mf.utils import read_config, scan_for_media_files, write_config
-from mf.utils.file_utils import sort_scan_results
+from mf.utils.config_utils import read_config, write_config
+from mf.utils.file_utils import scan_for_media_files, sort_scan_results
 
 
 def _set_search_paths(tmp_path: Path, paths: list[Path], prefer_fd: bool = True):
