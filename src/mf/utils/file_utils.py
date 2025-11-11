@@ -208,6 +208,11 @@ def is_cache_expired() -> bool:
         return True
 
     cache_timestamp = datetime.fromtimestamp(cache_file.stat().st_mtime)
+    cache_interval = get_library_cache_interval()
+
+    if cache_interval.total_seconds() == 0:
+        # Cache set to never expire
+        return False
 
     return datetime.now() - cache_timestamp > get_library_cache_interval()
 
