@@ -179,18 +179,18 @@ def load_library_cache() -> list[FileResult]:
         list[FileResult]: Cached file paths.
     """
     if is_cache_expired():
-        files = rebuild_library_cache()
+        results = rebuild_library_cache()
     else:
         try:
             with open(get_library_cache_file(), encoding="utf-8") as f:
                 cache_data = json.load(f)
 
-            files = [FileResult(Path(path_str)) for path_str in cache_data["files"]]
+            results = [FileResult(Path(path_str)) for path_str in cache_data["files"]]
         except (json.JSONDecodeError, KeyError):
             print_warn("Cache corrupted.")
-            files = rebuild_library_cache()
+            results = rebuild_library_cache()
 
-    return files
+    return results
 
 
 def is_cache_expired() -> bool:
