@@ -66,7 +66,7 @@ def test_start_editor_posix_no_editors(monkeypatch, tmp_path):
     monkeypatch.setattr(_sh, "which", fake_which)
 
     # Capture console output
-    from mf.utils import console
+    from mf.utils.console import console
 
     outputs = []
 
