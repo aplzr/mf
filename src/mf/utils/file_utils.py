@@ -319,7 +319,7 @@ def sort_scan_results(results: list[FileResult]) -> list[FileResult]:
     otherwise alphabetically.
 
     Args:
-        results (list[FileResult]): List of paths, optionally paired with mtimes.
+        results (list[FileResult]): List of files, optionally paired with mtimes.
 
     Returns:
         list[FileResult]: Results sorted alphabetically or by mtime, depending on the
@@ -583,10 +583,10 @@ class NewQuery(Query):
             first).
         """
         if self.cache_library:
-            # list[Path], already sorted by mtime
+            # Already sorted by mtime
             files = load_library_cache()
         else:
-            # list[tuple[Path, float]], not sorted yet
+            # Contains mtime but not sorted yet
             files = scan_for_media_files(self.pattern, with_mtime=True)
             files = sort_scan_results(files)
 
