@@ -16,13 +16,12 @@ def test_start_editor_visual(monkeypatch, tmp_path):
         calls.append(cmd)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    start_editor(test_file)
+    start_editor(test_file)  # uses fake_run
     assert calls and calls[0][0] == "myeditor"
 
 
 def test_start_editor_windows_notepad(monkeypatch, tmp_path):
     # Simulate Windows environment
-    monkeypatch.setattr(os, "name", "nt")
     test_file = tmp_path / "f.txt"
     test_file.write_text("x")
     # Ensure VISUAL/EDITOR unset
@@ -43,7 +42,7 @@ def test_start_editor_windows_notepad(monkeypatch, tmp_path):
         calls.append(cmd)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    start_editor(test_file)
+    start_editor(test_file)  # uses fake_run
     # Should have launched notepad
     assert calls and calls[0][0] == "notepad"
 
@@ -54,7 +53,6 @@ def test_start_editor_posix_no_editors(monkeypatch, tmp_path):
     test_file.write_text("x")
     monkeypatch.delenv("VISUAL", raising=False)
     monkeypatch.delenv("EDITOR", raising=False)
-    monkeypatch.setattr(os, "name", "posix")
 
     import shutil as _sh
 
@@ -81,5 +79,6 @@ def test_start_editor_posix_no_editors(monkeypatch, tmp_path):
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("Should not run")),
     )
 
+    # Uses fake_run; no real editor spawn
     start_editor(test_file)
     assert any("No editor found" in o for o in outputs)

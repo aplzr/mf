@@ -15,7 +15,7 @@ def test_start_editor_uses_visual(monkeypatch, tmp_path):
         calls["cmd"] = cmd
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    start_editor(file_)
+    start_editor(file_)  # uses fake_run
     # On Windows subprocess arg may retain backslashes; normalize both
     played = calls["cmd"][-1].replace("\\", "/")
     assert "cmd" in calls and file_.as_posix() in played
