@@ -65,6 +65,11 @@ def new(
     """Find the latest additions to the media database."""
     newest_files = NewQuery(n).execute()
     pattern = f"{n} latest additions"
+
+    if not newest_files:
+        console.print("No media files found (empty collection).", style="yellow")
+        raise typer.Exit()
+
     save_search_results(pattern, newest_files)
     print_search_results(pattern, newest_files)
 
