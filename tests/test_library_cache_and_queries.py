@@ -110,22 +110,15 @@ def test_filter_scan_results_pattern_and_extension():
     assert names == ["movie1.mkv", "movie2.mp4"]
 
 
-def test_sort_scan_results_alphabetical_and_unsorted():
+def test_sort_scan_results_alphabetical():
     # Unsorted alphabetical
     files = [
         FileResult(Path("/tmp/B.mkv")),
         FileResult(Path("/tmp/a.mkv")),
         FileResult(Path("/tmp/C.mkv")),
     ]
-    sorted_results = sort_scan_results(files, sort_alphabetically=True)
+    sorted_results = sort_scan_results(files)
     assert [f.file.name for f in sorted_results] == ["a.mkv", "B.mkv", "C.mkv"]
-    # Ensure no sort when flag false
-    files2 = [
-        FileResult(Path("/tmp/B.mkv")),
-        FileResult(Path("/tmp/a.mkv")),
-    ]
-    unsorted = sort_scan_results(files2, sort_alphabetically=False)
-    assert [f.file.name for f in unsorted] == ["B.mkv", "a.mkv"]
 
 
 def test_scan_for_media_files_fd_fallback(monkeypatch, isolated_media_dir):

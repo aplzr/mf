@@ -312,15 +312,14 @@ def filter_scan_results(
     return results
 
 
-def sort_scan_results(
-    results: list[FileResult],
-    sort_alphabetically: bool = False,  # TODO: check if necessary
-) -> list[FileResult]:
+def sort_scan_results(results: list[FileResult]) -> list[FileResult]:
     """Sort combined results from all search paths.
+
+    Sorts by modification time if it is available (FileResult.mtime is not None),
+    otherwise alphabetically.
 
     Args:
         results (list[FileResult]): List of paths, optionally paired with mtimes.
-        sort_alphabetically (bool, optional): Sorts results alphabetically if True.
 
     Returns:
         list[FileResult]: Results sorted alphabetically or by mtime, depending on the
@@ -330,16 +329,8 @@ def sort_scan_results(
         return []
 
     if results[0].mtime:
-        # Results for `mf new` from a scan. Always sort by mtime when it is present.
         results.sort(key=attrgetter("mtime"), reverse=True)
-        return results
-
-    if sort_alphabetically:
-        # Whether results without mtime should be sorted alphabetically depends on the
-        # context of the call:
-        # - Results for `mf find` (scan or cache) must always be sorted alphabetically
-        # - Results for `mf new` from the cache are already sorted by mtime and must
-        #   stay that way.
+    else:
         results.sort(key=lambda result: result.file.name.lower())
 
     return results
@@ -554,7 +545,7 @@ class FindQuery(Query):
             self.media_extensions,
             self.match_extensions,
         )
-        files = sort_scan_results(files, sort_alphabetically=True)
+        files = sort_scan_results(files)
 
         return files
 

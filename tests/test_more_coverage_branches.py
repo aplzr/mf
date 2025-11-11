@@ -47,6 +47,7 @@ def test_sort_scan_results_mtime_branch(tmp_path):
 
 def test_normalize_timedelta_str_invalid(capsys):
     import click
+
     with pytest.raises(click.exceptions.Exit):
         normalize_timedelta_str("badformat")
     captured = capsys.readouterr()
@@ -58,5 +59,6 @@ def test_get_fd_binary_unsupported(monkeypatch):
     monkeypatch.setattr("platform.system", lambda: "weirdOS")
     monkeypatch.setattr("platform.machine", lambda: "mysteryArch")
     from mf.utils.file_utils import get_fd_binary
+
     with pytest.raises(RuntimeError):
         get_fd_binary()
