@@ -87,7 +87,7 @@ def play(
 
     else:
         # Play random file
-        all_files = scan_for_media_files("*")
+        all_files = FindQuery("*").execute()
         file_to_play = all_files[randrange(len(all_files))]
 
     console.print(f"[green]Playing:[/green] {file_to_play.file.name}")
