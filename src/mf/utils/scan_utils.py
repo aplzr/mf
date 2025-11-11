@@ -267,11 +267,14 @@ def scan_for_media_files(
     return all_results
 
 
-def rebuild_library_cache():
+def rebuild_library_cache() -> list[Path]:
     """Rebuild the local library cache.
 
     Builds an mtime-sorted index (descending / newest first) of all media files in the
     configured search paths.
+
+    Returns:
+        list[Path]: Rebuilt cache.
     """
     files = scan_for_media_files("*", sort_by_mtime=True)
     files = sort_scan_results(files)
@@ -282,6 +285,8 @@ def rebuild_library_cache():
 
     with open(get_library_cache_file(), "w", encoding="utf-8") as f:
         json.dump(cache_data, f, indent=2)
+
+    return files
 
 
 class Query(ABC):
