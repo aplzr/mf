@@ -26,7 +26,7 @@ from .config_utils import (
     parse_timedelta_str,
     read_config,
 )
-from .console import console, print_error, print_info, print_warn
+from .console import console, print_error, print_info, print_ok, print_warn
 from .normalizers import normalize_pattern
 
 
@@ -484,6 +484,7 @@ def rebuild_library_cache() -> list[FileResult]:
     with open(get_library_cache_file(), "w", encoding="utf-8") as f:
         json.dump(cache_data, f, indent=2)
 
+    print_ok("Cache rebuilt.")
     return results
 
 
