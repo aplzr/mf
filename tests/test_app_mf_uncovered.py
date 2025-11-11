@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import builtins
 
-from mf._app_mf import app_mf
-from mf.utils.file_utils import FileResult
 from typer.testing import CliRunner
 
+from mf._app_mf import app_mf
+from mf.utils.file_utils import FileResult
 
 runner = CliRunner()
 

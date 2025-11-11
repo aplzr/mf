@@ -17,7 +17,6 @@ from .utils import (
     print_warn,
     read_config,
     save_search_results,
-    scan_for_media_files,
 )
 from .utils.file_utils import FindQuery, NewQuery
 
