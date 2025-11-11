@@ -11,7 +11,7 @@ from ._app_config import app_config
 from ._version import __version__
 from .utils import (
     console,
-    get_file_by_index,
+    get_result_by_index,
     print_error,
     print_search_results,
     print_warn,
@@ -19,7 +19,7 @@ from .utils import (
     save_search_results,
     scan_for_media_files,
 )
-from .utils.scan_utils import FindQuery, NewQuery
+from .utils.file_utils import FindQuery, NewQuery
 
 # Module-level placeholder so tests can monkeypatch `IMDb` even before the
 # actual dependency import succeeds. We assign the real class lazily inside
@@ -83,15 +83,15 @@ def play(
     """Play a media file by its index."""
     if index:
         # Play requested file
-        file_to_play = get_file_by_index(index)
+        file_to_play = get_result_by_index(index)
 
     else:
         # Play random file
         all_files = scan_for_media_files("*")
         _, file_to_play = all_files[randrange(len(all_files))]
 
-    console.print(f"[green]Playing:[/green] {file_to_play.name}")
-    console.print(f"[blue]Location:[/blue] [white]{file_to_play.parent}[/white]")
+    console.print(f"[green]Playing:[/green] {file_to_play.file.name}")
+    console.print(f"[blue]Location:[/blue] [white]{file_to_play.file.parent}[/white]")
 
     # Launch VLC with the file
     try:
@@ -114,7 +114,7 @@ def play(
             vlc_cmd = "vlc"
 
         fullscreen_playback = read_config().get("fullscreen_playback", True)
-        vlc_args = [vlc_cmd, str(file_to_play)]
+        vlc_args = [vlc_cmd, str(file_to_play.file)]
 
         if fullscreen_playback:
             vlc_args.extend(["--fullscreen", "--no-video-title-show"])
@@ -148,7 +148,7 @@ def imdb(
     """Open IMDB entry of a search result."""
     # First derive metadata from filename. Tests expect a parse failure
     # to be reported even if the IMDb library could not be imported.
-    filestem = get_file_by_index(index).stem
+    filestem = get_result_by_index(index).file.stem
     parsed = guessit(filestem)
 
     if "title" not in parsed:
@@ -197,7 +197,7 @@ def filepath(
     ),
 ):
     """Print filepath of a search result."""
-    print(get_file_by_index(index))
+    print(get_result_by_index(index).file)
 
 
 @app_mf.command()

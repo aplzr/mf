@@ -132,7 +132,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "src/mf/utils/default_config.py" = ["E501"]  # Line too long
-"src/mf/utils/scan_utils.py" = ["SIM102"]  # Use of nested 'if' statements
+"src/mf/utils/file_utils.py" = ["SIM102"]  # Use of nested 'if' statements
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

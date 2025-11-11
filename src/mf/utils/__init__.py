@@ -1,16 +1,5 @@
 """mf utility functions."""
 
-from .cache_utils import (
-    get_file_by_index,
-    get_library_cache_file,
-    get_library_cache_interval,
-    get_search_cache_file,
-    load_library_cache,
-    load_search_results,
-    print_search_results,
-    save_search_results,
-    use_library_cache,
-)
 from .config_utils import (
     get_config_file,
     get_media_extensions,
@@ -22,6 +11,23 @@ from .config_utils import (
 )
 from .console import console, print_error, print_info, print_ok, print_warn
 from .editor_utils import start_editor
+from .file_utils import (
+    filter_scan_results,
+    get_fd_binary,
+    get_library_cache_file,
+    get_library_cache_interval,
+    get_result_by_index,
+    get_search_cache_file,
+    load_library_cache,
+    load_search_results,
+    print_search_results,
+    rebuild_library_cache,
+    save_search_results,
+    scan_for_media_files,
+    scan_path_with_fd,
+    scan_path_with_python,
+    use_library_cache,
+)
 from .generate_dummy_media import generate_dummy_media
 from .normalizers import (
     normalize_bool_str,
@@ -30,14 +36,6 @@ from .normalizers import (
     normalize_path,
     normalize_pattern,
     normalize_timedelta_str,
-)
-from .scan_utils import (
-    filter_scan_results,
-    get_fd_binary,
-    rebuild_library_cache,
-    scan_for_media_files,
-    scan_path_with_fd,
-    scan_path_with_python,
 )
 from .settings_registry import apply_action, default_cfg
 
@@ -49,7 +47,7 @@ __all__ = [
     "generate_dummy_media",
     "get_config_file",
     "get_fd_binary",
-    "get_file_by_index",
+    "get_result_by_index",
     "get_library_cache_file",
     "get_library_cache_interval",
     "get_media_extensions",
