@@ -1,8 +1,8 @@
 """media file finder and player."""
 
 from . import utils
-from ._version import __version__
 from .cli_main import app_mf
+from .version import __version__
 
 __all__ = [
     "__version__",

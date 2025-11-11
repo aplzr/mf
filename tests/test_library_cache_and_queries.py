@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from mf.utils.config_utils import read_config, write_config
-from mf.utils.file_utils import (
+from mf.utils.config import read_config, write_config
+from mf.utils.file import (
     FileResult,
     FindQuery,
     NewQuery,
@@ -152,7 +152,7 @@ def test_new_query_cache_enabled(monkeypatch, isolated_media_dir):
 
     # Monkeypatch scan_for_media_files to raise if called (we expect cached path).
     monkeypatch.setattr(
-        "mf.utils.file_utils.scan_for_media_files",
+        "mf.utils.file.scan_for_media_files",
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("should not scan")),
     )
     results = NewQuery(5).execute()
@@ -173,7 +173,7 @@ def test_find_query_cache_enabled(monkeypatch, isolated_media_dir):
     cache_file.parent.mkdir(parents=True, exist_ok=True)
     cache_file.write_text(json.dumps(cache_data))
     monkeypatch.setattr(
-        "mf.utils.file_utils.scan_for_media_files",
+        "mf.utils.file.scan_for_media_files",
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("should not scan")),
     )
     results = FindQuery("*.mkv").execute()

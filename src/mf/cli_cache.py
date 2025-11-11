@@ -1,7 +1,7 @@
 import typer
 
 from .utils.console import print_ok
-from .utils.file_utils import get_library_cache_file, rebuild_library_cache
+from .utils.file import get_library_cache_file, rebuild_library_cache
 
 app_cache = typer.Typer(help="Manage mf's library cache.")
 

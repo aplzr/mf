@@ -6,12 +6,11 @@ from random import randrange
 import typer
 from guessit import guessit
 
-from ._version import __version__
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
 from .utils.console import console, print_error, print_warn
-from .utils.file_utils import (
+from .utils.file import (
     FindQuery,
     NewQuery,
     get_result_by_index,
@@ -19,6 +18,7 @@ from .utils.file_utils import (
     read_config,
     save_search_results,
 )
+from .version import __version__
 
 # Module-level placeholder so tests can monkeypatch `IMDb` even before the
 # actual dependency import succeeds. We assign the real class lazily inside

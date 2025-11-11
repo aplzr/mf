@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from mf.utils.editor_utils import start_editor
+from mf.utils.editor import start_editor
 from mf.utils.normalizers import normalize_bool_str, normalize_media_extension
 
 

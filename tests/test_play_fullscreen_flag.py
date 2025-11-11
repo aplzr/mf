@@ -3,8 +3,8 @@ import subprocess
 from typer.testing import CliRunner
 
 from mf.cli_main import app_mf
-from mf.utils.config_utils import read_config, write_config
-from mf.utils.file_utils import FileResult, save_search_results
+from mf.utils.config import read_config, write_config
+from mf.utils.file import FileResult, save_search_results
 
 runner = CliRunner()
 

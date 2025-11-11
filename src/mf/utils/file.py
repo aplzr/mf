@@ -20,7 +20,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from ..constants import FD_BINARIES
-from .config_utils import (
+from .config import (
     get_validated_search_paths,
     parse_timedelta_str,
     read_config,

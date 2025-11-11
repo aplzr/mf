@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from mf.utils.file_utils import (
+from mf.utils.file import (
     FileResult,
     get_search_cache_file,
     load_search_results,

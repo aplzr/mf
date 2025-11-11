@@ -3,8 +3,8 @@ import subprocess
 import time
 from pathlib import Path
 
-from mf.utils.config_utils import read_config, write_config
-from mf.utils.file_utils import scan_for_media_files, sort_scan_results
+from mf.utils.config import read_config, write_config
+from mf.utils.file import scan_for_media_files, sort_scan_results
 
 
 def _set_search_paths(tmp_path: Path, paths: list[Path], prefer_fd: bool = True):
@@ -23,12 +23,12 @@ def test_fd_fallback_calledprocesserror(monkeypatch, tmp_path):
     _set_search_paths(tmp_path, [media_dir], prefer_fd=True)
 
     # Monkeypatch scan_path_with_fd to raise CalledProcessError
-    import mf.utils.file_utils as file_utils
+    import mf.utils.file as file
 
     def raise_cpe(*args, **kwargs):
         raise subprocess.CalledProcessError(returncode=1, cmd=["fd"])  # noqa: F841
 
-    monkeypatch.setattr(file_utils, "scan_path_with_fd", raise_cpe)
+    monkeypatch.setattr(file, "scan_path_with_fd", raise_cpe)
     results = scan_for_media_files("*.mp4")
     assert any(res.file.name == "a.mp4" for res in results)
 
@@ -40,12 +40,12 @@ def test_fd_fallback_file_not_found(monkeypatch, tmp_path):
     f = media_dir / "b.mp4"
     f.write_text("x")
     _set_search_paths(tmp_path, [media_dir], prefer_fd=True)
-    import mf.utils.file_utils as file_utils
+    import mf.utils.file as file
 
     def raise_fnf(*args, **kwargs):
         raise FileNotFoundError("fd")
 
-    monkeypatch.setattr(file_utils, "scan_path_with_fd", raise_fnf)
+    monkeypatch.setattr(file, "scan_path_with_fd", raise_fnf)
     results = scan_for_media_files("*.mp4")
     assert any(res.file.name == "b.mp4" for res in results)
 

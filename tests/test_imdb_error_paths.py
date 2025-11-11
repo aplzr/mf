@@ -1,7 +1,7 @@
 from typer.testing import CliRunner
 
 from mf.cli_main import app_mf
-from mf.utils.file_utils import FileResult, save_search_results
+from mf.utils.file import FileResult, save_search_results
 
 runner = CliRunner()
 

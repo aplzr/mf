@@ -5,8 +5,8 @@ from typer.testing import CliRunner
 
 from mf.cli_config import app_config
 from mf.cli_main import app_mf
-from mf.utils.config_utils import read_config, write_config
-from mf.utils.file_utils import FileResult, save_search_results, scan_path_with_python
+from mf.utils.config import read_config, write_config
+from mf.utils.file import FileResult, save_search_results, scan_path_with_python
 from mf.utils.normalizers import normalize_media_extension
 
 runner = CliRunner()

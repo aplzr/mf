@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from mf.utils.config_utils import read_config, write_config
-from mf.utils.file_utils import (
+from mf.utils.config import read_config, write_config
+from mf.utils.file import (
     FileResult,
     get_library_cache_file,
     is_cache_expired,
@@ -58,7 +58,7 @@ def test_get_fd_binary_unsupported(monkeypatch):
     # Force unsupported platform combination
     monkeypatch.setattr("platform.system", lambda: "weirdOS")
     monkeypatch.setattr("platform.machine", lambda: "mysteryArch")
-    from mf.utils.file_utils import get_fd_binary
+    from mf.utils.file import get_fd_binary
 
     with pytest.raises(RuntimeError):
         get_fd_binary()
