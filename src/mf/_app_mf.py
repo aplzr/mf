@@ -214,8 +214,3 @@ def main_callback(ctx: typer.Context):
         console.print(f" Version: {__version__}", style="bright_yellow")
         console.print(ctx.get_help())
         raise typer.Exit()
-
-
-# TODOs
-# - [ ] Add "trailer" command
-# - [ ] Add -r option for additional ratings
