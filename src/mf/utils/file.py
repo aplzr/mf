@@ -528,11 +528,11 @@ class FindQuery(Query):
         self.pattern = normalize_pattern(pattern)
         super().__init__()
 
-    def execute(self) -> list[Path]:
+    def execute(self) -> list[FileResult]:
         """Execute the query.
 
         Returns:
-            list[Path]: Search results sorted alphabetically by filename.
+            list[FileResult]: Search results sorted alphabetically by filename.
         """
         if self.cache_library:
             files = load_library_cache()
@@ -575,12 +575,12 @@ class NewQuery(Query):
         self.n = n
         super().__init__()
 
-    def execute(self):
+    def execute(self) -> list[FileResult]:
         """Execute the query.
 
         Returns:
-            list[Path]: Up to n newest files, sorted by modification time (newest
-            first).
+            list[FileResult]: Up to n newest files, sorted by modification time (newest
+                first).
         """
         if self.cache_library:
             # Already sorted by mtime
