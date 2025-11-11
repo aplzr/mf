@@ -326,7 +326,7 @@ def sort_scan_results(
 
     if results[0].mtime:
         # Results for `mf new` from a scan. Always sort by mtime when it is present.
-        results.sort(key=attrgetter("mtime"))
+        results.sort(key=attrgetter("mtime"), reverse=True)
         return results
 
     if sort_alphabetically:
@@ -335,7 +335,7 @@ def sort_scan_results(
         # - Results for `mf find` (scan or cache) must always be sorted alphabetically
         # - Results for `mf new` from the cache are already sorted by mtime and must
         #   stay that way.
-        results.sort(key=lambda result: result.file.name.lower(), reverse=True)
+        results.sort(key=lambda result: result.file.name.lower())
 
     return results
 
