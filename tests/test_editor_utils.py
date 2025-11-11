@@ -21,6 +21,10 @@ def test_start_editor_visual(monkeypatch, tmp_path):
 
 
 def test_start_editor_windows_notepad(monkeypatch, tmp_path):
+    import platform
+
+    if platform.system().lower() != "windows":  # Skip on non-Windows CI runners
+        pytest.skip("Windows-only editor behavior")
     # Simulate Windows environment
     test_file = tmp_path / "f.txt"
     test_file.write_text("x")

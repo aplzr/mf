@@ -32,6 +32,13 @@ def test_editor_prefers_editor_env(monkeypatch, tmp_path):
 
 
 def test_editor_windows_notepadpp(monkeypatch, tmp_path):
+    # Skip on non-Windows platforms
+    import platform
+
+    if platform.system().lower() != "windows":
+        import pytest
+
+        pytest.skip("Windows-only editor behavior")
     calls = []
     monkeypatch.delenv("VISUAL", raising=False)
     monkeypatch.delenv("EDITOR", raising=False)
@@ -53,6 +60,12 @@ def test_editor_windows_notepadpp(monkeypatch, tmp_path):
 
 
 def test_editor_windows_notepad_fallback(monkeypatch, tmp_path):
+    import platform
+
+    if platform.system().lower() != "windows":
+        import pytest
+
+        pytest.skip("Windows-only editor behavior")
     calls = []
     monkeypatch.delenv("VISUAL", raising=False)
     monkeypatch.delenv("EDITOR", raising=False)
