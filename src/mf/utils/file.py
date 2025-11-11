@@ -499,11 +499,11 @@ class Query(ABC):
         self.match_extensions = config["match_extensions"]
 
     @abstractmethod
-    def execute(self) -> list[Path]:
+    def execute(self) -> list[FileResult]:
         """Execute the query.
 
         Returns:
-            list[Path]: Search results.
+            list[FileResult]: Search results.
         """
         ...
 
