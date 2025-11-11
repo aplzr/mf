@@ -8,18 +8,18 @@ from guessit import guessit
 
 from ._app_cache import app_cache
 from ._app_config import app_config
+from ._app_last import app_last
 from ._version import __version__
 from .utils import (
     console,
-    find_media_files,
-    get_file_by_index,
+    get_result_by_index,
     print_error,
     print_search_results,
     print_warn,
     read_config,
     save_search_results,
 )
-from .utils.normalizers import normalize_pattern
+from .utils.file_utils import FindQuery, NewQuery
 
 # Module-level placeholder so tests can monkeypatch `IMDb` even before the
 # actual dependency import succeeds. We assign the real class lazily inside
@@ -28,8 +28,9 @@ from .utils.normalizers import normalize_pattern
 IMDb = None  # type: ignore
 
 app_mf = typer.Typer(help="Media file finder and player")
-app_mf.add_typer(app_cache, name="cache")
+app_mf.add_typer(app_last, name="last")
 app_mf.add_typer(app_config, name="config")
+app_mf.add_typer(app_cache, name="cache")
 
 
 @app_mf.command()
@@ -48,8 +49,7 @@ def find(
     Finds matching files and prints an indexed list.
     """
     # Find, cache, and print media file paths
-    pattern = normalize_pattern(pattern)
-    results = find_media_files(pattern)
+    results = FindQuery(pattern).execute()
 
     if not results:
         console.print(f"No media files found matching '{pattern}'", style="yellow")
@@ -64,8 +64,13 @@ def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
 ):
     """Find the latest additions to the media database."""
-    newest_files = find_media_files("*", sort_by_mtime=True)[:n]
+    newest_files = NewQuery(n).execute()
     pattern = f"{n} latest additions"
+
+    if not newest_files:
+        console.print("No media files found (empty collection).", style="yellow")
+        raise typer.Exit()
+
     save_search_results(pattern, newest_files)
     print_search_results(pattern, newest_files)
 
@@ -79,15 +84,15 @@ def play(
     """Play a media file by its index."""
     if index:
         # Play requested file
-        file_to_play = get_file_by_index(index)
+        file_to_play = get_result_by_index(index)
 
     else:
         # Play random file
-        all_files = find_media_files("*")
-        _, file_to_play = all_files[randrange(len(all_files))]
+        all_files = FindQuery("*").execute()
+        file_to_play = all_files[randrange(len(all_files))]
 
-    console.print(f"[green]Playing:[/green] {file_to_play.name}")
-    console.print(f"[blue]Location:[/blue] [white]{file_to_play.parent}[/white]")
+    console.print(f"[green]Playing:[/green] {file_to_play.file.name}")
+    console.print(f"[blue]Location:[/blue] [white]{file_to_play.file.parent}[/white]")
 
     # Launch VLC with the file
     try:
@@ -110,7 +115,7 @@ def play(
             vlc_cmd = "vlc"
 
         fullscreen_playback = read_config().get("fullscreen_playback", True)
-        vlc_args = [vlc_cmd, str(file_to_play)]
+        vlc_args = [vlc_cmd, str(file_to_play.file)]
 
         if fullscreen_playback:
             vlc_args.extend(["--fullscreen", "--no-video-title-show"])
@@ -144,7 +149,7 @@ def imdb(
     """Open IMDB entry of a search result."""
     # First derive metadata from filename. Tests expect a parse failure
     # to be reported even if the IMDb library could not be imported.
-    filestem = get_file_by_index(index).stem
+    filestem = get_result_by_index(index).file.stem
     parsed = guessit(filestem)
 
     if "title" not in parsed:
@@ -193,7 +198,7 @@ def filepath(
     ),
 ):
     """Print filepath of a search result."""
-    print(get_file_by_index(index))
+    print(get_result_by_index(index).file)
 
 
 @app_mf.command()
@@ -210,8 +215,3 @@ def main_callback(ctx: typer.Context):
         console.print(f" Version: {__version__}", style="bright_yellow")
         console.print(ctx.get_help())
         raise typer.Exit()
-
-
-# TODOs
-# - [ ] Add "trailer" command
-# - [ ] Add -r option for additional ratings

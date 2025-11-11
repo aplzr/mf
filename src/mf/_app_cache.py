@@ -1,50 +1,25 @@
 import typer
 
-from .utils import (
-    console,
-    get_cache_file,
-    load_search_results,
-    print_ok,
-    print_search_results,
-)
+from .utils.console import print_ok
+from .utils.file_utils import get_library_cache_file, rebuild_library_cache
 
-app_cache = typer.Typer(
-    help=(
-        "Show cache contents, print cache location or clear the cache. "
-        "If no argument is given, runs the default 'show' command."
-    )
-)
+app_cache = typer.Typer(help=...)  # TODO
 
 
 @app_cache.command()
-def show():
-    """Print cache contents."""
-    pattern, results, timestamp = load_search_results()
-    console.print(f"[yellow]Cache file:[/yellow] {get_cache_file()}")
-    console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
-    console.print("[yellow]Cached results:[/yellow]")
-
-    if "latest additions" not in pattern:
-        pattern = f"Search pattern: {pattern}"
-
-    print_search_results(pattern, results)
+def rebuild():
+    """Rebuild the library cache."""
+    rebuild_library_cache()
 
 
 @app_cache.command()
 def file():
-    """Print the cache file location."""
-    print(get_cache_file())
+    """Print cache file location."""
+    print(get_library_cache_file())
 
 
 @app_cache.command()
 def clear():
-    """Clear the cache."""
-    get_cache_file().unlink(missing_ok=True)
-    print_ok("Cache cleared.")
-
-
-@app_cache.callback(invoke_without_command=True)
-def cache_callback(ctx: typer.Context):
-    """Runs the default subcommand 'show' when no argument to 'cache' is provided."""
-    if ctx.invoked_subcommand is None:
-        show()
+    """Clear the library cache."""
+    get_library_cache_file().unlink()
+    print_ok("Cleared the library cache.")

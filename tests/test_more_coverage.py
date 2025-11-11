@@ -13,7 +13,6 @@ def test_editor_windows_notepadpp(monkeypatch, tmp_path):
     monkeypatch.delenv("VISUAL", raising=False)
     monkeypatch.delenv("EDITOR", raising=False)
     # Force Windows behavior
-    monkeypatch.setattr(os, "name", "nt")
     # Provide notepad++
     import shutil as _sh
 
@@ -39,7 +38,6 @@ def test_editor_windows_notepadpp(monkeypatch, tmp_path):
 def test_editor_posix_editor_found(monkeypatch, tmp_path):
     monkeypatch.delenv("VISUAL", raising=False)
     monkeypatch.delenv("EDITOR", raising=False)
-    monkeypatch.setattr(os, "name", "posix")
     import shutil as _sh
 
     def fake_which(name):

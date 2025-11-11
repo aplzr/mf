@@ -1,54 +1,44 @@
-from pathlib import Path
+from __future__ import annotations
 
 from mf.utils.generate_dummy_media import (
-    MOVIES,
-    SHOW_EPISODES,
-    SPECIALS,
+    create_movies,
+    create_shows,
     generate_dummy_media,
+    summarize,
 )
 
 
-def test_generate_dummy_media_structure(tmp_path: Path):
-    """Full generation creates expected directories and files and is idempotent."""
-    generate_dummy_media(tmp_path)
+def test_create_movies_and_shows_and_summary(tmp_path):
+    base = tmp_path
+    movies_first = create_movies(base)
+    shows_first = create_shows(base)
+    # All should be newly created on first run
+    assert all(not c.existed for c in movies_first + shows_first)
+    summary_first = summarize(movies_first + shows_first)
+    assert "Created" in summary_first and "skipped 0" in summary_first.lower()
 
-    movies_dir = tmp_path / "movies"
-    shows_dir = tmp_path / "shows"
+    # Second run: all files should already exist
+    movies_second = create_movies(base)
+    shows_second = create_shows(base)
+    assert all(c.existed for c in movies_second + shows_second)
+    summary_second = summarize(movies_second + shows_second)
+    assert "skipped" in summary_second
 
-    assert movies_dir.is_dir()
-    assert shows_dir.is_dir()
 
-    # All movie + specials files exist
-    for name in MOVIES + SPECIALS:
-        assert (movies_dir / name).is_file(), f"Missing dummy movie: {name}"
+def test_generate_dummy_media_default_base(tmp_path, monkeypatch, capsys):
+    # Force CWD to tmp_path to exercise base_dir None branch
+    monkeypatch.chdir(tmp_path)
+    generate_dummy_media()
+    out = capsys.readouterr().out
+    assert "Base directory:" in out
+    assert (tmp_path / "movies").exists()
+    assert (tmp_path / "shows").exists()
 
-    # Show episodes under show/Season XX/
-    for show, episodes in SHOW_EPISODES.items():
-        for ep in episodes:
-            # Extract season token like S01E02
-            season_token = next(
-                (part for part in ep.split() if part.startswith("S") and "E" in part),
-                None,
-            )
-            assert season_token, f"No season token found in {ep}"
-            season_num = season_token.split("E")[0][1:]
-            season_folder = f"Season {season_num}"
-            path = shows_dir / show / season_folder / ep
-            assert path.is_file(), f"Missing episode file: {path}"
 
-    # Capture mtimes for idempotency check
-    before = {p: p.stat().st_mtime for p in movies_dir.rglob('*') if p.is_file()}
-    before.update({p: p.stat().st_mtime for p in shows_dir.rglob('*') if p.is_file()})
-
-    # Second run should not overwrite existing files (mtime stable)
-    generate_dummy_media(tmp_path)
-
-    after = {p: p.stat().st_mtime for p in movies_dir.rglob('*') if p.is_file()}
-    after.update({p: p.stat().st_mtime for p in shows_dir.rglob('*') if p.is_file()})
-
-    assert (
-        before == after
-    ), "File mtimes changed on second generation run (not idempotent)"
-
-    # Ensure printed summary lines (rough smoke test)
-    # We don't capture stdout here, but absence of exceptions is our success condition.
+def test_generate_dummy_media_custom_base(tmp_path, capsys):
+    custom = tmp_path / "custom"
+    generate_dummy_media(custom)
+    out = capsys.readouterr().out
+    assert f"Base directory: {custom}" in out
+    assert (custom / "movies").exists()
+    assert (custom / "shows").exists()

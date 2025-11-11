@@ -1,22 +1,23 @@
 import os
 from pathlib import Path
 
-from mf.utils import get_cache_file, load_search_results, save_search_results
+from mf.utils import get_search_cache_file, load_search_results, save_search_results
+from mf.utils.file_utils import FileResult
 
 
 def test_save_and_load_cache(tmp_path, monkeypatch):
     monkeypatch.setenv(
         "LOCALAPPDATA" if os.name == "nt" else "XDG_CACHE_HOME", str(tmp_path)
     )
-    cache_file = get_cache_file()
+    cache_file = get_search_cache_file()
     assert cache_file.parent.exists()
 
-    results = [Path("/tmp/movie1.mp4"), Path("/tmp/movie2.mkv")]
+    results = [FileResult(Path("/tmp/movie1.mp4")), FileResult(Path("/tmp/movie2.mkv"))]
     save_search_results("*movie*", results)
 
     pattern, loaded_results, timestamp = load_search_results()
     assert pattern == "*movie*"
-    assert loaded_results == [
+    assert [r.file for r in loaded_results] == [
         Path("/tmp/movie1.mp4"),
         Path("/tmp/movie2.mkv"),
     ]

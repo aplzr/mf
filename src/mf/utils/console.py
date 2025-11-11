@@ -6,6 +6,7 @@ from mf.constants import STATUS_SYMBOLS
 __all__ = [
     "console",
     "print_error",
+    "print_info",
     "print_ok",
     "print_warn",
 ]
@@ -40,3 +41,12 @@ def print_error(msg: str):
     """
     console.print(f"{STATUS_SYMBOLS['error']} {msg}", style="red")
     raise typer.Exit(1)
+
+
+def print_info(msg: str):
+    """Print info message.
+
+    Args:
+        msg (str): Info message.
+    """
+    console.print(f"{STATUS_SYMBOLS['info']}  {msg}", style="bright_cyan")

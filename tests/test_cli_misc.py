@@ -39,8 +39,9 @@ def test_imdb_parse_failure(monkeypatch, tmp_path):
     write_config(cfg)
     # Simulate a previous search cache referencing the file
     from mf.utils import save_search_results
+    from mf.utils.file_utils import FileResult
 
-    save_search_results("*", [bad_file])
+    save_search_results("*", [FileResult(bad_file)])
     result = runner.invoke(app_mf, ["imdb", "1"])
     assert result.exit_code != 0
     assert "Could not parse a title" in result.stdout

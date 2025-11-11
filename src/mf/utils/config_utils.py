@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import re
+from datetime import timedelta
 from pathlib import Path
 
 import tomlkit
@@ -20,6 +22,7 @@ __all__ = [
     "get_validated_search_paths",
     "get_media_extensions",
     "normalize_media_extension",
+    "parse_timedelta_str",
 ]
 
 
@@ -125,3 +128,38 @@ def get_media_extensions() -> set[str]:
         set[str]: Set of normalized extensions.
     """
     return {normalize_media_extension(e) for e in read_config()["media_extensions"]}
+
+
+def parse_timedelta_str(interval_str: str) -> timedelta:
+    """Parse time interval string like '10s', '30m', '2h', '1d', '5w' into timedelta.
+
+    Args:
+        interval_str (str): Interval string.
+
+    Raises:
+        ValueError: Invalid input.
+
+    Returns:
+        timedelta: Parsed time interval.
+    """
+    pattern = r"^(\d+)([smhdw])$"
+    match = re.match(pattern, interval_str.lower().strip())
+
+    if not match:
+        raise ValueError(
+            f"Invalid time interval format: {interval_str}. "
+            "Use format like '30m', '2h', '1d'"
+        )
+
+    value, unit = match.groups()
+    value = int(value)
+
+    unit_map = {
+        "s": timedelta(seconds=value),
+        "m": timedelta(minutes=value),
+        "h": timedelta(hours=value),
+        "d": timedelta(days=value),
+        "w": timedelta(weeks=value),
+    }
+
+    return unit_map[unit]
