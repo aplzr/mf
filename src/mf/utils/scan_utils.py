@@ -75,17 +75,17 @@ def get_fd_binary() -> Path:
 
 
 def filter_scan_results(
-    pattern: str,  # TODO: make results first argument
     results: list[Path] | list[tuple[Path, float]],
+    pattern: str,
     media_extensions: set[str],
     match_extensions: bool,
 ) -> list[Path]:
     """Filter search results.
 
     Args:
-        pattern (str): Glob pattern to match filenames against.
         results (list[Path] | list[tuple[Path, float]]): Paths, optionally paired with
             mtimes.
+        pattern (str): Glob pattern to match filenames against.
         media_extensions (set[str]): Media extensions to match against.
         match_extensions (bool): Whether to match media extensions or not.
         sort_alphabetically (bool, optional): Sorts results alphabetivally if True.
@@ -343,8 +343,8 @@ class FindQuery(Query):
             files = scan_for_media_files(self.pattern)
 
         files = filter_scan_results(
-            self.pattern,
             files,
+            self.pattern,
             self.media_extensions,
             self.match_extensions,
         )
@@ -394,6 +394,9 @@ class NewQuery(Query):
             files = sort_scan_results(files)
 
         files = filter_scan_results(
-            self.pattern, files, self.media_extensions, self.match_extensions
+            files,
+            self.pattern,
+            self.media_extensions,
+            self.match_extensions,
         )
         return files[: self.n]
