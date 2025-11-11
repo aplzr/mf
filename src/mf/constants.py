@@ -31,6 +31,7 @@ STATUS_SYMBOLS = {
     "ok": "✔",
     "warn": "⚠",
     "error": "❌",
+    "info": "ℹ",
 }
 
 __all__ = [

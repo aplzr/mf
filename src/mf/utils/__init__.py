@@ -20,7 +20,7 @@ from .config_utils import (
     write_config,
     write_default_config,
 )
-from .console import console, print_error, print_ok, print_warn
+from .console import console, print_error, print_info, print_ok, print_warn
 from .editor_utils import start_editor
 from .generate_dummy_media import generate_dummy_media
 from .normalizers import (
@@ -65,6 +65,7 @@ __all__ = [
     "normalize_timedelta_str",
     "parse_timedelta_str",
     "print_error",
+    "print_info",
     "print_ok",
     "print_search_results",
     "print_warn",
