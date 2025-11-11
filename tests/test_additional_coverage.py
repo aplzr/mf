@@ -37,7 +37,9 @@ def test_play_random(monkeypatch, tmp_path):
     fake_path = tmp_path / "movie.mkv"
     fake_path.write_text("x")
     monkeypatch.setattr(
-        app_module, "scan_for_media_files", lambda pattern: [FileResult(fake_path)]
+        app_module.FindQuery,
+        "execute",
+        lambda self: [FileResult(fake_path)],
     )
     # Monkeypatch subprocess.Popen to prevent launching real VLC
     import subprocess
