@@ -17,6 +17,7 @@ __all__ = [
     "get_library_cache_file",
     "get_library_cache_interval",
     "get_search_cache_file",
+    "is_cache_expired",
     "load_library_cache",
     "load_search_results",
     "print_search_results",
@@ -164,27 +165,52 @@ def get_file_by_index(index: int) -> Path:
     return file
 
 
-def load_library_cache() -> tuple[list[Path], datetime]:
-    """Load cached library metadata.
+def load_library_cache() -> list[Path]:
+    """Load cached library metadata. Rebuilds the cache if it has expired.
 
     Raises:
         typer.Exit: Cache empty or doesn't exist.
 
     Returns:
-        tuple[list[Path], datetime]: Cached file paths and cache timestamp.
+        list[Path]: Cached file paths.
     """
-    try:
-        with open(get_library_cache_file(), encoding="utf-8") as f:
-            cache_data = json.load(f)
+    if is_cache_expired():
+        from .scan_utils import rebuild_library_cache
 
-        files = [Path(path_str) for path_str in cache_data["files"]]
-        timestamp = datetime.fromisoformat(cache_data["timestamp"])
-
-        return files, timestamp
-    except (json.JSONDecodeError, KeyError, FileNotFoundError) as e:
         # TODO
-        print_error(...)
-        raise typer.Exit(1) from e
+        console.print("Rebuilding cache")
+        files = rebuild_library_cache()
+    else:
+        try:
+            with open(get_library_cache_file(), encoding="utf-8") as f:
+                cache_data = json.load(f)
+
+            files = [Path(path_str) for path_str in cache_data["files"]]
+        except (json.JSONDecodeError, KeyError, FileNotFoundError) as e:
+            # TODO
+            print_error(...)
+            raise typer.Exit(1) from e
+
+    return files
+
+
+def is_cache_expired() -> bool:
+    """Check if the library cache is older than the configured cache interval.
+
+    Args:
+        cache_timestamp (datetime): Last cache timestamp.
+
+    Returns:
+        bool: True if cache has expired, False otherwise.
+    """
+    cache_file = get_library_cache_file()
+
+    if not cache_file.exists():
+        return True
+
+    cache_timestamp = datetime.fromtimestamp(cache_file.stat().st_mtime)
+
+    return datetime.now() - cache_timestamp > get_library_cache_interval()
 
 
 def use_library_cache() -> bool:

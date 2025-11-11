@@ -336,7 +336,7 @@ class FindQuery(Query):
             list[Path]: Search results sorted alphabetically by filename.
         """
         if self.cache_library:
-            files, timestamp = load_library_cache()
+            files = load_library_cache()
         else:
             files = scan_for_media_files(self.pattern)
 
@@ -385,7 +385,7 @@ class NewQuery(Query):
         """
         if self.cache_library:
             # list[Path], already sorted by mtime
-            files, timestamp = load_library_cache()
+            files = load_library_cache()
         else:
             # list[tuple[Path, float]], not sorted yet
             files = scan_for_media_files(self.pattern, sort_by_mtime=True)
