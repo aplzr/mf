@@ -177,8 +177,6 @@ def load_library_cache() -> list[Path]:
     if is_cache_expired():
         from .scan_utils import rebuild_library_cache
 
-        # TODO
-        console.print("Rebuilding cache")
         files = rebuild_library_cache()
     else:
         try:

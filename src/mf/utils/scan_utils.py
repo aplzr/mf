@@ -22,7 +22,7 @@ from .config_utils import (
     get_validated_search_paths,
     read_config,
 )
-from .console import print_warn
+from .console import print_info, print_warn
 from .normalizers import normalize_pattern
 
 __all__ = [
@@ -276,6 +276,7 @@ def rebuild_library_cache() -> list[Path]:
     Returns:
         list[Path]: Rebuilt cache.
     """
+    print_info("Rebuilding cache.")
     files = scan_for_media_files("*", sort_by_mtime=True)
     files = sort_scan_results(files)
     cache_data = {
@@ -309,7 +310,6 @@ class Query(ABC):
         ...
 
 
-# TODO: Add cache invalidation
 # TODO: Add FileResult type
 class FindQuery(Query):
     """Query for finding files matching a glob pattern, sorted alphabetically.
