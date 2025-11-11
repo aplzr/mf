@@ -3,9 +3,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from mf._app_config import app_config
-from mf._app_mf import app_mf
-from mf.utils import read_config, write_config
+from mf.cli_config import app_config
+from mf.cli_main import app_mf
+from mf.utils.config import read_config, write_config
 
 runner = CliRunner()
 
@@ -38,8 +38,7 @@ def test_imdb_parse_failure(monkeypatch, tmp_path):
     cfg["search_paths"] = [test_dir.resolve().as_posix()]
     write_config(cfg)
     # Simulate a previous search cache referencing the file
-    from mf.utils import save_search_results
-    from mf.utils.file_utils import FileResult
+    from mf.utils.file import FileResult, save_search_results
 
     save_search_results("*", [FileResult(bad_file)])
     result = runner.invoke(app_mf, ["imdb", "1"])
@@ -90,7 +89,7 @@ def test_get_fd_binary_unsupported(monkeypatch):
 
     monkeypatch.setattr(platform_module, "system", lambda: "PlanetoidOS")
     monkeypatch.setattr(platform_module, "machine", lambda: "AlienCPU")
-    from mf.utils import get_fd_binary
+    from mf.utils.file import get_fd_binary
 
     with pytest.raises(RuntimeError):
         get_fd_binary()

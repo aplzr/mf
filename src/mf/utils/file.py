@@ -19,9 +19,8 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
-from mf.constants import FD_BINARIES
-
-from .config_utils import (
+from ..constants import FD_BINARIES
+from .config import (
     get_validated_search_paths,
     parse_timedelta_str,
     read_config,

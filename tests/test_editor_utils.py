@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from mf.utils import start_editor
+from mf.utils.editor import start_editor
 
 
 def test_start_editor_visual(monkeypatch, tmp_path):
@@ -66,7 +66,7 @@ def test_start_editor_posix_no_editors(monkeypatch, tmp_path):
     monkeypatch.setattr(_sh, "which", fake_which)
 
     # Capture console output
-    from mf.utils import console
+    from mf.utils.console import console
 
     outputs = []
 

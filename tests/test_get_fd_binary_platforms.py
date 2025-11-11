@@ -2,7 +2,7 @@ import platform
 
 import pytest
 
-from mf.utils import get_fd_binary
+from mf.utils.file import get_fd_binary
 
 
 def test_get_fd_binary_linux_x86_64(monkeypatch):
