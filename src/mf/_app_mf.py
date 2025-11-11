@@ -6,8 +6,8 @@ from random import randrange
 import typer
 from guessit import guessit
 
-from ._app_cache import app_cache
 from ._app_config import app_config
+from ._app_last import app_last
 from ._version import __version__
 from .utils import (
     console,
@@ -27,7 +27,7 @@ from .utils.file_utils import FindQuery, NewQuery
 IMDb = None  # type: ignore
 
 app_mf = typer.Typer(help="Media file finder and player")
-app_mf.add_typer(app_cache, name="cache")
+app_mf.add_typer(app_last, name="last")
 app_mf.add_typer(app_config, name="config")
 
 

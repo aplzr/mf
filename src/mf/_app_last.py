@@ -8,17 +8,17 @@ from .utils import (
     print_search_results,
 )
 
-app_cache = typer.Typer(
+app_last = typer.Typer(
     help=(
-        "Show cache contents, print cache location or clear the cache. "
-        "If no argument is given, runs the default 'show' command."
+        "Show or clear results of the last file search, print search results file "
+        "location. If no argument is given, runs the default 'show' command."
     )
 )
 
 
-@app_cache.command()
+@app_last.command()
 def show():
-    """Print cache contents."""
+    """Print last search results."""
     pattern, results, timestamp = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_search_cache_file()}")
     console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
@@ -30,21 +30,21 @@ def show():
     print_search_results(pattern, results)
 
 
-@app_cache.command()
+@app_last.command()
 def file():
-    """Print the cache file location."""
+    """Print the search results file location."""
     print(get_search_cache_file())
 
 
-@app_cache.command()
+@app_last.command()
 def clear():
-    """Clear the cache."""
+    """Clear last search results."""
     get_search_cache_file().unlink(missing_ok=True)
     print_ok("Cache cleared.")
 
 
-@app_cache.callback(invoke_without_command=True)
+@app_last.callback(invoke_without_command=True)
 def cache_callback(ctx: typer.Context):
-    """Runs the default subcommand 'show' when no argument to 'cache' is provided."""
+    """Runs the default subcommand 'show' when no argument to 'last' is provided."""
     if ctx.invoked_subcommand is None:
         show()

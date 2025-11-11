@@ -3,7 +3,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from mf._app_cache import app_cache
+from mf._app_last import app_last
 from mf.utils import get_search_cache_file, save_search_results
 from mf.utils.file_utils import FileResult
 
@@ -18,21 +18,21 @@ def _set_env(monkeypatch, tmp_path):
 
 def test_cache_show_empty_exits(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
-    r = runner.invoke(app_cache, ["show"])
+    r = runner.invoke(app_last, ["show"])
     assert r.exit_code != 0
 
 
 def test_cache_show_after_save(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
     save_search_results("*foo*", [FileResult(Path("/tmp/foo.mp4"))])
-    r = runner.invoke(app_cache, ["show"])
+    r = runner.invoke(app_last, ["show"])
     assert r.exit_code == 0
     assert "*foo*" in r.stdout
 
 
 def test_cache_file_outputs_path(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
-    r = runner.invoke(app_cache, ["file"])
+    r = runner.invoke(app_last, ["file"])
     assert r.exit_code == 0
     # Normalize output by removing newlines introduced by rich wrapping or console
     normalized_stdout = r.stdout.replace("\n", "")
@@ -45,7 +45,7 @@ def test_cache_clear_removes_file(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
     save_search_results("x", [FileResult(Path("/tmp/x.mp4"))])
     assert get_search_cache_file().exists()
-    r = runner.invoke(app_cache, ["clear"])
+    r = runner.invoke(app_last, ["clear"])
     assert r.exit_code == 0
     assert not get_search_cache_file().exists()
 
@@ -53,6 +53,6 @@ def test_cache_clear_removes_file(tmp_path, monkeypatch):
 def test_cache_default_invokes_show(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
     save_search_results("pattern", [FileResult(Path("/tmp/a.mp4"))])
-    r = runner.invoke(app_cache, [])
+    r = runner.invoke(app_last, [])
     assert r.exit_code == 0
     assert "Cached results:" in r.stdout
