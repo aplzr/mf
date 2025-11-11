@@ -290,6 +290,8 @@ def rebuild_library_cache() -> list[Path]:
 
 
 class Query(ABC):
+    """Base class for file search queries."""
+
     def __init__(self):
         config = read_config()
         self.cache_library = config["cache_library"]
