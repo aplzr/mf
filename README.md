@@ -89,7 +89,7 @@ mf new 50 # Show 50 newest files
 
 - `mf last` / `mf last show`- Show indexed results from the last file search
 - `mf last file` - Print search result file location
-- `mf last clear` - Clear last searh results
+- `mf last clear` - Clear last search results
 
 Cached indices remain valid until you run another `find` or `new` command that overwrites the last search.
 
