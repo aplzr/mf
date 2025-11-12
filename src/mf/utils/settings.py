@@ -176,7 +176,7 @@ def apply_action(
         new_value = spec.normalize(raw_values[0])
         spec.validate_all(new_value)
         cfg[key] = spec.before_write(new_value)
-        spec.after_update()
+        spec.after_update(cfg[key])
         print_ok(f"Set {key} to '{spec.display(new_value)}'.")
 
         return cfg
@@ -211,6 +211,6 @@ def apply_action(
                 print_warn(f"'{value}' not found in {key}, skipping.")
 
     spec.validate_all(cfg[key])
-    spec.after_update()
+    spec.after_update(cfg[key])
 
     return cfg
