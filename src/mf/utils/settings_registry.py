@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 from tomlkit import TOMLDocument, comment, document, nl
 
+from ..constants import DEFAULT_MEDIA_EXTENSIONS
 from .console import print_error, print_ok, print_warn
 from .normalizers import (
     normalize_bool_str,
@@ -68,7 +69,7 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=str,
         actions={"set", "add", "remove", "clear"},
         normalize=normalize_media_extension,
-        default=[".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm"],
+        default=DEFAULT_MEDIA_EXTENSIONS,
         help="Allowed media file extensions.",
     ),
     "match_extensions": SettingSpec(
