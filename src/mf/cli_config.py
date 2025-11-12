@@ -7,7 +7,7 @@ from rich.table import Column, Table
 from .utils.config import get_config_file, read_config, write_config
 from .utils.console import console
 from .utils.editor import start_editor
-from .utils.settings_registry import REGISTRY, apply_action
+from .utils.settings import REGISTRY, apply_action
 
 app_config = typer.Typer(help="Manage mf configuration.")
 
