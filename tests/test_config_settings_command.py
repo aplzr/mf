@@ -1,7 +1,7 @@
 from typer.testing import CliRunner
 
 from mf.cli_config import app_config
-from mf.utils.settings_registry import REGISTRY
+from mf.utils.settings import REGISTRY
 
 
 def test_settings_command_lists_all_keys():

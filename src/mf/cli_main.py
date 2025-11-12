@@ -9,13 +9,13 @@ from guessit import guessit
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
+from .utils.config import read_config
 from .utils.console import console, print_error, print_warn
 from .utils.file import (
     FindQuery,
     NewQuery,
     get_result_by_index,
     print_search_results,
-    read_config,
     save_search_results,
 )
 from .version import __version__

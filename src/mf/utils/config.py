@@ -11,7 +11,7 @@ from tomlkit import TOMLDocument
 
 from .console import print_error, print_ok, print_warn
 from .normalizers import normalize_media_extension
-from .settings_registry import default_cfg
+from .settings import default_cfg
 
 __all__ = [
     "get_config_file",
