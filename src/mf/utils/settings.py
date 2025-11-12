@@ -65,7 +65,7 @@ REGISTRY: dict[str, SettingSpec] = {
         normalize=normalize_path,
         default=[],
         help="Directories scanned for media files.",
-        after_update=lambda _: rebuild_library_cache,
+        after_update=lambda _: rebuild_library_cache,  # TODO: only when caching is on
     ),
     "media_extensions": SettingSpec(
         key="media_extensions",
