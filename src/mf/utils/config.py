@@ -24,6 +24,8 @@ __all__ = [
     "parse_timedelta_str",
 ]
 
+_config = None
+
 
 def get_config_file() -> Path:
     """Return path to config file.
@@ -57,14 +59,7 @@ def write_default_config() -> TOMLDocument:
     return default_cfg
 
 
-def read_config() -> TOMLDocument:
-    """Load configuration contents.
-
-    Falls back to creating a default configuration when the file is missing.
-
-    Returns:
-        TOMLDocument: Parsed configuration.
-    """
+def _read_config() -> TOMLDocument:
     try:
         with open(get_config_file()) as f:
             cfg = tomlkit.load(f)
@@ -75,6 +70,23 @@ def read_config() -> TOMLDocument:
         cfg = write_default_config()
 
     return cfg
+
+
+def read_config() -> TOMLDocument:
+    """Load configuration contents.
+
+    Falls back to creating a default configuration when the file is missing.
+
+    Returns:
+        TOMLDocument: Parsed configuration.
+    """
+    # Load config once per mf invocation
+    global _config
+
+    if _config is None:
+        _config = _read_config()
+
+    return _config
 
 
 def write_config(cfg: TOMLDocument):
