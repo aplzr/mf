@@ -34,7 +34,14 @@ from .config import (
     parse_timedelta_str,
     read_config,
 )
-from .console import console, print_error, print_info, print_ok, print_warn
+from .console import (
+    STATUS_SYMBOLS,
+    console,
+    print_error,
+    print_info,
+    print_ok,
+    print_warn,
+)
 from .normalizers import normalize_pattern
 
 
@@ -505,10 +512,9 @@ def scan_for_media_files(
                 first_file_found = False
 
                 # Phase 1: Show spinner until first file found
-                start_time = time.time()
-                min_spinner_time = 0.5
-
-                with console.status("Waiting for file system to respond..."):
+                with console.status(
+                    "[bright_cyan]Waiting for file system to respond...[/bright_cyan]"
+                ):
                     while remaining_futures and not first_file_found:
                         # Check for completed futures (non-blocking)
                         done_futures = []
@@ -525,9 +531,8 @@ def scan_for_media_files(
                         with progress_lock:
                             current_count = files_found
 
-                        # Only exit if files found AND minimum time elapsed
-                        elapsed = time.time() - start_time
-                        if current_count > 0 and elapsed >= min_spinner_time:
+                        # Exit if first file found
+                        if current_count > 0:
                             first_file_found = True
                             break
 
@@ -535,7 +540,7 @@ def scan_for_media_files(
 
                 # Phase 2: Show progress bar after first file found
                 if estimated_total and estimated_total > 0:
-                    # Progress bar with known total
+                    # Progress bar with estimated cache size from last run
                     with Progress(
                         TextColumn("[progress.description]{task.description}"),
                         BarColumn(),
@@ -543,7 +548,9 @@ def scan_for_media_files(
                         TextColumn("({task.completed}/{task.total})"),
                     ) as progress:
                         task = progress.add_task(
-                            "Scanning search paths", total=estimated_total
+                            f"{STATUS_SYMBOLS['info']}  "
+                            "[bright_cyan]Scanning search paths[/bright_cyan]",
+                            total=estimated_total,
                         )
                         last_update_count = 0
 
@@ -598,7 +605,7 @@ def scan_for_media_files(
                             else:
                                 progress.update(task, completed=final_count)
                 else:
-                    # No cache estimate - continue silently
+                    # No cache size estimate - continue silently
                     while remaining_futures:
                         # Check for completed futures (non-blocking)
                         done_futures = []
