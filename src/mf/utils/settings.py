@@ -6,6 +6,7 @@ from tomlkit import TOMLDocument, comment, document, nl
 
 from ..constants import DEFAULT_MEDIA_EXTENSIONS
 from .console import print_error, print_ok, print_warn
+from .file import rebuild_library_cache
 from .normalizers import (
     normalize_bool_str,
     normalize_bool_to_toml,
@@ -39,6 +40,7 @@ class SettingSpec:
         validate_all: Function validating the (possibly list) value(s).
         help: Human readable help text shown to the user.
         before_write: Hook to transform value(s) before persisting.
+        after_update: Hook to trigger additional action(s) after an update.
     """
 
     key: str
@@ -51,6 +53,7 @@ class SettingSpec:
     validate_all: Callable[[Any], None] = lambda value: None
     help: str = ""
     before_write: Callable[[Any], any] = lambda value: value
+    after_update: Callable[[Any], None] = lambda value: None
 
 
 REGISTRY: dict[str, SettingSpec] = {
@@ -62,6 +65,7 @@ REGISTRY: dict[str, SettingSpec] = {
         normalize=normalize_path,
         default=[],
         help="Directories scanned for media files.",
+        after_update=lambda _: rebuild_library_cache,
     ),
     "media_extensions": SettingSpec(
         key="media_extensions",
@@ -172,6 +176,7 @@ def apply_action(
         new_value = spec.normalize(raw_values[0])
         spec.validate_all(new_value)
         cfg[key] = spec.before_write(new_value)
+        spec.after_update()
         print_ok(f"Set {key} to '{spec.display(new_value)}'.")
 
         return cfg
@@ -206,5 +211,6 @@ def apply_action(
                 print_warn(f"'{value}' not found in {key}, skipping.")
 
     spec.validate_all(cfg[key])
+    spec.after_update()
 
     return cfg
