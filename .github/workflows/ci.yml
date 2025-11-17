@@ -92,6 +92,7 @@ jobs:
     uses: ./.github/workflows/badges.yml
     with:
       python-version: '3.13'
+    secrets: inherit
 
   lint:
     name: Ruff lint
