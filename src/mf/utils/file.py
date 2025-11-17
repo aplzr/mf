@@ -184,8 +184,34 @@ def get_result_by_index(index: int) -> FileResult:
     return result
 
 
+def _load_library_cache(allow_rebuild=True) -> list[FileResult]:
+    """Load cached library metadata. Rebuilds the cache if it is corrupted and
+    rebuilding is allowed.
+
+    Returns [] if cache is corrupted and rebuilding is not allowed.
+
+    Args:
+        allow_rebuild (bool, optional): Allow cache rebuilding. Defaults to True.
+
+    Returns:
+        list[FileResult]: Cached file paths.
+    """
+    try:
+        with open(get_library_cache_file(), encoding="utf-8") as f:
+            cache_data = json.load(f)
+
+        results = [FileResult(Path(path_str)) for path_str in cache_data["files"]]
+    except (json.JSONDecodeError, KeyError):
+        print_warn("Cache corrupted.")
+
+        results = rebuild_library_cache() if allow_rebuild else []
+
+    return results
+
+
 def load_library_cache() -> list[FileResult]:
-    """Load cached library metadata. Rebuilds the cache if it has expired.
+    """Load cached library metadata. Rebuilds the cache if it has expired or is
+    corrupted.
 
     Raises:
         typer.Exit: Cache empty or doesn't exist.
@@ -193,18 +219,7 @@ def load_library_cache() -> list[FileResult]:
     Returns:
         list[FileResult]: Cached file paths.
     """
-    if is_cache_expired():
-        results = rebuild_library_cache()
-    else:
-        try:
-            with open(get_library_cache_file(), encoding="utf-8") as f:
-                cache_data = json.load(f)
-
-            results = [FileResult(Path(path_str)) for path_str in cache_data["files"]]
-        except (json.JSONDecodeError, KeyError):
-            print_warn("Cache corrupted.")
-            results = rebuild_library_cache()
-
+    results = rebuild_library_cache() if is_cache_expired() else _load_library_cache()
     return results
 
 
