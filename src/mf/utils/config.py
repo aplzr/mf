@@ -4,33 +4,37 @@ import os
 import re
 from datetime import timedelta
 from pathlib import Path
+from textwrap import wrap
 
 import tomlkit
 import typer
-from tomlkit import TOMLDocument
+from tomlkit import TOMLDocument, comment, document, nl
 
 from .console import print_error, print_ok, print_warn
 from .normalizers import normalize_media_extension
-from .settings import default_cfg
+from .settings import REGISTRY
 
 __all__ = [
     "get_config_file",
-    "write_default_config",
-    "read_config",
-    "write_config",
-    "get_validated_search_paths",
+    "get_default_cfg",
     "get_media_extensions",
+    "get_validated_search_paths",
     "normalize_media_extension",
     "parse_timedelta_str",
+    "read_config",
+    "write_config",
+    "write_default_config",
 ]
+
+_config = None
 
 
 def get_config_file() -> Path:
     """Return path to config file.
 
     Returns:
-        Path: Location of the configuration file (platform aware; falls back to
-            ~/.config/mf on POSIX).
+        Path: Location of the configuration file (platform aware, falls back to
+            ~/.config/mf).
     """
     config_dir = (
         Path(
@@ -45,26 +49,7 @@ def get_config_file() -> Path:
     return config_dir / "config.toml"
 
 
-def write_default_config() -> TOMLDocument:
-    """Create and persist a default configuration file.
-
-    Returns:
-        TOMLDocument: The default configuration document after writing.
-    """
-    write_config(default_cfg)
-    print_ok(f"Written default configuration to '{get_config_file()}'.")
-
-    return default_cfg
-
-
-def read_config() -> TOMLDocument:
-    """Load configuration contents.
-
-    Falls back to creating a default configuration when the file is missing.
-
-    Returns:
-        TOMLDocument: Parsed configuration.
-    """
+def _read_config() -> TOMLDocument:
     try:
         with open(get_config_file()) as f:
             cfg = tomlkit.load(f)
@@ -77,6 +62,43 @@ def read_config() -> TOMLDocument:
     return cfg
 
 
+def read_config() -> TOMLDocument:
+    """Load configuration contents.
+
+    Falls back to creating a default configuration when the file is missing.
+
+    Returns:
+        TOMLDocument: Parsed configuration.
+    """
+    # Load config once per mf invocation
+    global _config
+
+    if _config is None:
+        _config = _read_config()
+
+    return _config
+
+
+def get_default_cfg() -> TOMLDocument:
+    """Get the default configuration.
+
+    Builds the default configuration from the settings registry.
+
+    Returns:
+        TOMLDocument: Default configuration.
+    """
+    default_cfg = document()
+
+    for setting, spec in REGISTRY.items():
+        for line in wrap(spec.help, width=80):
+            default_cfg.add(comment(line))
+
+        default_cfg.add(setting, spec.default)
+        default_cfg.add(nl())
+
+    return default_cfg
+
+
 def write_config(cfg: TOMLDocument):
     """Persist configuration to disk.
 
@@ -85,6 +107,19 @@ def write_config(cfg: TOMLDocument):
     """
     with open(get_config_file(), "w") as f:
         tomlkit.dump(cfg, f)
+
+
+def write_default_config() -> TOMLDocument:
+    """Create and persist a default configuration file.
+
+    Returns:
+        TOMLDocument: The default configuration document after writing.
+    """
+    default_cfg = get_default_cfg()
+    write_config(default_cfg)
+    print_ok(f"Written default configuration to '{get_config_file()}'.")
+
+    return default_cfg
 
 
 def get_validated_search_paths() -> list[Path]:

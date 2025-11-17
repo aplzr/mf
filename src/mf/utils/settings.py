@@ -2,7 +2,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from tomlkit import TOMLDocument, comment, document, nl
+from tomlkit import TOMLDocument
 
 from ..constants import DEFAULT_MEDIA_EXTENSIONS
 from .console import print_error, print_ok, print_warn
@@ -16,7 +16,6 @@ from .normalizers import (
 
 __all__ = [
     "apply_action",
-    "default_cfg",
     "REGISTRY",
     "SettingSpec",
 ]
@@ -127,15 +126,6 @@ REGISTRY: dict[str, SettingSpec] = {
         ),
     ),
 }
-
-
-default_cfg = document()
-
-for setting in REGISTRY:
-    spec = REGISTRY[setting]
-    default_cfg.add(comment(spec.help))
-    default_cfg.add(setting, spec.default)
-    default_cfg.add(nl())
 
 
 def apply_action(
