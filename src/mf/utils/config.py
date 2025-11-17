@@ -49,19 +49,6 @@ def get_config_file() -> Path:
     return config_dir / "config.toml"
 
 
-def write_default_config() -> TOMLDocument:
-    """Create and persist a default configuration file.
-
-    Returns:
-        TOMLDocument: The default configuration document after writing.
-    """
-    default_cfg = get_default_cfg()
-    write_config(default_cfg)
-    print_ok(f"Written default configuration to '{get_config_file()}'.")
-
-    return default_cfg
-
-
 def _read_config() -> TOMLDocument:
     try:
         with open(get_config_file()) as f:
@@ -120,6 +107,19 @@ def write_config(cfg: TOMLDocument):
     """
     with open(get_config_file(), "w") as f:
         tomlkit.dump(cfg, f)
+
+
+def write_default_config() -> TOMLDocument:
+    """Create and persist a default configuration file.
+
+    Returns:
+        TOMLDocument: The default configuration document after writing.
+    """
+    default_cfg = get_default_cfg()
+    write_config(default_cfg)
+    print_ok(f"Written default configuration to '{get_config_file()}'.")
+
+    return default_cfg
 
 
 def get_validated_search_paths() -> list[Path]:
