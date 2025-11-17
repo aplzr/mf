@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass
+from textwrap import wrap
 from typing import Any, Literal
 
 from tomlkit import TOMLDocument, comment, document, nl
@@ -132,7 +133,9 @@ REGISTRY: dict[str, SettingSpec] = {
 default_cfg = document()
 
 for setting, spec in REGISTRY.items():
-    default_cfg.add(comment(spec.help))
+    for line in wrap(spec.help, width=80):
+        default_cfg.add(comment(line))
+
     default_cfg.add(setting, spec.default)
     default_cfg.add(nl())
 
