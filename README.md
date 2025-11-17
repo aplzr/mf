@@ -44,7 +44,7 @@ mf config set search_paths "/path/to/movies" "/path/to/tv-shows"
 
 2. **Optional: Activate library caching**
 
-If your collections is stored on the network, activate caching for fast file searches:
+If your collection is stored on the network, activate caching for fast file searches:
 
 ```bash
 mf config set cache_library true
