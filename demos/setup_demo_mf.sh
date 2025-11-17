@@ -6,7 +6,8 @@ if command -v mf &> /dev/null; then
 fi
 
 uv tool uninstall mediafinder 2>/dev/null || true
-rm -rf ~/dummy_shows
-python ../src/mf/utils/generate_dummy_media.py ~
+rm -rf ~/movies
+rm -rf ~/shows
+python3 ../src/mf/utils/generate_dummy_media.py ~
 mv -f ~/shows ~/dummy_shows
 mv -f ~/movies ~/dummy_movies
