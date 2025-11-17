@@ -7,10 +7,13 @@ on:
         required: false
         type: string
         default: '3.14'
-    secrets: {}
+    secrets:
+      BADGES_TOKEN:
+        required: true
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   coverage:
@@ -31,15 +34,12 @@ jobs:
         run: uv pip install --system -e .[dev]
       - name: Run tests with coverage (single version)
         run: pytest
-      - name: Generate coverage badge
-        run: |
-          uv pip install --system anybadge
-          mkdir -p static
-          PCT=$(python -c "import re, pathlib; xml=pathlib.Path('coverage.xml').read_text(); m=re.search(r'line-rate=\"([0-9.]+)\"', xml); print(round(float(m.group(1))*100) if m else -1)")
-          anybadge --label coverage --value "$PCT%" --file static/badge_coverage.svg --color '#4c1' --overwrite
-      - name: Commit coverage badge if changed
+      - name: Generate coverage badge & detect change
+        id: generate_coverage_badge
         run: |
           set -euo pipefail
+          uv pip install --system anybadge
+          mkdir -p static
           PCT=$(python -c "import re, pathlib; xml=pathlib.Path('coverage.xml').read_text(); m=re.search(r'line-rate=\"([0-9.]+)\"', xml); print(round(float(m.group(1))*100) if m else -1)")
           if [ -f static/coverage.json ]; then
             PREV=$(python -c "import json, pathlib; p=pathlib.Path('static/coverage.json'); print(json.loads(p.read_text()).get('coverage', -1))")
@@ -47,18 +47,41 @@ jobs:
             PREV=-1
           fi
           echo "Previous coverage: $PREV%, Current coverage: $PCT%"
-          if [ "$PCT" = "-1" ] || [ "$PCT" = "$PREV" ]; then
-            echo 'Coverage unchanged; skipping commit.'
+          if [ "$PCT" = "-1" ]; then
+            echo 'Coverage parse failed'; echo "changed=false" >> $GITHUB_OUTPUT; exit 0; fi
+          if [ "$PCT" = "$PREV" ]; then
+            echo 'Coverage unchanged; skipping badge update.'
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "coverage=$PCT" >> $GITHUB_OUTPUT
             exit 0
           fi
+          anybadge --label coverage --value "$PCT%" --file static/badge_coverage.svg --color '#4c1' --overwrite
           echo "{\"coverage\": $PCT}" > static/coverage.json
-          git config user.name 'github-actions'
-
-          git config user.email 'github-actions@users.noreply.github.com'
-          git add static/badge_coverage.svg static/coverage.json
-          git diff --cached --quiet && echo 'Nothing to commit' && exit 0
-          git commit -m "chore: update coverage badge ($PCT%)"
-          git push
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "coverage=$PCT" >> $GITHUB_OUTPUT
+      - name: Create or update coverage badge PR
+        id: coverage_pr
+        if: steps.generate_coverage_badge.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: badges/coverage
+          commit-message: "chore: update coverage badge (${{ steps.generate_coverage_badge.outputs.coverage }}%)"
+          title: "chore: update coverage badge (${{ steps.generate_coverage_badge.outputs.coverage }}%)"
+          body: |
+            Automated coverage badge update.
+            Previous vs current: See static/coverage.json.
+          labels: badges, automation
+          delete-branch: true
+          signoff: false
+          token: ${{ secrets.BADGES_TOKEN }}
+      # Auto-merge removed until checks reliably run for PRs created with PAT
+      - name: Auto-merge coverage badge PR
+        if: steps.generate_coverage_badge.outputs.changed == 'true'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.BADGES_TOKEN }}
+          pull-request-number: ${{ steps.coverage_pr.outputs.pull-request-number }}
+          merge-method: squash
 
   python-min:
     name: Python min version badge
@@ -73,28 +96,50 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ inputs.python-version }}
-      - name: Install dependencies for badge generation
-        run: pip install tomlkit anybadge
-      - name: Generate & commit min Python version badge
+      - name: Generate python min badge & detect change
+        id: generate_python_min_badge
         run: |
           set -euo pipefail
+          pip install tomlkit anybadge
           mkdir -p static
           if [ -f static/python_version_min.json ]; then
             PREV_MIN=$(python -c "import json; print(json.load(open('static/python_version_min.json')).get('min',''))")
           else
             PREV_MIN=""
           fi
-          MIN=$(python -c "import tomlkit, re; spec=tomlkit.parse(open('pyproject.toml','r',encoding='utf-8').read())['project']['requires-python']; m=re.search(r'(\\d+\\.\\d+)', spec); print(m.group(1) if m else '')")
-          if [ -z "$MIN" ]; then echo 'Could not determine min Python version'; exit 1; fi
+          MIN=$(python -c "import tomlkit, re, pathlib; spec=tomlkit.parse(pathlib.Path('pyproject.toml').read_text(encoding='utf-8'))['project']['requires-python']; m=re.search(r'(\d+\.\d+)', spec); print(m.group(1) if m else '')")
+          if [ -z "$MIN" ]; then echo 'Could not determine min Python version'; echo "changed=false" >> $GITHUB_OUTPUT; exit 0; fi
           BADGE_VALUE="${MIN}+"
-          echo "Minimum Python version: $MIN (badge: $BADGE_VALUE)"
-          printf '{"min": "%s"}' "$MIN" > static/python_version_min.json
-          anybadge --label python --value "$BADGE_VALUE" --file static/badge_python.svg --color '#3776AB' --overwrite
           if [ "$PREV_MIN" = "$MIN" ]; then
-            echo 'Min version unchanged; skipping commit.'; exit 0; fi
-          git config user.name 'github-actions'
-          git config user.email 'github-actions@users.noreply.github.com'
-          git add static/badge_python.svg static/python_version_min.json
-          git diff --cached --quiet && echo 'Nothing to commit' && exit 0
-          git commit -m "chore: update python min version badge ($BADGE_VALUE)"
-          git push
+            echo 'Min version unchanged; skipping badge update.'
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "min=$MIN" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          anybadge --label python --value "$BADGE_VALUE" --file static/badge_python.svg --color '#3776AB' --overwrite
+          printf '{"min": "%s"}' "$MIN" > static/python_version_min.json
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "min=$MIN" >> $GITHUB_OUTPUT
+      - name: Create or update python min version badge PR
+        id: python_min_pr
+        if: steps.generate_python_min_badge.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: badges/python-min
+          commit-message: "chore: update python min version badge (${{ steps.generate_python_min_badge.outputs.min }}+)"
+          title: "chore: update python min version badge (${{ steps.generate_python_min_badge.outputs.min }}+)"
+          body: |
+            Automated Python minimum version badge update.
+            Previous vs current: See static/python_version_min.json.
+          labels: badges, automation
+          delete-branch: true
+          signoff: false
+          token: ${{ secrets.BADGES_TOKEN }}
+      # Auto-merge removed until checks reliably run for PRs created with PAT
+      - name: Auto-merge python min version badge PR
+        if: steps.generate_python_min_badge.outputs.changed == 'true'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.BADGES_TOKEN }}
+          pull-request-number: ${{ steps.python_min_pr.outputs.pull-request-number }}
+          merge-method: squash

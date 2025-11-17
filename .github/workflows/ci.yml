@@ -12,7 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read  # default least privilege
+  contents: write  # allow badge workflow to update artifacts when needed
+  pull-requests: write  # required for reusable workflow PR creation
   actions: read
   checks: write
 
@@ -80,16 +81,18 @@ jobs:
             htmlcov/
           if-no-files-found: error
           retention-days: 3
-          
+
   badges:
     name: Update badges
     needs: tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
-      contents: write  # allow reusable workflow to push badge commits
+      contents: write  # allow reusable workflow to update badge artifacts
+      pull-requests: write  # required for creating & auto-merging PRs in badges workflow
     uses: ./.github/workflows/badges.yml
     with:
       python-version: '3.13'
+    secrets: inherit
 
   lint:
     name: Ruff lint
