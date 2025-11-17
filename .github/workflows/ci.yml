@@ -12,7 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read  # default least privilege
+  contents: write  # allow badge workflow to update artifacts when needed
+  pull-requests: write  # required for reusable workflow PR creation
   actions: read
   checks: write
 
