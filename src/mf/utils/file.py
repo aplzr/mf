@@ -5,7 +5,10 @@ import os
 import platform
 import stat
 import subprocess
+import threading
+import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -17,6 +20,12 @@ from pathlib import Path
 
 import typer
 from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    Progress,
+    TaskProgressColumn,
+    TextColumn,
+)
 from rich.table import Table
 
 from ..constants import FD_BINARIES
@@ -25,7 +34,14 @@ from .config import (
     parse_timedelta_str,
     read_config,
 )
-from .console import console, print_error, print_info, print_ok, print_warn
+from .console import (
+    STATUS_SYMBOLS,
+    console,
+    print_error,
+    print_info,
+    print_ok,
+    print_warn,
+)
 from .normalizers import normalize_pattern
 
 
@@ -168,8 +184,34 @@ def get_result_by_index(index: int) -> FileResult:
     return result
 
 
+def _load_library_cache(allow_rebuild=True) -> list[FileResult]:
+    """Load cached library metadata. Rebuilds the cache if it is corrupted and
+    rebuilding is allowed.
+
+    Returns [] if cache is corrupted and rebuilding is not allowed.
+
+    Args:
+        allow_rebuild (bool, optional): Allow cache rebuilding. Defaults to True.
+
+    Returns:
+        list[FileResult]: Cached file paths.
+    """
+    try:
+        with open(get_library_cache_file(), encoding="utf-8") as f:
+            cache_data = json.load(f)
+
+        results = [FileResult(Path(path_str)) for path_str in cache_data["files"]]
+    except (json.JSONDecodeError, KeyError):
+        print_warn("Cache corrupted.")
+
+        results = rebuild_library_cache() if allow_rebuild else []
+
+    return results
+
+
 def load_library_cache() -> list[FileResult]:
-    """Load cached library metadata. Rebuilds the cache if it has expired.
+    """Load cached library metadata. Rebuilds the cache if it has expired or is
+    corrupted.
 
     Raises:
         typer.Exit: Cache empty or doesn't exist.
@@ -177,19 +219,17 @@ def load_library_cache() -> list[FileResult]:
     Returns:
         list[FileResult]: Cached file paths.
     """
-    if is_cache_expired():
-        results = rebuild_library_cache()
-    else:
-        try:
-            with open(get_library_cache_file(), encoding="utf-8") as f:
-                cache_data = json.load(f)
-
-            results = [FileResult(Path(path_str)) for path_str in cache_data["files"]]
-        except (json.JSONDecodeError, KeyError):
-            print_warn("Cache corrupted.")
-            results = rebuild_library_cache()
-
+    results = rebuild_library_cache() if is_cache_expired() else _load_library_cache()
     return results
+
+
+def get_library_cache_size() -> int:
+    """Get the size of the library cache.
+
+    Returns:
+        int: Number of cached file paths.
+    """
+    return len(_load_library_cache(allow_rebuild=False))
 
 
 def is_cache_expired() -> bool:
@@ -337,13 +377,16 @@ def sort_scan_results(results: list[FileResult]) -> list[FileResult]:
 
 def scan_path_with_python(
     search_path: Path,
-    include_mtime: bool = False,
+    with_mtime: bool = False,
+    progress_callback: Callable[[FileResult], None] | None = None,
 ) -> list[FileResult]:
     """Recursively scan a directory using Python.
 
     Args:
         search_path (Path): Root directory to scan.
-        include_mtime (bool): Include modification time in results.
+        with_mtime (bool): Include modification time in results.
+        progress_callback (Callable[[FileResult], None] | None): Called for each file
+            found (optional, defaults to None).
 
     Returns:
         list[FileResult]: All files in the search path, optionally paired with mtime.
@@ -355,15 +398,18 @@ def scan_path_with_python(
             with os.scandir(path) as entries:
                 for entry in entries:
                     if entry.is_file(follow_symlinks=False):
-                        if include_mtime:
-                            # mtime = entry.stat().st_mtime
-                            # results.append((Path(entry.path), mtime))
-                            results.append(
-                                FileResult(Path(entry.path), entry.stat().st_mtime)
+                        if with_mtime:
+                            file_result = FileResult(
+                                Path(entry.path), entry.stat().st_mtime
                             )
                         else:
-                            # results.append(Path(entry.path))
-                            results.append(FileResult(Path(entry.path)))
+                            file_result = FileResult(Path(entry.path))
+
+                        results.append(file_result)
+
+                        if progress_callback:
+                            progress_callback(file_result)
+
                     elif entry.is_dir(follow_symlinks=False):
                         scan_dir(entry.path)
         except PermissionError:
@@ -411,7 +457,11 @@ def scan_path_with_fd(
 
 
 def scan_for_media_files(
-    pattern: str, *, with_mtime: bool = False, prefer_fd: bool | None = None
+    pattern: str,
+    *,
+    with_mtime: bool = False,
+    prefer_fd: bool | None = None,
+    show_progress: bool = False,
 ) -> list[FileResult]:
     """Find media files by scanning all search paths.
 
@@ -420,6 +470,7 @@ def scan_for_media_files(
         with_mtime (bool): Add mtime info for later sorting by new (Python scan only).
         prefer_fd (bool): Prefer fd unless mtime sorting is requested. If None, value is
             read from the configuration file.
+        show_progress (bool): Show progress bar during scanning.
 
     Raises:
         RuntimeError: From fd resolution if platform unsupported.
@@ -446,14 +497,44 @@ def scan_for_media_files(
                 OSError,
                 PermissionError,
             ):
-                # Do full scan with python scanner if fd fails for any reason
-                partial_fd_scanner = partial(scan_path_with_python, include_mtime=False)
+                partial_fd_scanner = partial(scan_path_with_python, with_mtime=False)
                 path_results = list(executor.map(partial_fd_scanner, search_paths))
         else:
-            partial_python_scanner = partial(
-                scan_path_with_python, include_mtime=with_mtime
-            )
-            path_results = list(executor.map(partial_python_scanner, search_paths))
+            if show_progress:
+                # Get estimated total from cache
+                if get_library_cache_file().exists():
+                    estimated_total = get_library_cache_size()
+                else:
+                    estimated_total = None
+
+                # Set up progress tracking, use list to make it mutable for the helper
+                # function
+                files_found = [0]
+                progress_lock = threading.Lock()
+
+                def progress_callback(file_result: FileResult):
+                    with progress_lock:
+                        files_found[0] += 1
+
+                scanner_with_progress = partial(
+                    scan_path_with_python,
+                    with_mtime=with_mtime,
+                    progress_callback=progress_callback,
+                )
+
+                futures = [
+                    executor.submit(scanner_with_progress, path)
+                    for path in search_paths
+                ]
+
+                path_results = _scan_with_progress_bar(
+                    futures, estimated_total, files_found, progress_lock
+                )
+            else:
+                partial_python_scanner = partial(
+                    scan_path_with_python, with_mtime=with_mtime
+                )
+                path_results = list(executor.map(partial_python_scanner, search_paths))
 
     all_results: list = []
 
@@ -461,6 +542,134 @@ def scan_for_media_files(
         all_results.extend(res)
 
     return all_results
+
+
+def _scan_with_progress_bar(
+    futures: list,
+    estimated_total: int | None,
+    files_found: list[int],
+    progress_lock: threading.Lock,
+) -> list:
+    """Handle progress bar display while futures complete.
+
+    Shows a spinner until first file is found, then displays a progress bar
+    with estimated completion based on cache size. Updates progress in real-time
+    as files are discovered.
+
+    Args:
+        futures (list): List of Future objects from ThreadPoolExecutor.
+        estimated_total (int | None): Estimated number of files for progress bar.
+            If None, no progress bar is shown.
+        files_found (list[int]): Mutable list containing current file count.
+            Modified by progress callback during scanning.
+        progress_lock (threading.Lock): Lock for thread-safe access to files_found.
+
+    Returns:
+        list: Combined results from all completed futures.
+    """
+    path_results = []
+    remaining_futures = futures.copy()
+    first_file_found = False
+
+    # Phase 1: Show spinner until first file found
+    with console.status(
+        "[bright_cyan]Waiting for file system to respond...[/bright_cyan]"
+    ):
+        while remaining_futures and not first_file_found:
+            # Check for completed futures (non-blocking)
+            done_futures = []
+            for future in remaining_futures:
+                if future.done():
+                    path_results.append(future.result())
+                    done_futures.append(future)
+
+            # Remove completed futures
+            for future in done_futures:
+                remaining_futures.remove(future)
+
+            # Check progress counter
+            with progress_lock:
+                current_count = files_found[0]  # Use list to make it mutable
+
+            # Exit if first file found
+            if current_count > 0:
+                first_file_found = True
+                break
+
+            time.sleep(0.1)
+
+    # Phase 2: Show progress bar after first file found
+    if estimated_total and estimated_total > 0:
+        # Progress bar with estimated cache size from last run
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TextColumn("({task.completed}/{task.total} files)"),
+        ) as progress:
+            task = progress.add_task(
+                f"{STATUS_SYMBOLS['info']}  "
+                "[bright_cyan]Scanning search paths[/bright_cyan]",
+                total=estimated_total,
+            )
+            last_update_count = 0
+            update_threshold = max(1, estimated_total // 20)
+
+            while remaining_futures:
+                # Check for completed futures (non-blocking)
+                done_futures = []
+
+                for future in remaining_futures:
+                    if future.done():
+                        path_results.append(future.result())
+                        done_futures.append(future)
+
+                # Remove completed futures
+                for future in done_futures:
+                    remaining_futures.remove(future)
+
+                # Update progress bar
+                with progress_lock:
+                    current_count = files_found[0]
+
+                # Only update if we've found enough new files
+                if current_count - last_update_count >= update_threshold:
+                    # If we exceed estimate, update the total as well
+                    if current_count > estimated_total:
+                        new_estimate = int(current_count * 1.1)  # Add 10% buffer
+                        progress.update(
+                            task,
+                            completed=current_count,
+                            total=new_estimate,
+                        )
+                        estimated_total = new_estimate
+                    else:
+                        progress.update(task, completed=current_count)
+
+                    last_update_count = current_count
+
+                time.sleep(0.1)
+
+            # Final update
+            with progress_lock:
+                final_count = files_found[0]
+                progress.update(task, completed=final_count, total=final_count)
+    else:
+        # No cache size estimate, continue silently
+        while remaining_futures:
+            done_futures = []
+            for future in remaining_futures:
+                if future.done():
+                    path_results.append(future.result())
+                    done_futures.append(future)
+
+            # Remove completed futures
+            for future in done_futures:
+                remaining_futures.remove(future)
+
+            time.sleep(0.1)
+
+    return path_results
 
 
 def rebuild_library_cache() -> list[FileResult]:
@@ -473,7 +682,7 @@ def rebuild_library_cache() -> list[FileResult]:
         list[FileResult]: Rebuilt cache.
     """
     print_info("Rebuilding cache.")
-    results = scan_for_media_files("*", with_mtime=True)
+    results = scan_for_media_files("*", with_mtime=True, show_progress=True)
     results = sort_scan_results(results)
     cache_data = {
         "timestamp": datetime.now().isoformat(),
