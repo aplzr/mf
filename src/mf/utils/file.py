@@ -223,6 +223,15 @@ def load_library_cache() -> list[FileResult]:
     return results
 
 
+def get_library_cache_size() -> int:
+    """Get the size of the library cache.
+
+    Returns:
+        int: Number of cached file paths.
+    """
+    return len(_load_library_cache(allow_rebuild=False))
+
+
 def is_cache_expired() -> bool:
     """Check if the library cache is older than the configured cache interval.
 
