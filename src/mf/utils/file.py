@@ -605,7 +605,7 @@ def _scan_with_progress_bar(
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TaskProgressColumn(),
-            TextColumn("({task.completed}/{task.total})"),
+            TextColumn("({task.completed}/{task.total} files)"),
         ) as progress:
             task = progress.add_task(
                 f"{STATUS_SYMBOLS['info']}  "
