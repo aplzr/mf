@@ -131,8 +131,7 @@ REGISTRY: dict[str, SettingSpec] = {
 
 default_cfg = document()
 
-for setting in REGISTRY:
-    spec = REGISTRY[setting]
+for setting, spec in REGISTRY.items():
     default_cfg.add(comment(spec.help))
     default_cfg.add(setting, spec.default)
     default_cfg.add(nl())
