@@ -6,7 +6,6 @@ from tomlkit import TOMLDocument
 
 from ..constants import DEFAULT_MEDIA_EXTENSIONS
 from .console import print_error, print_ok, print_warn
-from .file import rebuild_library_cache
 from .normalizers import (
     normalize_bool_str,
     normalize_bool_to_toml,
@@ -22,6 +21,14 @@ __all__ = [
 ]
 
 Action = Literal["set", "add", "remove", "clear"]
+
+
+def _rebuild_cache_if_enabled():
+    from .config import read_config
+    from .file import rebuild_library_cache
+
+    if read_config()["cache_library"]:
+        rebuild_library_cache()
 
 
 @dataclass
@@ -64,7 +71,7 @@ REGISTRY: dict[str, SettingSpec] = {
         normalize=normalize_path,
         default=[],
         help="Directories scanned for media files.",
-        after_update=lambda _: rebuild_library_cache,  # TODO: only when caching is on
+        after_update=lambda _: _rebuild_cache_if_enabled(),
     ),
     "media_extensions": SettingSpec(
         key="media_extensions",
@@ -114,6 +121,7 @@ REGISTRY: dict[str, SettingSpec] = {
         default=False,
         display=normalize_bool_to_toml,
         help="If true, caches library metadata locally.",
+        after_update=lambda _: _rebuild_cache_if_enabled(),
     ),
     "library_cache_interval": SettingSpec(
         key="library_cache_interval",
