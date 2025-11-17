@@ -33,8 +33,8 @@ def get_config_file() -> Path:
     """Return path to config file.
 
     Returns:
-        Path: Location of the configuration file (platform aware; falls back to
-            ~/.config/mf on POSIX).
+        Path: Location of the configuration file (platform aware, falls back to
+            ~/.config/mf).
     """
     config_dir = (
         Path(
