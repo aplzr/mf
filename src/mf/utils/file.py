@@ -618,6 +618,7 @@ def _scan_with_progress_bar(
             while remaining_futures:
                 # Check for completed futures (non-blocking)
                 done_futures = []
+
                 for future in remaining_futures:
                     if future.done():
                         path_results.append(future.result())
@@ -654,7 +655,7 @@ def _scan_with_progress_bar(
                 final_count = files_found[0]
                 progress.update(task, completed=final_count, total=final_count)
     else:
-        # No cache size estimate - continue silently
+        # No cache size estimate, continue silently
         while remaining_futures:
             done_futures = []
             for future in remaining_futures:
