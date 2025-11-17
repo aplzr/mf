@@ -219,8 +219,7 @@ def load_library_cache() -> list[FileResult]:
     Returns:
         list[FileResult]: Cached file paths.
     """
-    results = rebuild_library_cache() if is_cache_expired() else _load_library_cache()
-    return results
+    return rebuild_library_cache() if is_cache_expired() else _load_library_cache()
 
 
 def get_library_cache_size() -> int:
