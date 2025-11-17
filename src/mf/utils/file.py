@@ -253,7 +253,7 @@ def is_cache_expired() -> bool:
         # Cache set to never expire
         return False
 
-    return datetime.now() - cache_timestamp > get_library_cache_interval()
+    return datetime.now() - cache_timestamp > cache_interval
 
 
 def use_library_cache() -> bool:
