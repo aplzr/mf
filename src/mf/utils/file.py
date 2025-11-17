@@ -489,7 +489,6 @@ def scan_for_media_files(
 
     with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
         if use_fd:
-            # FD scanner path - unchanged
             try:
                 path_results = list(executor.map(scan_path_with_fd, search_paths))
             except (
@@ -498,26 +497,24 @@ def scan_for_media_files(
                 OSError,
                 PermissionError,
             ):
-                # Fallback - unchanged
                 partial_fd_scanner = partial(scan_path_with_python, with_mtime=False)
                 path_results = list(executor.map(partial_fd_scanner, search_paths))
         else:
-            # Python scanner path
             if show_progress:
                 # Get estimated total from cache
                 if get_library_cache_file().exists():
-                    estimated_total = len(load_library_cache())
+                    estimated_total = get_library_cache_size()
                 else:
-                    estimated_total = None  # No cache available for estimation
+                    estimated_total = None
 
-                # Set up progress tracking for cache rebuilds
-                files_found = 0
+                # Set up progress tracking, use list to make it mutable for the helper
+                # function
+                files_found = [0]
                 progress_lock = threading.Lock()
 
                 def progress_callback(file_result: FileResult):
-                    nonlocal files_found
                     with progress_lock:
-                        files_found += 1
+                        files_found[0] += 1
 
                 scanner_with_progress = partial(
                     scan_path_with_python,
@@ -530,123 +527,10 @@ def scan_for_media_files(
                     for path in search_paths
                 ]
 
-                # Monitor progress while workers are running
-                path_results = []
-                remaining_futures = futures.copy()
-                first_file_found = False
-
-                # Phase 1: Show spinner until first file found
-                with console.status(
-                    "[bright_cyan]Waiting for file system to respond...[/bright_cyan]"
-                ):
-                    while remaining_futures and not first_file_found:
-                        # Check for completed futures (non-blocking)
-                        done_futures = []
-                        for future in remaining_futures:
-                            if future.done():
-                                path_results.append(future.result())
-                                done_futures.append(future)
-
-                        # Remove completed futures
-                        for future in done_futures:
-                            remaining_futures.remove(future)
-
-                        # Check progress counter
-                        with progress_lock:
-                            current_count = files_found
-
-                        # Exit if first file found
-                        if current_count > 0:
-                            first_file_found = True
-                            break
-
-                        time.sleep(0.1)
-
-                # Phase 2: Show progress bar after first file found
-                if estimated_total and estimated_total > 0:
-                    # Progress bar with estimated cache size from last run
-                    with Progress(
-                        TextColumn("[progress.description]{task.description}"),
-                        BarColumn(),
-                        TaskProgressColumn(),
-                        TextColumn("({task.completed}/{task.total})"),
-                    ) as progress:
-                        task = progress.add_task(
-                            f"{STATUS_SYMBOLS['info']}  "
-                            "[bright_cyan]Scanning search paths[/bright_cyan]",
-                            total=estimated_total,
-                        )
-                        last_update_count = 0
-
-                        # Update ~20 times
-                        update_threshold = max(1, estimated_total // 20)
-
-                        while remaining_futures:
-                            # Check for completed futures (non-blocking)
-                            done_futures = []
-
-                            for future in remaining_futures:
-                                if future.done():
-                                    path_results.append(future.result())
-                                    done_futures.append(future)
-
-                            # Remove completed futures
-                            for future in done_futures:
-                                remaining_futures.remove(future)
-
-                            # Update progress bar
-                            with progress_lock:
-                                current_count = files_found
-
-                            # Only update if we've found enough new files
-                            if current_count - last_update_count >= update_threshold:
-                                # If we exceed estimate, update the total as well
-                                if current_count > estimated_total:
-                                    new_estimate = int(
-                                        current_count * 1.1
-                                    )  # Add 10% buffer
-                                    progress.update(
-                                        task,
-                                        completed=current_count,
-                                        total=new_estimate,
-                                    )
-                                    estimated_total = new_estimate
-                                else:
-                                    progress.update(task, completed=current_count)
-
-                                last_update_count = current_count
-
-                            time.sleep(0.1)
-
-                        # Final update
-                        with progress_lock:
-                            final_count = files_found
-
-                            if final_count > estimated_total:
-                                progress.update(
-                                    task, completed=final_count, total=final_count
-                                )
-                            else:
-                                progress.update(task, completed=final_count)
-                else:
-                    # No cache size estimate - continue silently
-                    while remaining_futures:
-                        # Check for completed futures (non-blocking)
-                        done_futures = []
-
-                        for future in remaining_futures:
-                            if future.done():
-                                path_results.append(future.result())
-                                done_futures.append(future)
-
-                        # Remove completed futures
-                        for future in done_futures:
-                            remaining_futures.remove(future)
-
-                        time.sleep(0.1)
-
+                path_results = _scan_with_progress_bar(
+                    futures, estimated_total, files_found, progress_lock
+                )
             else:
-                # Regular searches - unchanged behavior
                 partial_python_scanner = partial(
                     scan_path_with_python, with_mtime=with_mtime
                 )
@@ -658,6 +542,133 @@ def scan_for_media_files(
         all_results.extend(res)
 
     return all_results
+
+
+def _scan_with_progress_bar(
+    futures: list,
+    estimated_total: int | None,
+    files_found: list[int],
+    progress_lock: threading.Lock,
+) -> list:
+    """Handle progress bar display while futures complete.
+
+    Shows a spinner until first file is found, then displays a progress bar
+    with estimated completion based on cache size. Updates progress in real-time
+    as files are discovered.
+
+    Args:
+        futures (list): List of Future objects from ThreadPoolExecutor.
+        estimated_total (int | None): Estimated number of files for progress bar.
+            If None, no progress bar is shown.
+        files_found (list[int]): Mutable list containing current file count.
+            Modified by progress callback during scanning.
+        progress_lock (threading.Lock): Lock for thread-safe access to files_found.
+
+    Returns:
+        list: Combined results from all completed futures.
+    """
+    path_results = []
+    remaining_futures = futures.copy()
+    first_file_found = False
+
+    # Phase 1: Show spinner until first file found
+    with console.status(
+        "[bright_cyan]Waiting for file system to respond...[/bright_cyan]"
+    ):
+        while remaining_futures and not first_file_found:
+            # Check for completed futures (non-blocking)
+            done_futures = []
+            for future in remaining_futures:
+                if future.done():
+                    path_results.append(future.result())
+                    done_futures.append(future)
+
+            # Remove completed futures
+            for future in done_futures:
+                remaining_futures.remove(future)
+
+            # Check progress counter
+            with progress_lock:
+                current_count = files_found[0]  # Use list to make it mutable
+
+            # Exit if first file found
+            if current_count > 0:
+                first_file_found = True
+                break
+
+            time.sleep(0.1)
+
+    # Phase 2: Show progress bar after first file found
+    if estimated_total and estimated_total > 0:
+        # Progress bar with estimated cache size from last run
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TextColumn("({task.completed}/{task.total})"),
+        ) as progress:
+            task = progress.add_task(
+                f"{STATUS_SYMBOLS['info']}  "
+                "[bright_cyan]Scanning search paths[/bright_cyan]",
+                total=estimated_total,
+            )
+            last_update_count = 0
+            update_threshold = max(1, estimated_total // 20)
+
+            while remaining_futures:
+                # Check for completed futures (non-blocking)
+                done_futures = []
+                for future in remaining_futures:
+                    if future.done():
+                        path_results.append(future.result())
+                        done_futures.append(future)
+
+                # Remove completed futures
+                for future in done_futures:
+                    remaining_futures.remove(future)
+
+                # Update progress bar
+                with progress_lock:
+                    current_count = files_found[0]
+
+                # Only update if we've found enough new files
+                if current_count - last_update_count >= update_threshold:
+                    # If we exceed estimate, update the total as well
+                    if current_count > estimated_total:
+                        new_estimate = int(current_count * 1.1)  # Add 10% buffer
+                        progress.update(
+                            task,
+                            completed=current_count,
+                            total=new_estimate,
+                        )
+                        estimated_total = new_estimate
+                    else:
+                        progress.update(task, completed=current_count)
+
+                    last_update_count = current_count
+
+                time.sleep(0.1)
+
+            # Final update
+            with progress_lock:
+                final_count = files_found[0]
+                progress.update(task, completed=final_count, total=final_count)
+    else:
+        # No cache size estimate - continue silently
+        while remaining_futures:
+            done_futures = []
+            for future in remaining_futures:
+                if future.done():
+                    path_results.append(future.result())
+                    done_futures.append(future)
+
+            # Remove completed futures
+            for future in done_futures:
+                remaining_futures.remove(future)
+
+            time.sleep(0.1)
+
+    return path_results
 
 
 def rebuild_library_cache() -> list[FileResult]:
