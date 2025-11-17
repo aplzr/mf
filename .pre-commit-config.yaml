@@ -10,8 +10,6 @@ repos:
     rev: v4.6.0
     hooks:
       - id: end-of-file-fixer
-      - id: mixed-line-ending
-        args: ["--fix=lf"]
       - id: trailing-whitespace
       - id: check-merge-conflict
       - id: check-yaml
