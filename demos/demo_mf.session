@@ -1,0 +1,10 @@
+#doitlive shell: /bin/bash
+#doitlive prompt: deadsimple
+#doitlive speed: 2
+
+uv tool install mediafinder
+mf config set search_paths dummy_shows dummy_movies
+mf config set cache_library true
+mf find signal
+mf new 5
+mf play 3
