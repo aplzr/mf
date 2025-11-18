@@ -5,6 +5,7 @@ from random import randrange
 
 import typer
 from guessit import guessit
+from imdbinfo import search_title
 
 from .cli_cache import app_cache
 from .cli_config import app_config
@@ -19,12 +20,6 @@ from .utils.file import (
     save_search_results,
 )
 from .version import __version__
-
-# Module-level placeholder so tests can monkeypatch `IMDb` even before the
-# actual dependency import succeeds. We assign the real class lazily inside
-# the `imdb` command. Tests use `monkeypatch.setattr(app_mod, "IMDb", ...)`;
-# without this sentinel attribute those tests would fail with AttributeError.
-IMDb = None  # type: ignore
 
 app_mf = typer.Typer(help="Media file finder and player")
 app_mf.add_typer(app_last, name="last")
@@ -146,8 +141,6 @@ def imdb(
     ),
 ):
     """Open IMDB entry of a search result."""
-    # First derive metadata from filename. Tests expect a parse failure
-    # to be reported even if the IMDb library could not be imported.
     filestem = get_result_by_index(index).file.stem
     parsed = guessit(filestem)
 
@@ -156,38 +149,14 @@ def imdb(
         raise typer.Exit(1)
 
     title = parsed["title"]
+    results = search_title(title)
 
-    # Lazy import to avoid failing package import on Python versions where imdb package
-    # still uses deprecated APIs (e.g., pkgutil.find_loader removed in 3.14, see issue
-    # #60). Import only after we know we have a title; avoids aborting before
-    # parse-related error paths are exercised in tests and in real usage.
-    # Provide the global for assignment
-    global IMDb  # noqa: PLW0603
-    if IMDb is None:  # First use: attempt real import
-        try:
-            from imdb import IMDb as _IMDb  # type: ignore
-
-            IMDb = _IMDb
-        except ImportError as e:
-            print_error(
-                "IMDb functionality unavailable on this Python version "
-                "or missing dependency."
-            )
-            raise typer.Exit(1) from e
-
-    # Gracefully handle no IMDb results
-    try:
-        results = IMDb().search_movie(title)  # type: ignore[call-arg]
-    except Exception as e:  # Network or API error (network, parsing, etc.)
-        print_error(f"IMDb lookup failed: {e}.")
-
-    if not results:
-        print_error(f"No IMDb results found for parsed title '{title}'.")
-
-    imdb_entry = results[0]
-    imdb_url = f"https://www.imdb.com/title/tt{imdb_entry.movieID}/"
-    console.print(f"IMDB entry for [green]{imdb_entry['title']}[/green]: {imdb_url}")
-    typer.launch(imdb_url)
+    if results.titles:
+        imdb_url = results.titles[0].url
+        console.print(f"IMDB entry for [green]{title}[/green]: {imdb_url}")
+        typer.launch(imdb_url)
+    else:
+        print_error("No IMDB results found for parsed title {title}.")
 
 
 @app_mf.command()
