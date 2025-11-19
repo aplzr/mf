@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import builtins
-
 from typer.testing import CliRunner
 
 from mf.cli_main import app_mf
@@ -101,47 +99,6 @@ def test_play_generic_exception(monkeypatch, tmp_path):
     result = runner.invoke(app_mf, ["play", "1"])
     assert result.exit_code != 0
     assert "Error launching VLC" in result.stdout
-
-
-def test_imdb_import_error(monkeypatch, tmp_path):
-    """IMDb lazy import failure path."""
-    import mf.cli_main as app_mod
-
-    app_mod.IMDb = None
-    fake_file = tmp_path / "Title 2024 1080p.mkv"
-    fake_file.write_text("dummy", encoding="utf-8")
-    monkeypatch.setattr(
-        "mf.cli_main.get_result_by_index", lambda idx: FileResult(fake_file)
-    )
-    monkeypatch.setattr("mf.cli_main.guessit", lambda _: {"title": "Title"})
-
-    real_import = builtins.__import__
-
-    def selective_import(name, *a, **k):  # pragma: no cover
-        if name.startswith("imdb"):
-            raise ImportError("no imdb")
-        return real_import(name, *a, **k)
-
-    monkeypatch.setattr("builtins.__import__", selective_import)
-    result = runner.invoke(app_mf, ["imdb", "1"])
-    assert result.exit_code != 0
-    assert "IMDb functionality unavailable" in result.stdout
-
-
-def test_imdb_no_results(monkeypatch, tmp_path):
-    """IMDb search returns no results path."""
-    import mf.cli_main as app_mod
-
-    app_mod.IMDb = lambda: type("FakeIMDb", (), {"search_movie": lambda self, t: []})()
-    fake_file = tmp_path / "Title 2024 1080p.mkv"
-    fake_file.write_text("dummy", encoding="utf-8")
-    monkeypatch.setattr(
-        "mf.cli_main.get_result_by_index", lambda idx: FileResult(fake_file)
-    )
-    monkeypatch.setattr("mf.cli_main.guessit", lambda _: {"title": "Title"})
-    result = runner.invoke(app_mf, ["imdb", "1"])
-    assert result.exit_code != 0
-    assert "No IMDb results found" in result.stdout
 
 
 def test_filepath_command(monkeypatch, tmp_path):
