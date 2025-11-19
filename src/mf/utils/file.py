@@ -200,8 +200,20 @@ def print_search_results(title: str, results: list[FileResult]):
     table.add_column("File", style="green", overflow="fold")
     table.add_column("Location", style="blue", overflow="fold")
 
-    for idx, result in enumerate(results, start=1):
-        table.add_row(str(idx), result.file.name, str(result.file.parent))
+    last_played_index = get_last_played_index()
+
+    for idx, result in enumerate(results):
+        is_last_played = idx == last_played_index
+
+        if is_last_played:
+            # Highlight last played file in the search results
+            table.add_row(
+                f"[bright_cyan]{str(idx + 1)}[/bright_cyan]",
+                f"[bright_cyan]{result.file.name}[/bright_cyan]",
+                str(result.file.parent),
+            )
+        else:
+            table.add_row(str(idx + 1), result.file.name, str(result.file.parent))
 
     panel = Panel(
         table, title=f"[bold]{title}[/bold]", title_align="left", padding=(1, 1)
