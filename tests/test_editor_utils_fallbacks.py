@@ -1,7 +1,7 @@
 import shutil
 import subprocess
 
-from mf.utils.editor import start_editor
+from mf.utils.misc import start_editor
 
 
 def test_editor_prefers_visual(monkeypatch, tmp_path):

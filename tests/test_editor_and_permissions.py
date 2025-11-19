@@ -1,8 +1,8 @@
 import os
 import subprocess
 
-from mf.utils.editor import start_editor
 from mf.utils.file import scan_path_with_python
+from mf.utils.misc import start_editor
 
 
 def test_start_editor_uses_visual(monkeypatch, tmp_path):
