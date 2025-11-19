@@ -4,14 +4,12 @@ from pathlib import Path
 from random import randrange
 
 import typer
-from guessit import guessit
-from imdbinfo import search_title
 
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import read_config
-from .utils.console import console, print_error, print_warn
+from .utils.console import console
 from .utils.file import (
     FindQuery,
     NewQuery,
@@ -19,6 +17,7 @@ from .utils.file import (
     print_search_results,
     save_search_results,
 )
+from .utils.misc import open_imdb_entry
 from .version import __version__
 
 app_mf = typer.Typer(help="Media file finder and player")
@@ -141,22 +140,7 @@ def imdb(
     ),
 ):
     """Open IMDB entry of a search result."""
-    filestem = get_result_by_index(index).file.stem
-    parsed = guessit(filestem)
-
-    if "title" not in parsed:
-        print_warn(f"Could not parse a title from filename '{filestem}'.")
-        raise typer.Exit(1)
-
-    title = parsed["title"]
-    results = search_title(title)
-
-    if results.titles:
-        imdb_url = results.titles[0].url
-        console.print(f"IMDB entry for [green]{title}[/green]: {imdb_url}")
-        typer.launch(imdb_url)
-    else:
-        print_error("No IMDB results found for parsed title {title}.")
+    open_imdb_entry(get_result_by_index(index))
 
 
 @app_mf.command()
