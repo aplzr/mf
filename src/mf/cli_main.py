@@ -9,12 +9,14 @@ from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import read_config
-from .utils.console import console, print_warn
+from .utils.console import console, print_error, print_warn
 from .utils.file import (
     FindQuery,
     NewQuery,
+    get_next,
     get_result_by_index,
     print_search_results,
+    save_last_played,
     save_search_results,
 )
 from .utils.misc import open_imdb_entry
@@ -71,17 +73,30 @@ def new(
 
 @app_mf.command()
 def play(
-    index: int = typer.Argument(
-        None, help="Index of the file to play. If None, plays a random file."
+    target: str = typer.Argument(
+        None,
+        help=(
+            "Index of the file to play or 'next' to play the next search result. "
+            "If None, plays a random file."
+        ),
     ),
 ):
     """Play a media file by its index."""
-    if index:
-        # Play requested file
-        file_to_play = get_result_by_index(index)
-
+    if target:
+        if target.lower() == "next":
+            file_to_play = get_next()
+            save_last_played(file_to_play)
+        else:
+            # Play requested file
+            try:
+                index = int(target)
+                file_to_play = get_result_by_index(index)
+                save_last_played(file_to_play)
+            except ValueError:
+                print_error("Invalid taget: {target}. Use an index number or 'next'.")
     else:
-        # Play random file
+        # Play random file without saving it as last played. This way a random file
+        # can be played without disrupting the 'next' logic.
         all_files = FindQuery("*").execute()
         file_to_play = all_files[randrange(len(all_files))]
 
@@ -120,7 +135,6 @@ def play(
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-
         console.print("[green]✓[/green] VLC launched successfully")
 
     except FileNotFoundError as e:
