@@ -95,7 +95,7 @@ def save_search_results(pattern: str, results: list[FileResult]) -> None:
     cache_data = {
         "pattern": pattern,
         "timestamp": datetime.now().isoformat(),
-        "results": [result.file.as_posix() for result in results],
+        "results": [str(result) for result in results],
     }
 
     cache_file = get_search_cache_file()
@@ -818,3 +818,25 @@ class FileResult:
 
     file: Path
     mtime: float | None = None
+
+    def __str__(self) -> str:
+        """Returns a POSIX string representation of the file path.
+
+        mtime is never included.
+
+        Returns:
+            str: POSIX representation of the file path.
+        """
+        return self.file.as_posix()
+
+    @classmethod
+    def from_string(cls, path: str | Path) -> FileResult:
+        """Create a FileResult from a path.
+
+        Args:
+            path (str | Path): String or Path representation of the file path.
+
+        Returns:
+            FileResult: New FileResult instance.
+        """
+        return cls(Path(path))
