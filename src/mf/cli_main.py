@@ -9,7 +9,7 @@ from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import read_config
-from .utils.console import console
+from .utils.console import console, print_warn
 from .utils.file import (
     FindQuery,
     NewQuery,
@@ -42,14 +42,15 @@ def find(
     Finds matching files and prints an indexed list.
     """
     # Find, cache, and print media file paths
-    results = FindQuery(pattern).execute()
+    query = FindQuery(pattern)
+    results = query.execute()
 
     if not results:
-        console.print(f"No media files found matching '{pattern}'", style="yellow")
+        print_warn(f"No media files found matching '{query.pattern}'")
         raise typer.Exit()
 
-    save_search_results(pattern, results)
-    print_search_results(f"Search pattern: {pattern}", results)
+    save_search_results(query.pattern, results)
+    print_search_results(f"Search pattern: {query.pattern}", results)
 
 
 @app_mf.command()
