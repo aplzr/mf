@@ -94,7 +94,7 @@ def save_last_played(result: FileResult):
     with open(get_search_cache_file(), encoding="utf-8") as f:
         cached = json.load(f)
 
-    last_search_results: list[FileResult] = cached["results"]
+    last_search_results: list[str] = cached["results"]
     last_played_index = last_search_results.index(str(result))
     cached["last_played_index"] = last_played_index
 
