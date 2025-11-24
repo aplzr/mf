@@ -14,7 +14,7 @@ from mf.utils.file import (
     get_result_by_index,
     load_library_cache,
     save_search_results,
-    scan_for_media_files,
+    scan_search_paths,
 )
 
 
@@ -106,7 +106,7 @@ def test_scan_for_media_files_fd_fallback(monkeypatch, isolated_media_dir):
     cfg = read_config()
     cfg["prefer_fd"] = True
     write_config(cfg)
-    results = scan_for_media_files("*", with_mtime=False, prefer_fd=True)
+    results = scan_search_paths(with_mtime=False, prefer_fd=True)
     assert any(r.file.name == "fd1.mkv" for r in results)
 
 
@@ -122,9 +122,9 @@ def test_new_query_cache_enabled(monkeypatch, isolated_media_dir):
     cache_file.parent.mkdir(parents=True, exist_ok=True)
     cache_file.write_text(json.dumps(cache_data))
 
-    # Monkeypatch scan_for_media_files to raise if called (we expect cached path).
+    # Monkeypatch scan_search_paths to raise if called (we expect cached path).
     monkeypatch.setattr(
-        "mf.utils.file.scan_for_media_files",
+        "mf.utils.file.scan_search_paths",
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("should not scan")),
     )
     results = NewQuery(5).execute()
@@ -145,7 +145,7 @@ def test_find_query_cache_enabled(monkeypatch, isolated_media_dir):
     cache_file.parent.mkdir(parents=True, exist_ok=True)
     cache_file.write_text(json.dumps(cache_data))
     monkeypatch.setattr(
-        "mf.utils.file.scan_for_media_files",
+        "mf.utils.file.scan_search_paths",
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("should not scan")),
     )
     results = FindQuery("*.mkv").execute()
