@@ -133,8 +133,8 @@ REGISTRY: dict[str, SettingSpec] = {
         help=(
             "Time after which the library cache is automatically rebuilt if "
             "cache_library is set to true. Format: '<number><unit>', with unit one of "
-            "s, m, h, d, w. Set to '0d' (or any other unit) to turn off automatic "
-            "cache rebuilding."
+            "s, m, h, d, w. Set to '0' (without unit) to turn off automatic cache "
+            "rebuilding."
         ),
     ),
 }
