@@ -895,7 +895,7 @@ class FileResult:
         Returns:
             str: POSIX representation of the file path.
         """
-        return self.file.as_posix()
+        return self.file.resolve().as_posix()
 
     @classmethod
     def from_string(cls, path: str | Path) -> FileResult:
