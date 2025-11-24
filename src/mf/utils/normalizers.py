@@ -10,6 +10,7 @@ __all__ = [
     "normalize_path",
     "normalize_pattern",
     "normalize_timedelta_str",
+    "wrap_string_in_quotes",
 ]
 
 
@@ -118,3 +119,15 @@ def normalize_timedelta_str(timedelta_str: str) -> str:
             )
 
     return timedelta_str.lower()
+
+
+def wrap_string_in_quotes(s: str) -> str:
+    """Wrap string in quotes (").
+
+    Args:
+        s (str): String to be wrapped.
+
+    Returns:
+        str: Wrapped string.
+    """
+    return f'"{s}"'

@@ -12,6 +12,7 @@ from .normalizers import (
     normalize_media_extension,
     normalize_path,
     normalize_timedelta_str,
+    wrap_string_in_quotes,
 )
 
 __all__ = [
@@ -130,6 +131,7 @@ REGISTRY: dict[str, SettingSpec] = {
         actions={"set"},
         normalize=normalize_timedelta_str,
         default="1d",
+        display=wrap_string_in_quotes,
         help=(
             "Time after which the library cache is automatically rebuilt if "
             "cache_library is set to true. Format: '<number><unit>', with unit one of "
