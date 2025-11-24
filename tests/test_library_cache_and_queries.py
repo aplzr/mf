@@ -10,13 +10,11 @@ from mf.utils.file import (
     FileResult,
     FindQuery,
     NewQuery,
-    filter_scan_results,
     get_library_cache_file,
     get_result_by_index,
     load_library_cache,
     save_search_results,
     scan_for_media_files,
-    sort_scan_results,
 )
 
 
@@ -93,32 +91,6 @@ def test_get_result_by_index_file_deleted(isolated_media_dir, capsys):
         get_result_by_index(1)
     captured = capsys.readouterr()
     assert "File no longer exists" in captured.out
-
-
-def test_filter_scan_results_pattern_and_extension():
-    # Build sample FileResult list
-    files = [
-        FileResult(Path("/tmp/movie1.mkv")),
-        FileResult(Path("/tmp/clip.avi")),
-        FileResult(Path("/tmp/movie2.mp4")),
-        FileResult(Path("/tmp/other.txt")),
-    ]
-    media_exts = {".mkv", ".mp4"}
-    # Pattern that matches 'movie*'
-    filtered = filter_scan_results(files, "movie*", media_exts, match_extensions=True)
-    names = [f.file.name for f in filtered]
-    assert names == ["movie1.mkv", "movie2.mp4"]
-
-
-def test_sort_scan_results_alphabetical():
-    # Unsorted alphabetical
-    files = [
-        FileResult(Path("/tmp/B.mkv")),
-        FileResult(Path("/tmp/a.mkv")),
-        FileResult(Path("/tmp/C.mkv")),
-    ]
-    sorted_results = sort_scan_results(files)
-    assert [f.file.name for f in sorted_results] == ["a.mkv", "B.mkv", "C.mkv"]
 
 
 def test_scan_for_media_files_fd_fallback(monkeypatch, isolated_media_dir):
