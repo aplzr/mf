@@ -107,13 +107,14 @@ def normalize_bool_to_toml(bool_: bool) -> str:
 
 
 def normalize_timedelta_str(timedelta_str: str) -> str:
-    pattern = r"^(\d+)([smhdw])$"
-    match = re.match(pattern, timedelta_str.lower())
+    if timedelta_str != "0":
+        pattern = r"^(\d+)([smhdw])$"
+        match = re.match(pattern, timedelta_str.lower())
 
-    if not match:
-        print_error(
-            f"Invalid format: '{timedelta_str}'. Expected format: "
-            "<number><unit>, where unit is s/m/h/d/w."
-        )
+        if not match:
+            print_error(
+                f"Invalid format: '{timedelta_str}'. Expected format: "
+                "<number><unit>, where unit is s/m/h/d/w."
+            )
 
     return timedelta_str.lower()

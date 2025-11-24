@@ -176,24 +176,28 @@ def parse_timedelta_str(interval_str: str) -> timedelta:
     Returns:
         timedelta: Parsed time interval.
     """
-    pattern = r"^(\d+)([smhdw])$"
-    match = re.match(pattern, interval_str.lower().strip())
+    if interval_str == "0":
+        # Special case: 0 without unit
+        return timedelta(seconds=0)
+    else:
+        pattern = r"^(\d+)([smhdw])$"
+        match = re.match(pattern, interval_str.lower().strip())
 
-    if not match:
-        raise ValueError(
-            f"Invalid time interval format: {interval_str}. "
-            "Use format like '30m', '2h', '1d'"
-        )
+        if not match:
+            raise ValueError(
+                f"Invalid time interval format: {interval_str}. "
+                "Use format like '30m', '2h', '1d'"
+            )
 
-    value, unit = match.groups()
-    value = int(value)
+        value, unit = match.groups()
+        value = int(value)
 
-    unit_map = {
-        "s": timedelta(seconds=value),
-        "m": timedelta(minutes=value),
-        "h": timedelta(hours=value),
-        "d": timedelta(days=value),
-        "w": timedelta(weeks=value),
-    }
+        unit_map = {
+            "s": timedelta(seconds=value),
+            "m": timedelta(minutes=value),
+            "h": timedelta(hours=value),
+            "d": timedelta(days=value),
+            "w": timedelta(weeks=value),
+        }
 
-    return unit_map[unit]
+        return unit_map[unit]
