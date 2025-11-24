@@ -749,7 +749,9 @@ class FindQuery(Query):
         """
         results = load_library_cache() if self.cache_library else scan_search_paths()
 
-        results.filter_by_extension()
+        results.filter_by_extension(
+            self.media_extensions if self.match_extensions else None
+        )
         results.filter_by_pattern(self.pattern)
         results.sort()
 
@@ -796,7 +798,9 @@ class NewQuery(Query):
             results = scan_search_paths(with_mtime=True)
             results.sort(by_mtime=True)
 
-        results.filter_by_extension()
+        results.filter_by_extension(
+            self.media_extensions if self.match_extensions else None
+        )
         results.filter_by_pattern(self.pattern)
 
         return results[: self.n]
@@ -873,20 +877,21 @@ class FileResults(UserList):
         """
         return cls([FileResult.from_string(path) for path in paths])
 
-    def filter_by_extension(self):
-        """Filter files by configured media extensions (in-place)."""
-        if not self.data:
+    def filter_by_extension(self, media_extensions: list[str] | None = None):
+        """Filter files by media extensions (in-place).
+
+        Args:
+            media_extensions (list[str] | None, optional): List of media file
+                extensions, each with a leading '.', for filtering. Defaults to None.
+        """
+        if not self.data or not media_extensions:
             return
 
-        match_extensions = read_config()["match_extensions"]
-        media_extensions = read_config()["media_extensions"]
-
-        if match_extensions and media_extensions:
-            self.data = [
-                result
-                for result in self.data
-                if result.file.suffix.lower() in media_extensions
-            ]
+        self.data = [
+            result
+            for result in self.data
+            if result.file.suffix.lower() in media_extensions
+        ]
 
     def filter_by_pattern(self, pattern: str):
         """Filter files by filename pattern (in-place).
