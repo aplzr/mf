@@ -44,14 +44,6 @@ jobs:
       - name: Install uv
         run: pip install uv
 
-      - name: Debug file system
-
-        run: |
-          pwd
-          ls -la
-          ls -la pyproject.toml || echo "pyproject.toml not found"
-          file pyproject.toml || echo "Cannot check file type"
-
       - name: Cache uv build artifacts
         uses: actions/cache@v4
         with:
