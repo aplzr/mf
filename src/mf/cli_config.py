@@ -48,11 +48,7 @@ def get(key: str):
             f"{', '.join(repr(key) for key in REGISTRY)}"
         )
 
-    if setting in [True, False]:
-        # Print as TOML
-        setting = str(setting).lower()
-
-    console.print(f"{key} = {setting}")
+    console.print(f"{key} = {REGISTRY[key].display(setting)}")
 
 
 @app_config.command()
