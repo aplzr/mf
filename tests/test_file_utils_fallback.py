@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 
 from mf.utils.config import read_config, write_config
-from mf.utils.file import scan_for_media_files, sort_scan_results
+from mf.utils.file import scan_for_media_files
 
 
 def _set_search_paths(tmp_path: Path, paths: list[Path], prefer_fd: bool = True):
@@ -63,8 +63,8 @@ def test_mtime_sorting(tmp_path):
     # Request mtimes so results contain mtime and `sort_scan_results` will
     # order by mtime descending.
     results = scan_for_media_files("*", with_mtime=True)
-    sorted_results = sort_scan_results(results)
-    names = [r.file.name for r in sorted_results]
+    results.sort(by_mtime=True)
+    names = [r.file.name for r in results]
     assert names[:2] == ["second.mp4", "first.mp4"]
 
 

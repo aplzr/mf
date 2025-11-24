@@ -1,15 +1,12 @@
 import time
-from pathlib import Path
 
 import pytest
 
 from mf.utils.config import read_config, write_config
 from mf.utils.file import (
-    FileResult,
     get_library_cache_file,
     is_cache_expired,
     rebuild_library_cache,
-    sort_scan_results,
 )
 from mf.utils.normalizers import normalize_timedelta_str
 
@@ -35,14 +32,6 @@ def test_is_cache_expired_true(media_dir):
     # Sleep past interval
     time.sleep(1.2)
     assert is_cache_expired() is True
-
-
-def test_sort_scan_results_mtime_branch(tmp_path):
-    # Create FileResult entries with mtime set; ensure mtime sorting path taken
-    f1 = FileResult(Path("/tmp/x1.mkv"), 1000.0)
-    f2 = FileResult(Path("/tmp/x2.mkv"), 2000.0)
-    results = sort_scan_results([f1, f2])
-    assert [r.file.name for r in results] == ["x2.mkv", "x1.mkv"]
 
 
 def test_normalize_timedelta_str_invalid(capsys):
