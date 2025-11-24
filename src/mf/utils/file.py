@@ -461,20 +461,20 @@ def scan_path_with_fd(
     return files
 
 
-def scan_for_media_files(
-    pattern: str,  # TODO: remove argument, rename function to scan_for_files
+def scan_search_paths(
     *,
     with_mtime: bool = False,
     prefer_fd: bool | None = None,
     show_progress: bool = False,
 ) -> FileResults:
-    """Find media files by scanning all search paths.
+    """Scan configured search paths.
+
+    Returns paths of all files stored in the search paths.
 
     Args:
-        pattern (str): Search pattern.
         with_mtime (bool): Add mtime info for later sorting by new (Python scan only).
-        prefer_fd (bool): Prefer fd unless mtime sorting is requested. If None, value is
-            read from the configuration file.
+        prefer_fd (bool): Prefer the faster fd scanner unless mtime sorting is
+            requested. If None, value is read from the configuration file.
         show_progress (bool): Show progress bar during scanning.
 
     Raises:
@@ -484,7 +484,6 @@ def scan_for_media_files(
         FileResults: Results, optionally paired with mtimes.
     """
     cfg = read_config()
-    pattern = normalize_pattern(pattern)
     search_paths = get_validated_search_paths()
 
     if prefer_fd is None:
@@ -687,7 +686,7 @@ def rebuild_library_cache() -> FileResults:
         FileResults: Rebuilt cache.
     """
     print_info("Rebuilding cache.")
-    results = scan_for_media_files("*", with_mtime=True, show_progress=True)
+    results = scan_search_paths(with_mtime=True, show_progress=True)
     results.sort(by_mtime=True)
     cache_data = {
         "timestamp": datetime.now().isoformat(),
@@ -748,10 +747,7 @@ class FindQuery(Query):
         Returns:
             FileResults: Search results sorted alphabetically by filename.
         """
-        if self.cache_library:
-            results = load_library_cache()
-        else:
-            results = scan_for_media_files(self.pattern)
+        results = load_library_cache() if self.cache_library else scan_search_paths()
 
         results.filter_by_extension()
         results.filter_by_pattern(self.pattern)
@@ -797,7 +793,7 @@ class NewQuery(Query):
             results = load_library_cache()
         else:
             # Contains mtime but not sorted yet
-            results = scan_for_media_files(self.pattern, with_mtime=True)
+            results = scan_search_paths(with_mtime=True)
             results.sort(by_mtime=True)
 
         results.filter_by_extension()
