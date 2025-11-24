@@ -5,7 +5,7 @@ from rich.syntax import Syntax
 from rich.table import Column, Table
 
 from .utils.config import get_config_file, read_config, write_config
-from .utils.console import console
+from .utils.console import console, print_error
 from .utils.misc import start_editor
 from .utils.settings import REGISTRY, apply_action
 
@@ -40,7 +40,13 @@ def list_config():
 @app_config.command()
 def get(key: str):
     """Get a setting."""
-    setting = read_config().get(key)
+    try:
+        setting = read_config()[key]
+    except tomlkit.exceptions.NonExistentKey:
+        print_error(
+            f"Invalid key: '{key}'. Available keys: "
+            f"{', '.join(repr(key) for key in REGISTRY)}"
+        )
 
     if setting in [True, False]:
         # Print as TOML
