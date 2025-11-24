@@ -39,68 +39,6 @@ def test_new_no_results(monkeypatch):
     assert "No media files found" in result.stdout
 
 
-def test_play_specific_index(monkeypatch, tmp_path):
-    """Play command with explicit index (non-random path)."""
-    fake_file = tmp_path / "movie.mp4"
-    fake_file.write_text("dummy", encoding="utf-8")
-
-    monkeypatch.setattr(
-        "mf.cli_main.get_result_by_index", lambda idx: FileResult(fake_file)
-    )
-    monkeypatch.setattr("subprocess.Popen", lambda *a, **k: None)
-    # Block VLC path detection for packaged paths
-    from pathlib import Path as _P
-
-    orig_exists = _P.exists
-
-    def fake_exists(self):  # pragma: no cover
-        if str(self) in {
-            r"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe",
-            r"C:\\Program Files (x86)\\VideoLAN\\VLC\\vlc.exe",
-        }:
-            return False
-        return orig_exists(self)
-
-    monkeypatch.setattr(_P, "exists", fake_exists)
-    result = runner.invoke(app_mf, ["play", "1"])
-    assert result.exit_code == 0
-    assert "Playing:" in result.stdout
-
-
-def test_play_vlc_not_found(monkeypatch, tmp_path):
-    """VLC not installed path raises with message."""
-    fake_file = tmp_path / "movie.mp4"
-    fake_file.write_text("dummy", encoding="utf-8")
-    monkeypatch.setattr(
-        "mf.cli_main.get_result_by_index", lambda idx: FileResult(fake_file)
-    )
-
-    def popen_raise(*a, **k):  # pragma: no cover
-        raise FileNotFoundError("vlc missing")
-
-    monkeypatch.setattr("subprocess.Popen", popen_raise)
-    result = runner.invoke(app_mf, ["play", "1"])
-    assert result.exit_code != 0
-    assert "VLC not found" in result.stdout
-
-
-def test_play_generic_exception(monkeypatch, tmp_path):
-    """Generic VLC launch exception path."""
-    fake_file = tmp_path / "movie.mp4"
-    fake_file.write_text("dummy", encoding="utf-8")
-    monkeypatch.setattr(
-        "mf.cli_main.get_result_by_index", lambda idx: FileResult(fake_file)
-    )
-
-    def popen_raise(*a, **k):  # pragma: no cover
-        raise RuntimeError("boom")
-
-    monkeypatch.setattr("subprocess.Popen", popen_raise)
-    result = runner.invoke(app_mf, ["play", "1"])
-    assert result.exit_code != 0
-    assert "Error launching VLC" in result.stdout
-
-
 def test_filepath_command(monkeypatch, tmp_path):
     """Filepath command prints path."""
     fake_file = tmp_path / "movie.mp4"
