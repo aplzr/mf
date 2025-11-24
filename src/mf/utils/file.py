@@ -867,7 +867,7 @@ class FileResults(UserList):
 
     @classmethod
     def from_paths(cls, paths: list[str | Path]) -> FileResults:
-        """Creare FileResults from list of paths.
+        """Create FileResults from list of paths.
 
         Args:
             paths (list[str | Path]): List of paths.
