@@ -16,6 +16,7 @@ A cross-platform command-line tool for finding and playing video files in large 
 - **🔍 Fast file search** - Uses vendored `fd` binary with automatic fallback to Python scanning
 - **🎯 Flexible pattern matching** - Glob-based search patterns with automatic wildcard wrapping
 - **🚀 Quick access to search results** - Access found files by index number
+- **📋 Search results as playlists** - Play through search results in order
 - **💾 Caching of library metadata** - Cache library metadata for fast file lookups in network storage
 - **📁 Multi-path scanning** - Search across multiple configured directories simultaneously
 - **🕒 Latest additions** - Find newest files by modification time
@@ -62,6 +63,7 @@ mf find "2023" # Finds files from 2023
 
 ```bash
 mf play 1 # Play first result
+mf play next # Search results as playlist: play next result
 mf play # Play random file
 ```
 
@@ -208,9 +210,6 @@ If no editor is found, it prints the path so you can edit manually.
 - VLC media player (for `play` command)
 - Internet connection (for IMDB lookup)
 
-### Python & IMDb Notes
-
-IMDb lookups rely on the `cinemagoer` library (`imdb` module), which uses an API that was deprecated in Python 3.14. Until this is fixed upstream, in 3.14 `mf imdb` exits gracefully without affecting other commands.
 
 ## License
 
