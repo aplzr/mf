@@ -10,7 +10,7 @@ from guessit import guessit
 from imdbinfo import search_title
 
 from ..constants import FALLBACK_EDITORS_POSIX
-from .console import console, print_error
+from .console import console, print_and_raise
 from .file import FileResult
 
 __all__ = [
@@ -58,7 +58,7 @@ def open_imdb_entry(result: FileResult):
     parsed = guessit(filestem)
 
     if "title" not in parsed:
-        print_error(f"Could not parse a title from filename '{filestem}'.")
+        print_and_raise(f"Could not parse a title from filename '{filestem}'.")
 
     title = parsed["title"]
     results = search_title(title)
@@ -68,4 +68,4 @@ def open_imdb_entry(result: FileResult):
         console.print(f"IMDB entry for [green]{title}[/green]: {imdb_url}")
         typer.launch(imdb_url)
     else:
-        print_error("No IMDB results found for parsed title {title}.")
+        print_and_raise("No IMDB results found for parsed title {title}.")
