@@ -12,9 +12,10 @@ from pathlib import Path
 
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
+from ..constants import STATUS_SYMBOLS
 from .cache import get_library_cache_size, load_library_cache
 from .config import get_validated_search_paths, read_config
-from .console import STATUS_SYMBOLS, console, print_warn
+from .console import console, print_warn
 from .file import FileResult, FileResults, get_fd_binary, get_library_cache_file
 from .normalizers import normalize_pattern
 
