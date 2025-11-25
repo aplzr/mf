@@ -37,7 +37,7 @@ def test_new_no_results(monkeypatch):
     monkeypatch.setattr("mf.cli_main.NewQuery", FakeNew)
     result = runner.invoke(app_mf, ["new", "5"])
     # Graceful exit (empty collection) uses default Typer exit code 0
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     assert "No media files found (empty collection)." in result.stdout
 
 

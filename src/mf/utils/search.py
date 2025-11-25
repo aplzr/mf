@@ -1,7 +1,6 @@
 import json
 from datetime import datetime
 
-import typer
 from rich.panel import Panel
 from rich.table import Table
 
@@ -108,12 +107,11 @@ def get_result_by_index(index: int) -> FileResult:
     try:
         result = results[index - 1]
     except IndexError as e:
-        console.print(
+        print_and_raise(
             f"Index {index} not found in last search results (pattern: '{pattern}'). "
             f"Valid indices: 1-{len(results)}.",
-            style="red",
+            raise_from=e,
         )
-        raise typer.Exit(1) from e
 
     if not result.file.exists():
         print_and_raise(f"File no longer exists: {result.file}.")
