@@ -1,14 +1,10 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
+from .config import parse_timedelta_str, read_config
 from .console import print_info, print_ok, print_warn
-from .file import (
-    FileResult,
-    FileResults,
-    get_library_cache_file,
-    get_library_cache_interval,
-)
+from .file import FileResult, FileResults, get_library_cache_file
 
 
 def rebuild_library_cache() -> FileResults:
@@ -75,6 +71,15 @@ def load_library_cache() -> FileResults:
         FileResults: Cached file paths.
     """
     return rebuild_library_cache() if is_cache_expired() else _load_library_cache()
+
+
+def get_library_cache_interval() -> timedelta:
+    """Get the library cache interval from the configuration.
+
+    Returns:
+        timedelta: Interval after which cache is rebuilt.
+    """
+    return parse_timedelta_str(read_config()["library_cache_interval"])
 
 
 def is_cache_expired() -> bool:
