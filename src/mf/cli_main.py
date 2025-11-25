@@ -10,16 +10,13 @@ from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import read_config
 from .utils.console import console, print_error, print_warn
-from .utils.file import (
+from .utils.misc import open_imdb_entry
+from .utils.playlist import get_next, save_last_played
+from .utils.scan import (
     FindQuery,
     NewQuery,
-    get_next,
-    get_result_by_index,
-    print_search_results,
-    save_last_played,
-    save_search_results,
 )
-from .utils.misc import open_imdb_entry
+from .utils.search import get_result_by_index, print_search_results, save_search_results
 from .version import __version__
 
 app_mf = typer.Typer(help="Media file finder and player")
