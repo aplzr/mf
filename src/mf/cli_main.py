@@ -46,7 +46,6 @@ def find(
 
     if not results:
         print_warn(f"No media files found matching '{query.pattern}'")
-        raise typer.Exit()
 
     save_search_results(query.pattern, results)
     print_search_results(f"Search pattern: {query.pattern}", results)
@@ -61,8 +60,7 @@ def new(
     pattern = f"{n} latest additions"
 
     if not newest_files:
-        console.print("No media files found (empty collection).", style="yellow")
-        raise typer.Exit()
+        print_and_raise("No media files found (empty collection).")
 
     save_search_results(pattern, newest_files)
     print_search_results(pattern, newest_files)
@@ -138,14 +136,10 @@ def play(
         console.print("[green]✓[/green] VLC launched successfully")
 
     except FileNotFoundError as e:
-        console.print(
-            "Error: VLC not found. Please install VLC media player.", style="red"
-        )
-        raise typer.Exit(1) from e
+        print_and_raise("VLC not found. Please install VLC media player.", raise_from=e)
 
     except Exception as e:
-        console.print(f"Error launching VLC: {e}", style="red")
-        raise typer.Exit(1) from e
+        print_and_raise(f"Error launching VLC: {e}", raise_from=e)
 
 
 @app_mf.command()

@@ -35,7 +35,7 @@ def test_new_no_results(monkeypatch):
 
     monkeypatch.setattr("mf.cli_main.NewQuery", FakeNew)
     result = runner.invoke(app_mf, ["new", "5"])
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     assert "No media files found" in result.stdout
 
 
