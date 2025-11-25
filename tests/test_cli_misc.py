@@ -6,6 +6,7 @@ from typer.testing import CliRunner
 from mf.cli_config import app_config
 from mf.cli_main import app_mf
 from mf.utils.config import read_config, write_config
+from mf.utils.search import save_search_results
 
 runner = CliRunner()
 
@@ -38,7 +39,7 @@ def test_imdb_parse_failure(monkeypatch, tmp_path):
     cfg["search_paths"] = [test_dir.resolve().as_posix()]
     write_config(cfg)
     # Simulate a previous search cache referencing the file
-    from mf.utils.file import FileResult, save_search_results
+    from mf.utils.file import FileResult
 
     save_search_results("*", [FileResult(bad_file)])
     result = runner.invoke(app_mf, ["imdb", "1"])

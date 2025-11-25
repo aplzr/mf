@@ -4,7 +4,8 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from mf.cli_last import app_last
-from mf.utils.file import FileResult, get_search_cache_file, save_search_results
+from mf.utils.file import FileResult, get_search_cache_file
+from mf.utils.search import save_search_results
 
 runner = CliRunner()
 

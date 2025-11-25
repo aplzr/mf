@@ -3,9 +3,8 @@ import typer
 from .utils.console import console, print_ok
 from .utils.file import (
     get_search_cache_file,
-    load_search_results,
-    print_search_results,
 )
+from .utils.search import load_search_results, print_search_results
 
 app_last = typer.Typer(
     help=(
