@@ -1,6 +1,6 @@
 import json
 
-from .console import print_error
+from .console import print_and_raise
 from .file import FileResult, get_search_cache_file
 
 
@@ -56,5 +56,5 @@ def get_next() -> FileResult:
     try:
         next = FileResult.from_string(results[index_last_played + 1])
         return next
-    except IndexError:
-        print_error("Last available file already played.")
+    except IndexError as e:
+        print_and_raise("Last available file already played.", raise_from=e)

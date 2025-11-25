@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 
 from ..constants import BOOLEAN_FALSE_VALUES, BOOLEAN_TRUE_VALUES
-from .console import print_error
+from .console import print_and_raise
 
 __all__ = [
     "normalize_bool_str",
@@ -34,7 +34,7 @@ def normalize_bool_str(bool_str: str) -> bool:
     if bool_str in BOOLEAN_FALSE_VALUES:
         return False
 
-    print_error(
+    print_and_raise(
         f"Invalid boolean value. Got: '{bool_str}'. Expected one of: {{}}.".format(
             ", ".join(
                 repr(item)
@@ -75,7 +75,7 @@ def normalize_media_extension(extension: str) -> str:
     extension = extension.lower().strip().lstrip(".")
 
     if not extension:
-        print_error("Extension can't be empty after normalization.")
+        print_and_raise("Extension can't be empty after normalization.")
 
     return "." + extension
 
@@ -113,7 +113,7 @@ def normalize_timedelta_str(timedelta_str: str) -> str:
         match = re.match(pattern, timedelta_str.lower())
 
         if not match:
-            print_error(
+            print_and_raise(
                 f"Invalid format: '{timedelta_str}'. Expected format: "
                 "<number><unit>, where unit is s/m/h/d/w."
             )

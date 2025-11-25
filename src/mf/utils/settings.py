@@ -5,7 +5,7 @@ from typing import Any, Literal
 from tomlkit import TOMLDocument
 
 from ..constants import DEFAULT_MEDIA_EXTENSIONS
-from .console import print_error, print_ok, print_warn
+from .console import print_and_raise, print_ok, print_warn
 from .normalizers import (
     normalize_bool_str,
     normalize_bool_to_toml,
@@ -159,18 +159,18 @@ def apply_action(
         TOMLDocument: Updated configuration.
     """
     if key not in REGISTRY:
-        print_error(
+        print_and_raise(
             f"Unknown configuration key: {key}. Available keys: {list(REGISTRY)}"
         )
 
     spec = REGISTRY[key]
 
     if action not in spec.actions:
-        print_error(f"Action {action} not supported for {key}.")
+        print_and_raise(f"Action {action} not supported for {key}.")
 
     if spec.kind == "scalar" and action == "set":
         if raw_values is None or len(raw_values) > 1:
-            print_error(
+            print_and_raise(
                 f"Scalar setting {key} requires "
                 f"a single value for set, got: {raw_values}."
             )

@@ -5,7 +5,7 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
-from .console import console, print_error
+from .console import console, print_and_raise
 from .file import FileResult, FileResults, get_search_cache_file
 from .playlist import get_last_played_index
 
@@ -84,11 +84,11 @@ def load_search_results() -> tuple[str, FileResults, datetime]:
 
         return pattern, results, timestamp
     except (json.JSONDecodeError, KeyError, FileNotFoundError) as e:
-        print_error(
+        print_and_raise(
             "Cache is empty or doesn't exist. "
-            "Please run 'mf find <pattern>' or 'mf new' first."
+            "Please run 'mf find <pattern>' or 'mf new' first.",
+            raise_from=e,
         )
-        raise typer.Exit(1) from e
 
 
 def get_result_by_index(index: int) -> FileResult:
@@ -116,6 +116,6 @@ def get_result_by_index(index: int) -> FileResult:
         raise typer.Exit(1) from e
 
     if not result.file.exists():
-        print_error(f"File no longer exists: {result.file}.")
+        print_and_raise(f"File no longer exists: {result.file}.")
 
     return result

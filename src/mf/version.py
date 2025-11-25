@@ -3,7 +3,7 @@ from urllib import request
 
 from packaging.version import Version
 
-from .utils.console import print_error, print_info
+from .utils.console import print_and_raise, print_info
 
 __version__ = "0.7.0"
 
@@ -22,7 +22,7 @@ def get_pypi_version() -> Version:
             data = json.loads(response.read().decode())
             return Version(data["info"]["version"])
     except Exception as e:
-        print_error(f"Version check failed with error: {e}")
+        print_and_raise(f"Version check failed with error: {e}", raise_from=e)
 
 
 def check_version():

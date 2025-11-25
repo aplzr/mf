@@ -7,10 +7,9 @@ from pathlib import Path
 from textwrap import wrap
 
 import tomlkit
-import typer
 from tomlkit import TOMLDocument, comment, document, nl
 
-from .console import print_error, print_ok, print_warn
+from .console import print_and_raise, print_ok, print_warn
 from .normalizers import normalize_media_extension
 from .settings import REGISTRY
 
@@ -143,11 +142,10 @@ def get_validated_search_paths() -> list[Path]:
             validated.append(p)
 
     if not validated:
-        print_error(
+        print_and_raise(
             "List of search paths is empty or paths don't exist. "
             "Set search paths with 'mf config set search_paths'."
         )
-        raise typer.Exit(1)
 
     return validated
 

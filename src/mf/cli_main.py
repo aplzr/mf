@@ -9,7 +9,7 @@ from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import read_config
-from .utils.console import console, print_error, print_warn
+from .utils.console import console, print_and_raise, print_warn
 from .utils.misc import open_imdb_entry
 from .utils.playlist import get_next, save_last_played
 from .utils.scan import (
@@ -89,8 +89,11 @@ def play(
                 index = int(target)
                 file_to_play = get_result_by_index(index)
                 save_last_played(file_to_play)
-            except ValueError:
-                print_error("Invalid taget: {target}. Use an index number or 'next'.")
+            except ValueError as e:
+                print_and_raise(
+                    "Invalid taget: {target}. Use an index number or 'next'.",
+                    raise_from=e,
+                )
     else:
         # Play random file without saving it as last played. This way a random file
         # can be played without disrupting the 'next' logic.

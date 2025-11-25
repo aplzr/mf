@@ -5,7 +5,7 @@ from rich.syntax import Syntax
 from rich.table import Column, Table
 
 from .utils.config import get_config_file, read_config, write_config
-from .utils.console import console, print_error
+from .utils.console import console, print_and_raise
 from .utils.misc import start_editor
 from .utils.settings import REGISTRY, apply_action
 
@@ -42,10 +42,11 @@ def get(key: str):
     """Get a setting."""
     try:
         setting = read_config()[key]
-    except tomlkit.exceptions.NonExistentKey:
-        print_error(
+    except tomlkit.exceptions.NonExistentKey as e:
+        print_and_raise(
             f"Invalid key: '{key}'. Available keys: "
-            f"{', '.join(repr(key) for key in REGISTRY)}"
+            f"{', '.join(repr(key) for key in REGISTRY)}",
+            raise_from=e,
         )
 
     console.print(f"{key} = {REGISTRY[key].display(setting)}")

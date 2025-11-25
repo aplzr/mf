@@ -5,7 +5,7 @@ from ..constants import STATUS_SYMBOLS
 
 __all__ = [
     "console",
-    "print_error",
+    "print_and_raise",
     "print_info",
     "print_ok",
     "print_warn",
@@ -33,14 +33,17 @@ def print_warn(msg: str):
     console.print(f"{STATUS_SYMBOLS['warn']}  {msg}", style="yellow")
 
 
-def print_error(msg: str):
+def print_and_raise(msg: str, raise_from: Exception | None = None):
     """Print error message and exit with status 1.
 
     Args:
-        msg (str): Error message (include trailing punctuation yourself).
+        msg (str): Error message.
+        raise_from (Exception | None, optional): Caught exception to raise from.
+            Defaults to None.
     """
     console.print(f"{STATUS_SYMBOLS['error']} {msg}", style="red")
-    raise typer.Exit(1)
+
+    raise typer.Exit(1) from raise_from
 
 
 def print_info(msg: str):
