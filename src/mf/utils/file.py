@@ -899,15 +899,14 @@ class FileResults(UserList):
         Args:
             pattern (str): Glob-style pattern to match against filenames.
         """
-        if not self.data:
+        if not self.data or pattern == "*":
             return
 
-        if pattern != "*":
-            self.data = [
-                result
-                for result in self.data
-                if fnmatch(result.file.name.lower(), pattern.lower())
-            ]
+        self.data = [
+            result
+            for result in self.data
+            if fnmatch(result.file.name.lower(), pattern.lower())
+        ]
 
     def sort(self, *, by_mtime: bool = False, reverse: bool = False):
         """Sort collection in-place by file path or modification time.
