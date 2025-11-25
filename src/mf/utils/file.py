@@ -5,17 +5,12 @@ import platform
 import stat
 from collections import UserList
 from dataclasses import dataclass
-from datetime import timedelta
 from fnmatch import fnmatch
 from importlib.resources import files
 from operator import attrgetter
 from pathlib import Path
 
 from ..constants import FD_BINARIES
-from .config import (
-    parse_timedelta_str,
-    read_config,
-)
 
 
 def get_cache_dir() -> Path:
@@ -56,24 +51,6 @@ def get_library_cache_file() -> Path:
         Path: Location of the JSON library cache file.
     """
     return get_cache_dir() / "library.json"
-
-
-def use_library_cache() -> bool:
-    """Check if library cache is configured.
-
-    Returns:
-        bool: True if library cache should be used, False otherwise.
-    """
-    return read_config()["cache_library"]
-
-
-def get_library_cache_interval() -> timedelta:
-    """Get the library cache interval from the configuration.
-
-    Returns:
-        timedelta: Interval after which cache is rebuilt.
-    """
-    return parse_timedelta_str(read_config()["library_cache_interval"])
 
 
 def get_fd_binary() -> Path:
