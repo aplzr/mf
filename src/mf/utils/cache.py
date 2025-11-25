@@ -1,11 +1,10 @@
 import json
 from collections import Counter
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from .config import parse_timedelta_str, read_config
 from .console import print_info, print_ok, print_warn
-from .file import FileResult, FileResults, get_library_cache_file
+from .file import FileResults, get_library_cache_file
 
 
 def rebuild_library_cache() -> FileResults:
@@ -50,9 +49,7 @@ def _load_library_cache(allow_rebuild=True) -> FileResults:
         with open(get_library_cache_file(), encoding="utf-8") as f:
             cache_data = json.load(f)
 
-        results = FileResults(
-            [FileResult(Path(path_str)) for path_str in cache_data["files"]]
-        )
+        results = FileResults.from_paths(cache_data["files"])
     except (json.JSONDecodeError, KeyError):
         print_warn("Cache corrupted.")
 
@@ -95,6 +92,9 @@ def is_cache_expired() -> bool:
     cache_file = get_library_cache_file()
 
     if not cache_file.exists():
+        # is_cache_expired is only called if caching is turned on, so if the cache file
+        # doesn't exist we always have to build the cache, even if rebuilding is turned
+        # off via library_cache_interval = 0.
         return True
 
     cache_timestamp = datetime.fromtimestamp(cache_file.stat().st_mtime)
