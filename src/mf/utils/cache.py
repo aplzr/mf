@@ -127,9 +127,10 @@ def _count_file_extensions(results: FileResults) -> list[tuple[str, int]]:
         results (FileResults): Files whose extensions should be counted.
 
     Returns:
-        list[tuple[str, int]]: (extension, count) tuples.
+        list[tuple[str, int]]: (extension, count) tuples, sorted by count descending and
+            extension ascending.
     """
     return sorted(
         Counter(file.suffix for file in results.get_paths()).items(),
-        key=lambda x: (-x[1], x[0]),  # By frequency, then by extension
+        key=lambda x: (-x[1], x[0]),
     )
