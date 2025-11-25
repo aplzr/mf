@@ -4,9 +4,8 @@ from pathlib import Path
 from mf.utils.file import (
     FileResults,
     get_search_cache_file,
-    load_search_results,
-    save_search_results,
 )
+from mf.utils.search import load_search_results, save_search_results
 
 
 def test_save_and_load_cache(tmp_path, monkeypatch):

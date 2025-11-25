@@ -6,8 +6,10 @@ from typer.testing import CliRunner
 from mf.cli_config import app_config
 from mf.cli_main import app_mf
 from mf.utils.config import read_config, write_config
-from mf.utils.file import FileResult, save_search_results, scan_path_with_python
+from mf.utils.file import FileResult
 from mf.utils.normalizers import normalize_media_extension
+from mf.utils.scan import scan_path_with_python
+from mf.utils.search import save_search_results
 
 runner = CliRunner()
 
@@ -27,7 +29,7 @@ def test_find_no_results(monkeypatch, tmp_path):
 
 def test_play_random(monkeypatch, tmp_path):
     # Monkeypatch find_media_files used in cli_main to return deterministic files
-    from mf import cli_main as app_module
+    from mf.utils import scan as app_module
 
     fake_path = tmp_path / "movie.mkv"
     fake_path.write_text("x")

@@ -21,15 +21,17 @@ __all__ = [
     "SettingSpec",
 ]
 
-Action = Literal["set", "add", "remove", "clear"]
-
 
 def _rebuild_cache_if_enabled():
+    # Helper function with lazy imports to avoid circular import
+    from .cache import rebuild_library_cache
     from .config import read_config
-    from .file import rebuild_library_cache
 
     if read_config()["cache_library"]:
         rebuild_library_cache()
+
+
+Action = Literal["set", "add", "remove", "clear"]
 
 
 @dataclass

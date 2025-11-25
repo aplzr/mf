@@ -10,7 +10,7 @@ runner = CliRunner()
 
 def test_find_no_results(monkeypatch):
     """Find command exits gracefully when no files match."""
-    from mf.cli_main import FindQuery as _FindQuery
+    from mf.utils.scan import FindQuery as _FindQuery
 
     class FakeFind(_FindQuery):  # type: ignore
         def __init__(self, pattern: str):  # pragma: no cover - trivial init reuse
@@ -27,7 +27,7 @@ def test_find_no_results(monkeypatch):
 
 def test_new_no_results(monkeypatch):
     """New command exits gracefully on empty collection."""
-    from mf.cli_main import NewQuery as _NewQuery
+    from mf.utils.scan import NewQuery as _NewQuery
 
     class FakeNew(_NewQuery):  # type: ignore
         def execute(self):  # noqa: D401
