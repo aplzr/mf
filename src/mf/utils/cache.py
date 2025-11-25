@@ -1,10 +1,9 @@
 import json
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from .config import parse_timedelta_str, read_config
 from .console import print_info, print_ok, print_warn
-from .file import FileResult, FileResults, get_library_cache_file
+from .file import FileResults, get_library_cache_file
 
 
 def rebuild_library_cache() -> FileResults:
@@ -49,9 +48,7 @@ def _load_library_cache(allow_rebuild=True) -> FileResults:
         with open(get_library_cache_file(), encoding="utf-8") as f:
             cache_data = json.load(f)
 
-        results = FileResults(
-            [FileResult(Path(path_str)) for path_str in cache_data["files"]]
-        )
+        results = FileResults.from_paths(cache_data["files"])
     except (json.JSONDecodeError, KeyError):
         print_warn("Cache corrupted.")
 
