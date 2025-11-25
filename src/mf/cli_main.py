@@ -17,7 +17,7 @@ from .utils.scan import (
     NewQuery,
 )
 from .utils.search import get_result_by_index, print_search_results, save_search_results
-from .version import __version__
+from .version import __version__, check_version
 
 app_mf = typer.Typer(help="Media file finder and player")
 app_mf.add_typer(app_last, name="last")
@@ -166,9 +166,18 @@ def filepath(
 
 
 @app_mf.command()
-def version():
-    "Print version."
-    console.print(__version__)
+def version(
+    target: str = typer.Argument(
+        None,
+        help="None or 'check'. If None, displays mediafinder's version. "
+        "If 'check', checks if a newer version is aviable.",
+    ),
+):
+    "Print version or perform version check."
+    if target and target == "check":
+        check_version()
+    else:
+        console.print(__version__)
 
 
 @app_mf.callback(invoke_without_command=True)
