@@ -12,10 +12,7 @@ from .utils.config import read_config
 from .utils.console import console, print_and_raise, print_warn
 from .utils.misc import open_imdb_entry
 from .utils.playlist import get_next, save_last_played
-from .utils.scan import (
-    FindQuery,
-    NewQuery,
-)
+from .utils.scan import FindQuery, NewQuery
 from .utils.search import get_result_by_index, print_search_results, save_search_results
 from .version import __version__, check_version
 
