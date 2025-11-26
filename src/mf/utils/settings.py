@@ -61,7 +61,7 @@ class SettingSpec:
     display: Callable[[Any], str] = lambda value: str(value)
     validate_all: Callable[[Any], None] = lambda value: None
     help: str = ""
-    before_write: Callable[[Any], any] = lambda value: value
+    before_write: Callable[[Any], Any] = lambda value: value
     after_update: Callable[[Any], None] = lambda value: None
 
 
