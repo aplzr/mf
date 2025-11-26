@@ -11,7 +11,7 @@ from tomlkit import TOMLDocument, comment, document, nl
 
 from .console import print_and_raise, print_ok, print_warn
 from .normalizers import normalize_media_extension
-from .settings import REGISTRY
+from .settings import REGISTRY, SettingSpec
 
 __all__ = [
     "get_config_file",
@@ -48,7 +48,14 @@ def get_config_file() -> Path:
     return config_dir / "config.toml"
 
 
-def _read_config() -> TOMLDocument:
+def read_config() -> TOMLDocument:
+    """Load configuration contents.
+
+    Falls back to creating a default configuration when the file is missing.
+
+    Returns:
+        TOMLDocument: Parsed configuration.
+    """
     try:
         with open(get_config_file()) as f:
             cfg = tomlkit.load(f)
@@ -61,21 +68,58 @@ def _read_config() -> TOMLDocument:
     return cfg
 
 
-def read_config() -> TOMLDocument:
-    """Load configuration contents.
-
-    Falls back to creating a default configuration when the file is missing.
-
-    Returns:
-        TOMLDocument: Parsed configuration.
-    """
-    # Load config once per mf invocation
+def _get_config() -> Configuration:
     global _config
 
     if _config is None:
-        _config = _read_config()
+        _configuration = Configuration(read_config(), REGISTRY)
 
-    return _config
+    return _configuration
+
+
+def get_config() -> Configuration:
+    """Get configuration as a Configuration object.
+
+    Returns:
+        Configuration: Configuration object with settings as attributes.
+    """
+    return _get_config()
+
+
+class Configuration:
+    """Configuration object with settings as attributes."""
+
+    def __init__(
+        self, raw_config: TOMLDocument, settings_registry: dict[str, SettingSpec]
+    ):
+        """Create Configuration object from raw configigration and settings registry.
+
+        Args:
+            raw_config (TOMLDocument): Raw configuration as loaded from disk.
+            settings_registry (dict[str, SettingSpec]): Setting specifications registry
+                that defines how to process each setting before making it available.
+
+        """
+        self._registry = settings_registry
+
+        for key, setting in raw_config.items():
+            # Apply after_read hook and store as attribute for dot notation access
+            setting_spec = self._registry[key]
+            setattr(self, key, setting_spec.after_read(setting))
+
+    def __repr__(self) -> str:
+        """Return a representation showing all configured settings."""
+        # Get all attributes that aren't the registry
+        configured_settings = {
+            setting: getattr(self, setting)
+            for setting in self._registry
+            if hasattr(self, setting)
+        }
+
+        # Format each key-value pair
+        items = [f"{key}={value!r}" for key, value in configured_settings.items()]
+
+        return f"Configuration({', '.join(items)})"
 
 
 def get_default_cfg() -> TOMLDocument:
