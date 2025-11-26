@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import os
-import re
-from datetime import timedelta
 from pathlib import Path
 from textwrap import wrap
 from typing import Any
@@ -19,7 +17,6 @@ __all__ = [
     "get_default_cfg",
     "validate_search_paths",
     "normalize_media_extension",
-    "parse_timedelta_str",
     "read_config",
     "write_config",
     "write_default_config",
@@ -216,42 +213,3 @@ def validate_search_paths() -> list[Path]:
         )
 
     return validated
-
-
-def parse_timedelta_str(interval_str: str) -> timedelta:
-    """Parse time interval string like '10s', '30m', '2h', '1d', '5w' into timedelta.
-
-    Args:
-        interval_str (str): Interval string.
-
-    Raises:
-        ValueError: Invalid input.
-
-    Returns:
-        timedelta: Parsed time interval.
-    """
-    if interval_str == "0":
-        # Special case: 0 without unit
-        return timedelta(seconds=0)
-    else:
-        pattern = r"^(\d+)([smhdw])$"
-        match = re.match(pattern, interval_str.lower().strip())
-
-        if not match:
-            raise ValueError(
-                f"Invalid time interval format: {interval_str}. "
-                "Use format like '30m', '2h', '1d'"
-            )
-
-        value, unit = match.groups()
-        value = int(value)
-
-        unit_map = {
-            "s": timedelta(seconds=value),
-            "m": timedelta(minutes=value),
-            "h": timedelta(hours=value),
-            "d": timedelta(days=value),
-            "w": timedelta(weeks=value),
-        }
-
-        return unit_map[unit]
