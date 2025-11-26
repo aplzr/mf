@@ -14,7 +14,7 @@ from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
 from ..constants import STATUS_SYMBOLS
 from .cache import get_library_cache_size, load_library_cache
-from .config import get_validated_search_paths, read_config
+from .config import read_config, validate_search_paths
 from .console import console, print_warn
 from .file import FileResult, FileResults, get_fd_binary, get_library_cache_file
 from .normalizers import normalize_pattern
@@ -43,7 +43,7 @@ def scan_search_paths(
         FileResults: Results, optionally paired with mtimes.
     """
     cfg = read_config()
-    search_paths = get_validated_search_paths()
+    search_paths = validate_search_paths()
 
     if prefer_fd is None:
         prefer_fd = cfg["prefer_fd"]

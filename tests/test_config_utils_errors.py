@@ -1,7 +1,7 @@
 import pytest
 import typer
 
-from mf.utils.config import get_validated_search_paths, read_config, write_config
+from mf.utils.config import read_config, validate_search_paths, write_config
 
 
 def test_get_validated_search_paths_empty(monkeypatch):
@@ -9,7 +9,7 @@ def test_get_validated_search_paths_empty(monkeypatch):
     cfg["search_paths"] = []
     write_config(cfg)
     with pytest.raises(typer.Exit):
-        get_validated_search_paths()
+        validate_search_paths()
 
 
 def test_get_validated_search_paths_all_missing(monkeypatch):
@@ -17,4 +17,4 @@ def test_get_validated_search_paths_all_missing(monkeypatch):
     cfg["search_paths"] = ["/unlikely/path/that/does/not/exist/for/tests"]
     write_config(cfg)
     with pytest.raises(typer.Exit):
-        get_validated_search_paths()
+        validate_search_paths()

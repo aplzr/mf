@@ -17,7 +17,7 @@ from .settings import REGISTRY, SettingSpec
 __all__ = [
     "get_config_file",
     "get_default_cfg",
-    "get_validated_search_paths",
+    "validate_search_paths",
     "normalize_media_extension",
     "parse_timedelta_str",
     "read_config",
@@ -189,7 +189,7 @@ def write_default_config() -> TOMLDocument:
     return default_cfg
 
 
-def get_validated_search_paths() -> list[Path]:
+def validate_search_paths() -> list[Path]:
     """Return existing configured search paths.
 
     Raises:
