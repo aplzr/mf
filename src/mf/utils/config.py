@@ -140,10 +140,9 @@ class Configuration:
         # not in modified configs. Improve or add a warning in the default cfg.
         cfg = get_default_cfg()
 
-        for key in self._registry:
-            setting_spec = self._registry[key]
-            value = getattr(self, key)
-            cfg[key] = setting_spec.before_write(value)
+        for setting, spec in self._registry.items():
+            value = getattr(self, setting)
+            cfg[setting] = spec.before_write(value)
 
         return cfg
 
