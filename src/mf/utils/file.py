@@ -110,7 +110,12 @@ class FileResult:
         Returns:
             str: POSIX representation of the file path.
         """
-        return self.file.resolve().as_posix()
+        # resolve is expensive, so only do it if necessary
+        return (
+            self.file.as_posix()
+            if self.file.is_absolute()
+            else self.file.resolve().as_posix()
+        )
 
     @classmethod
     def from_string(cls, path: str | Path) -> FileResult:
