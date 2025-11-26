@@ -5,6 +5,7 @@ import re
 from datetime import timedelta
 from pathlib import Path
 from textwrap import wrap
+from typing import Any
 
 import tomlkit
 from tomlkit import TOMLDocument, comment, document, nl
@@ -120,6 +121,12 @@ class Configuration:
         items = [f"{key}={value!r}" for key, value in configured_settings.items()]
 
         return f"Configuration({', '.join(items)})"
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
+
+    def __setitem__(self, key: str, value: Any):
+        setattr(self, key, value)
 
 
 def get_default_cfg() -> TOMLDocument:
