@@ -95,6 +95,9 @@ class Configuration:
     ):
         """Create Configuration object from raw configigration and settings registry.
 
+        Access setting values by subscription (config["key"] == value) or dot notation
+        (config.key == value).
+
         Args:
             raw_config (TOMLDocument): Raw configuration as loaded from disk.
             settings_registry (dict[str, SettingSpec]): Setting specifications registry
@@ -102,8 +105,9 @@ class Configuration:
 
         """
         self._registry = settings_registry
+        self._raw_config = raw_config
 
-        for key, setting in raw_config.items():
+        for key, setting in self._raw_config.items():
             # Apply after_read hook and store as attribute for dot notation access
             setting_spec = self._registry[key]
             setattr(self, key, setting_spec.after_read(setting))
@@ -129,16 +133,12 @@ class Configuration:
         setattr(self, key, value)
 
     def to_toml(self) -> TOMLDocument:
-        """Convert Configuration object back to TOMLDocument.
+        """Convert (possibly updated) Configuration object back to TOMLDocument.
 
         Returns:
             TOMLDocument: Configuration as TOMLDocument.
         """
-        # TODO: add before_write hooks to setting registry
-
-        # TODO: This preserves comments only in the default config,
-        # not in modified configs. Improve or add a warning in the default cfg.
-        cfg = get_default_cfg()
+        cfg = self._raw_config  # Preserve user-added comments
 
         for setting, spec in self._registry.items():
             value = getattr(self, setting)
