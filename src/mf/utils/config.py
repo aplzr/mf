@@ -17,7 +17,6 @@ from .settings import REGISTRY, SettingSpec
 __all__ = [
     "get_config_file",
     "get_default_cfg",
-    "get_media_extensions",
     "get_validated_search_paths",
     "normalize_media_extension",
     "parse_timedelta_str",
@@ -217,18 +216,6 @@ def get_validated_search_paths() -> list[Path]:
         )
 
     return validated
-
-
-def get_media_extensions() -> set[str]:
-    """Retrieve configured media extensions.
-
-    Args:
-        None
-
-    Returns:
-        set[str]: Set of normalized extensions.
-    """
-    return {normalize_media_extension(e) for e in read_config()["media_extensions"]}
 
 
 def parse_timedelta_str(interval_str: str) -> timedelta:
