@@ -50,6 +50,7 @@ class SettingSpec:
         help: Human readable help text shown to the user.
         before_write: Hook to transform value(s) before persisting.
         after_update: Hook to trigger additional action(s) after an update.
+        after_read: Hook to transform value(s) after reading from config.
     """
 
     key: str
@@ -63,6 +64,7 @@ class SettingSpec:
     help: str = ""
     before_write: Callable[[Any], Any] = lambda value: value
     after_update: Callable[[Any], None] = lambda value: None
+    after_read: Callable[[Any], Any] = lambda value: value
 
 
 REGISTRY: dict[str, SettingSpec] = {
