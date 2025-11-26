@@ -128,6 +128,25 @@ class Configuration:
     def __setitem__(self, key: str, value: Any):
         setattr(self, key, value)
 
+    def to_toml(self) -> TOMLDocument:
+        """Convert Configuration object back to TOMLDocument.
+
+        Returns:
+            TOMLDocument: Configuration as TOMLDocument.
+        """
+        # TODO: add before_write hooks to setting registry
+
+        # TODO: This preserves comments only in the default config,
+        # not in modified configs. Improve or add a warning in the default cfg.
+        cfg = get_default_cfg()
+
+        for key in self._registry:
+            setting_spec = self._registry[key]
+            value = getattr(self, key)
+            cfg[key] = setting_spec.before_write(value)
+
+        return cfg
+
 
 def get_default_cfg() -> TOMLDocument:
     """Get the default configuration.
