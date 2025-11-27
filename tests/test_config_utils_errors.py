@@ -1,7 +1,8 @@
 import pytest
 import typer
 
-from mf.utils.config import read_config, validate_search_paths, write_config
+from mf.utils.config import read_config, write_config
+from mf.utils.misc import validate_search_paths
 
 
 def test_get_validated_search_paths_empty(monkeypatch):

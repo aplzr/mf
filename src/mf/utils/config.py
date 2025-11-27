@@ -8,14 +8,13 @@ from typing import Any
 import tomlkit
 from tomlkit import TOMLDocument, comment, document, nl
 
-from .console import print_and_raise, print_ok, print_warn
+from .console import print_ok, print_warn
 from .normalizers import normalize_media_extension
 from .settings import REGISTRY, SettingSpec
 
 __all__ = [
     "get_config_file",
     "get_default_cfg",
-    "validate_search_paths",
     "normalize_media_extension",
     "read_config",
     "write_config",
@@ -172,33 +171,3 @@ def write_default_config() -> TOMLDocument:
     print_ok(f"Written default configuration to '{get_config_file()}'.")
 
     return default_cfg
-
-
-# TODO: functions below should go somewhere else. misc.py?
-def validate_search_paths() -> list[Path]:
-    """Return existing configured search paths.
-
-    Raises:
-        typer.Exit: If no valid search paths are configured.
-
-    Returns:
-        list[Path]: List of validated existing search paths.
-    """
-    search_paths = read_config()["search_paths"]
-    validated: list[Path] = []
-
-    for search_path in search_paths:
-        p = Path(search_path)
-
-        if not p.exists():
-            print_warn(f"Configured search path {search_path} does not exist.")
-        else:
-            validated.append(p)
-
-    if not validated:
-        print_and_raise(
-            "List of search paths is empty or paths don't exist. "
-            "Set search paths with 'mf config set search_paths'."
-        )
-
-    return validated
