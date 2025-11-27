@@ -16,7 +16,7 @@ def media_dir(tmp_path):
     cfg = read_config()
     cfg["search_paths"] = [d.as_posix()]
     cfg["cache_library"] = True
-    cfg["library_cache_interval"] = "1s"  # very short expiry
+    cfg["library_cache_interval"] = 1  # very short expiry
     write_config(cfg)
     return d
 
