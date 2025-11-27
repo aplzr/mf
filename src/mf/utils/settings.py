@@ -11,7 +11,6 @@ from .normalizers import (
     normalize_bool_to_toml,
     normalize_media_extension,
     normalize_path,
-    normalize_timedelta_str,
     wrap_string_in_quotes,
 )
 
@@ -133,7 +132,6 @@ REGISTRY: dict[str, SettingSpec] = {
         kind="scalar",
         value_type=str,
         actions={"set"},
-        normalize=normalize_timedelta_str,
         default="1d",
         display=wrap_string_in_quotes,
         help=(
