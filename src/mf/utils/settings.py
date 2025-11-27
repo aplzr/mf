@@ -1,5 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import timedelta
+from pathlib import Path
 from typing import Any, Literal
 
 from tomlkit import TOMLDocument
@@ -11,7 +13,6 @@ from .normalizers import (
     normalize_bool_to_toml,
     normalize_media_extension,
     normalize_path,
-    wrap_string_in_quotes,
 )
 
 __all__ = [
@@ -40,30 +41,28 @@ class SettingSpec:
     Attributes:
         key: Name of the setting in the configuration file.
         kind: Kind of setting ('scalar' or 'list').
-        value_type: Python type of the normalized value(s).
+        value_type: Python type of values loaded from TOML via from_toml.
         actions: Allowed actions for this setting.
-        normalize: Function converting a raw string into the typed value.
         default: Default value(s), used in the default configuration.
+        normalize: Function converting a raw string into what is written to TOML.
+        from_toml: Function converting value from TOML to the typed value.
         display: Function producing a human readable representation.
         validate_all: Function validating the (possibly list) value(s).
-        help: Human readable help text shown to the user.
-        before_write: Hook to transform value(s) before persisting.
         after_update: Hook to trigger additional action(s) after an update.
-        after_read: Hook to transform value(s) after reading from config.
+        help: Human readable help text shown to the user.
     """
 
     key: str
     kind: Literal["scalar", "list"]
     value_type: type
     actions: set[Action]
-    normalize: Callable[[str], Any]
     default: Any
+    normalize: Callable[[str], Any] = lambda value: value
+    from_toml: Callable[[Any], Any] = lambda value: value
     display: Callable[[Any], str] = lambda value: str(value)
     validate_all: Callable[[Any], None] = lambda value: None
-    help: str = ""
-    before_write: Callable[[Any], Any] = lambda value: value
     after_update: Callable[[Any], None] = lambda value: None
-    after_read: Callable[[Any], Any] = lambda value: value
+    help: str = ""
 
 
 REGISTRY: dict[str, SettingSpec] = {
@@ -73,9 +72,10 @@ REGISTRY: dict[str, SettingSpec] = {
         value_type=str,
         actions={"set", "add", "remove", "clear"},
         normalize=normalize_path,
+        from_toml=lambda path: Path(path).resolve(),
         default=[],
-        help="Directories scanned for media files.",
         after_update=lambda _: _rebuild_cache_if_enabled(),
+        help="Directories scanned for media files.",
     ),
     "media_extensions": SettingSpec(
         key="media_extensions",
@@ -124,21 +124,20 @@ REGISTRY: dict[str, SettingSpec] = {
         normalize=normalize_bool_str,
         default=False,
         display=normalize_bool_to_toml,
-        help="If true, caches library metadata locally.",
         after_update=lambda _: _rebuild_cache_if_enabled(),
+        help="If true, caches library metadata locally.",
     ),
     "library_cache_interval": SettingSpec(
         key="library_cache_interval",
         kind="scalar",
-        value_type=str,
+        value_type=timedelta,
         actions={"set"},
-        default="1d",
-        display=wrap_string_in_quotes,
+        default=86400,
+        from_toml=lambda interval_s: timedelta(seconds=int(interval_s)),
         help=(
             "Time after which the library cache is automatically rebuilt if "
-            "cache_library is set to true. Format: '<number><unit>', with unit one of "
-            "s, m, h, d, w. Set to '0' (without unit) to turn off automatic cache "
-            "rebuilding."
+            "cache_library is set to true, in seconds. Set to 0 to turn off automatic"
+            "cache rebuilding. Default value of 86400 s is 1 day."
         ),
     ),
 }
@@ -177,7 +176,7 @@ def apply_action(
 
         new_value = spec.normalize(raw_values[0])
         spec.validate_all(new_value)
-        cfg[key] = spec.before_write(new_value)
+        cfg[key] = new_value
         spec.after_update(cfg[key])
         print_ok(f"Set {key} to '{spec.display(new_value)}'.")
 
