@@ -23,7 +23,7 @@ def isolated_media_dir(tmp_path):
     cfg = read_config()
     cfg["search_paths"] = [media_dir.as_posix()]
     cfg["cache_library"] = True
-    cfg["library_cache_interval"] = "10m"  # non-zero default for most tests
+    cfg["library_cache_interval"] = 600  # non-zero default for most tests
     write_config(cfg)
     return media_dir
 
@@ -52,7 +52,7 @@ def test_library_cache_rebuild_on_missing(isolated_media_dir):
 def test_library_cache_no_expiry_zero_interval(isolated_media_dir):
     # Set interval to zero so cache never expires.
     cfg = read_config()
-    cfg["library_cache_interval"] = "0s"
+    cfg["library_cache_interval"] = "0"
     write_config(cfg)
     create_files(isolated_media_dir, ["c1.mkv"])  # one file
     results_first = load_library_cache()
