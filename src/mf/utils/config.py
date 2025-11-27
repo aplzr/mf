@@ -45,14 +45,7 @@ def get_config_file() -> Path:
     return config_dir / "config.toml"
 
 
-def read_config() -> TOMLDocument:
-    """Load configuration contents.
-
-    Falls back to creating a default configuration when the file is missing.
-
-    Returns:
-        TOMLDocument: Parsed configuration.
-    """
+def _read_config() -> TOMLDocument:
     try:
         with open(get_config_file()) as f:
             cfg = tomlkit.load(f)
@@ -65,22 +58,31 @@ def read_config() -> TOMLDocument:
     return cfg
 
 
-def _get_config() -> Configuration:
+def read_config() -> TOMLDocument:
+    """Read raw configuration from disk.
+
+    Falls back to creating a default configuration when the file is missing.
+
+    Returns:
+        TOMLDocument: Parsed configuration.
+    """
     global _config
 
     if _config is None:
-        _configuration = Configuration(read_config(), REGISTRY)
+        _configuration = _read_config()
 
     return _configuration
 
 
-def get_config() -> Configuration:
-    """Get configuration as a Configuration object.
+def build_config() -> Configuration:
+    """Build integrated Configuration from the raw TOML configuration.
+
+    Transforms raw TOML into typed python values.
 
     Returns:
         Configuration: Configuration object with settings as attributes.
     """
-    return _get_config()
+    return Configuration(read_config(), REGISTRY)
 
 
 class Configuration:
@@ -89,7 +91,7 @@ class Configuration:
     def __init__(
         self, raw_config: TOMLDocument, settings_registry: dict[str, SettingSpec]
     ):
-        """Create Configuration object from raw configigration and settings registry.
+        """Create Configuration object from raw configuration and settings registry.
 
         Access setting values by subscription (config["key"] == value) or dot notation
         (config.key == value).
@@ -103,10 +105,13 @@ class Configuration:
         self._registry = settings_registry
         self._raw_config = raw_config
 
-        for key, setting in self._raw_config.items():
-            # Apply after_read hook and store as attribute for dot notation access
-            setting_spec = self._registry[key]
-            setattr(self, key, setting_spec.after_read(setting))
+        for setting, values in self._raw_config.items():
+            spec = self._registry[setting]
+
+            if spec.kind == "list":
+                setattr(self, setting, [spec.from_toml(value) for value in values])
+            else:
+                setattr(self, setting, spec.from_toml(values))
 
     def __repr__(self) -> str:
         """Return a representation showing all configured settings."""
@@ -116,10 +121,7 @@ class Configuration:
             for setting in self._registry
             if hasattr(self, setting)
         }
-
-        # Format each key-value pair
         items = [f"{key}={value!r}" for key, value in configured_settings.items()]
-
         return f"Configuration({', '.join(items)})"
 
     def __getitem__(self, key: str) -> Any:
@@ -127,20 +129,6 @@ class Configuration:
 
     def __setitem__(self, key: str, value: Any):
         setattr(self, key, value)
-
-    def to_toml(self) -> TOMLDocument:
-        """Convert (possibly updated) Configuration object back to TOMLDocument.
-
-        Returns:
-            TOMLDocument: Configuration as TOMLDocument.
-        """
-        cfg = self._raw_config  # Preserve user-added comments
-
-        for setting, spec in self._registry.items():
-            value = getattr(self, setting)
-            cfg[setting] = spec.before_write(value)
-
-        return cfg
 
 
 def get_default_cfg() -> TOMLDocument:
@@ -186,6 +174,7 @@ def write_default_config() -> TOMLDocument:
     return default_cfg
 
 
+# TODO: functions below should go somewhere else. misc.py?
 def validate_search_paths() -> list[Path]:
     """Return existing configured search paths.
 
