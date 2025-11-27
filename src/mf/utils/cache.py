@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .config import build_config
 from .console import print_info, print_ok, print_warn
@@ -88,7 +88,7 @@ def is_cache_expired() -> bool:
         return True
 
     cache_timestamp = datetime.fromtimestamp(cache_file.stat().st_mtime)
-    cache_interval = build_config()["library_cache_interval"]
+    cache_interval: timedelta = build_config()["library_cache_interval"]
 
     if cache_interval.total_seconds() == 0:
         # Cache set to never expire
