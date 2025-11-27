@@ -1,5 +1,4 @@
 import json
-from collections import Counter
 from datetime import datetime, timedelta
 
 from .config import build_config
@@ -105,23 +104,3 @@ def get_library_cache_size() -> int:
         int: Number of cached file paths.
     """
     return len(_load_library_cache(allow_rebuild=False))
-
-
-def compute_cache_stats(results: FileResults):
-    pass
-
-
-def _count_file_extensions(results: FileResults) -> list[tuple[str, int]]:
-    """Count file extensions.
-
-    Args:
-        results (FileResults): Files whose extensions should be counted.
-
-    Returns:
-        list[tuple[str, int]]: (extension, count) tuples, sorted by count descending and
-            extension ascending.
-    """
-    return sorted(
-        Counter(file.suffix for file in results.get_paths()).items(),
-        key=lambda x: (-x[1], x[0]),
-    )
