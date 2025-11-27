@@ -52,7 +52,7 @@ def show_histogram(
     console.print(
         Panel(
             "\n".join(bars),
-            title=(f"[bold cyan]{title} (top {top_n} counts)[/bold cyan]"),
+            title=(f"[bold cyan]{title} (top {top_n})[/bold cyan]"),
             padding=(1, 2),
             title_align="left",
         )
