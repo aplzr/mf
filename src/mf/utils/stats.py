@@ -20,12 +20,11 @@ def show_histogram(
         top_n (int, optional): Only use top n counts. Defaults to 20.
         bar_style (str, optional): Bar style. Defaults to "lower_blocks".
     """
-    # Take top N items
-    top_extensions = items[:top_n]
-    max_count = max(count for _, count in top_extensions)
+    top_items = items[:top_n]
+    max_count = max(count for _, count in top_items)
     total_count = sum(count for _, count in items)
+    max_name_len = max(len(item[0]) for item in top_items)
 
-    # Different bar characters
     bar_chars = {
         "solid": "█",
         "thick_line": "━",
@@ -38,14 +37,14 @@ def show_histogram(
     bar_char = bar_chars[bar_style]
     bars = []
 
-    for ext, count in top_extensions:
+    for ext, count in top_items:
         percentage = (count / total_count) * 100
         bar_width = int((count / max_count) * 40)
         bar = bar_char * bar_width
 
         ext_display = ext if ext else "(no ext)"
         bars.append(
-            f"{ext_display:>8} │[bold cyan]{bar:<40}[/bold cyan]│ "
+            f"{ext_display:>{max_name_len}} │[bold cyan]{bar:<40}[/bold cyan]│ "
             f"{count:>5} ({percentage:4.1f}%)"
         )
 
