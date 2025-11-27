@@ -7,7 +7,6 @@ from mf.utils.config import read_config, write_config
 from mf.utils.file import (
     get_library_cache_file,
 )
-from mf.utils.normalizers import normalize_timedelta_str
 
 
 @pytest.fixture()
@@ -17,7 +16,7 @@ def media_dir(tmp_path):
     cfg = read_config()
     cfg["search_paths"] = [d.as_posix()]
     cfg["cache_library"] = True
-    cfg["library_cache_interval"] = "1s"  # very short expiry
+    cfg["library_cache_interval"] = 1  # very short expiry
     write_config(cfg)
     return d
 
@@ -31,15 +30,6 @@ def test_is_cache_expired_true(media_dir):
     # Sleep past interval
     time.sleep(1.2)
     assert is_cache_expired() is True
-
-
-def test_normalize_timedelta_str_invalid(capsys):
-    import click
-
-    with pytest.raises(click.exceptions.Exit):
-        normalize_timedelta_str("badformat")
-    captured = capsys.readouterr()
-    assert "Invalid format" in captured.out
 
 
 def test_get_fd_binary_unsupported(monkeypatch):
