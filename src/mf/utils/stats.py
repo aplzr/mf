@@ -37,14 +37,14 @@ def show_histogram(
     bar_char = bar_chars[bar_style]
     bars = []
 
-    for ext, count in top_items:
+    for name, count in top_items:
         percentage = (count / total_count) * 100
         bar_width = int((count / max_count) * 40)
         bar = bar_char * bar_width
 
-        ext_display = ext if ext else "(no ext)"
+        name_display = name if name else "(no name)"
         bars.append(
-            f"{ext_display:>{max_name_len}} │[bold cyan]{bar:<40}[/bold cyan]│ "
+            f"{name_display:>{max_name_len}} │[bold cyan]{bar:<40}[/bold cyan]│ "
             f"{count:>5} ({percentage:4.1f}%)"
         )
 
