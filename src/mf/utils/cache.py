@@ -1,7 +1,7 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from .config import parse_timedelta_str, read_config
+from .config import build_config
 from .console import print_info, print_ok, print_warn
 from .file import FileResults, get_library_cache_file
 
@@ -70,15 +70,6 @@ def load_library_cache() -> FileResults:
     return rebuild_library_cache() if is_cache_expired() else _load_library_cache()
 
 
-def get_library_cache_interval() -> timedelta:
-    """Get the library cache interval from the configuration.
-
-    Returns:
-        timedelta: Interval after which cache is rebuilt.
-    """
-    return parse_timedelta_str(read_config()["library_cache_interval"])
-
-
 def is_cache_expired() -> bool:
     """Check if the library cache is older than the configured cache interval.
 
@@ -97,7 +88,7 @@ def is_cache_expired() -> bool:
         return True
 
     cache_timestamp = datetime.fromtimestamp(cache_file.stat().st_mtime)
-    cache_interval = get_library_cache_interval()
+    cache_interval = build_config()["library_cache_interval"]
 
     if cache_interval.total_seconds() == 0:
         # Cache set to never expire
