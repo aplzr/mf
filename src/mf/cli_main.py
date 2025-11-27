@@ -118,7 +118,7 @@ def play(
         else:  # Unix-like (Linux, macOS)
             vlc_cmd = "vlc"
 
-        fullscreen_playback = read_config().get("fullscreen_playback", True)
+        fullscreen_playback = read_config()["fullscreen_playback"]
         vlc_args = [vlc_cmd, str(file_to_play.file)]
 
         if fullscreen_playback:
