@@ -43,11 +43,10 @@ def scan_search_paths(
     Returns:
         FileResults: Results, optionally paired with mtimes.
     """
-    cfg = read_config()
     search_paths = validate_search_paths()
 
     if prefer_fd is None:
-        prefer_fd = cfg["prefer_fd"]
+        prefer_fd = read_config()["prefer_fd"]
 
     use_fd = prefer_fd and not with_mtime
 
