@@ -3,7 +3,7 @@ from urllib import request
 
 from packaging.version import Version
 
-from .utils.console import print_and_raise, print_info
+from .utils.console import print_and_raise, print_info, print_ok
 
 __version__ = "0.7.0"
 
@@ -37,4 +37,4 @@ def check_version():
             "Use 'uv tool upgrade mediafinder' to upgrade."
         )
     else:
-        print_info(f"You're on the latest version of mediafinder ({local_version}).")
+        print_ok(f"You're on the latest version of mediafinder ({local_version}).")
