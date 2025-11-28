@@ -45,7 +45,7 @@ def show_histogram(
         name_display = name if name else "(no name)"
         bars.append(
             f"{name_display:>{max_name_len}} │[bold cyan]{bar:<40}[/bold cyan]│ "
-            f"{count:>5} ({percentage:4.1f}%)"
+            f"{count:>{len(str(max_count))}} ({percentage:4.1f}%)"
         )
 
     console.print(
