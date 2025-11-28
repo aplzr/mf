@@ -59,6 +59,7 @@ def show_histogram(
             title=(f"[bold cyan]{title} (top {top_n})[/bold cyan]"),
             padding=(1, 2),
             title_align="left",
+            expand=False,
         )
     )
 
