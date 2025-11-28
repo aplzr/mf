@@ -6,6 +6,11 @@ from .console import console
 from .file import FileResults
 
 
+# TODO: Generalize the histogram function
+# - Let it accept any list of strings (no counts)
+# - Let it count the strings itself
+# - Optionally pass a function for sorting
+# - Make top_n fully optional (don't limit if None)
 def show_histogram(
     items: list[tuple[str, int]],
     title: str,
@@ -72,7 +77,3 @@ def count_file_extensions(results: FileResults) -> list[tuple[str, int]]:
         Counter(file.suffix for file in results.get_paths()).items(),
         key=lambda x: (-x[1], x[0]),
     )
-
-
-def compute_cache_stats(results: FileResults):
-    pass
