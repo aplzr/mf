@@ -31,12 +31,15 @@ def clear():
 @app_cache.command()
 def stats():
     """Show cache statistics."""
-    # Extension histogram
+    # Extension histogram (all files)
     cache = load_library_cache()
     extension_counts = count_file_extensions(cache)
     console.print("")
     show_histogram(extension_counts, "Cache file extension distribution")
 
+    # TODO: Extension histogram (media file extensions only)
+
+    # Resolution distribution
     resolution_counts = parse_resolution(cache)
     show_histogram(resolution_counts, "Cache file resolution distribution")
 
