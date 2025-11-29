@@ -100,7 +100,7 @@ Cached indices remain valid until you run another `find` or `new` command that o
 **Configuration:**
 
 - `mf config set cache_library <true/false>` - Turn library caching on or off
-- `mf config set library_cache_interval <interval>` - Set auto-rebuild interval (0 to disable)
+- `mf config set library_cache_interval <interval>` - Set auto-rebuild interval in seconds (default 86400 (1 day), 0 to disable)
 
 **Manual control:**
 
