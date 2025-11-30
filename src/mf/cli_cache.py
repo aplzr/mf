@@ -3,8 +3,8 @@ import typer
 from .utils.cache import load_library_cache, rebuild_library_cache
 from .utils.console import console, print_ok
 from .utils.file import get_library_cache_file
-from .utils.parsers import parse_resolution
-from .utils.stats import count_file_extensions, show_histogram
+from .utils.parsers import parse_resolutions
+from .utils.stats import show_histogram
 
 app_cache = typer.Typer(help="Manage mf's library cache.")
 
@@ -31,16 +31,28 @@ def clear():
 @app_cache.command()
 def stats():
     """Show cache statistics."""
-    # Extension histogram (all files)
     cache = load_library_cache()
-    extension_counts = count_file_extensions(cache)
+
+    # Extension histogram (all files)
     console.print("")
-    show_histogram(extension_counts, "Cache file extension distribution")
+    show_histogram(
+        [file.suffix for file in cache.get_paths()],
+        "File extension distribution",
+        sort=True,
+        # Sort by frequency descending, then name ascending
+        sort_key=lambda bar: (-bar[1], bar[0]),
+        top_n=20,
+    )
 
     # TODO: Extension histogram (media file extensions only)
 
     # Resolution distribution
-    resolution_counts = parse_resolution(cache)
-    show_histogram(resolution_counts, "Cache file resolution distribution")
+    resolutions = parse_resolutions(cache)
+    show_histogram(
+        resolutions,
+        "File resolution distribution",
+        sort=True,
+        sort_key=lambda bar: int("".join(filter(str.isdigit, bar[0]))),
+    )
 
     # TODO: file size distribution
