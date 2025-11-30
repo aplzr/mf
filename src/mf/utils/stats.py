@@ -19,10 +19,10 @@ def show_histogram(
 
     Counts the items by producing (item, count) tuples which are then sorted if sorting
     is requested (using sort_key if given). The resulting tuples are then used to
-    produce the historam, where each tuple produces a histogram bar.
+    produce the histogram, where each tuple produces a histogram bar.
 
     Args:
-        items (list[[str]): Data whose distribution should be shown.
+        items (list[str]): Data whose distribution should be shown.
         title (str): Histogram title.
         sort (bool, optional): Whether to sort item counts. Defaults to False.
         sort_reverse (bool, optional): Reverse sort order of sort==True. Defaults to
