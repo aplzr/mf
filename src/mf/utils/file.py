@@ -117,6 +117,14 @@ class FileResult:
             else self.file.resolve().as_posix()
         )
 
+    def get_path(self) -> Path:
+        """Get the path of a FileResult.
+
+        Returns:
+            Path: FileResult path.
+        """
+        return self.file
+
     @classmethod
     def from_string(cls, path: str | Path) -> FileResult:
         """Create a FileResult from a path.
@@ -241,3 +249,11 @@ class FileResults(UserList):
         sorted_results = FileResults(self.data.copy())
         sorted_results.sort(by_mtime=by_mtime, reverse=reverse)
         return sorted_results
+
+    def get_paths(self) -> list[Path]:
+        """Get paths of all FileResult objects.
+
+        Returns:
+            list[Path]: Paths of all FileResults
+        """
+        return [result.get_path() for result in self.data]

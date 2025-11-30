@@ -68,9 +68,9 @@ def read_config() -> TOMLDocument:
     global _config
 
     if _config is None:
-        _configuration = _read_config()
+        _config = _read_config()
 
-    return _configuration
+    return _config
 
 
 def build_config() -> Configuration:
