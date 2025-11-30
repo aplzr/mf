@@ -1,18 +1,18 @@
 import re
-from collections import Counter
 
 from .file import FileResults
 
 
-# TODO: only parse, count/sort in the histogram function
-def parse_resolution(results: FileResults) -> list[tuple[str, int]]:
+def parse_resolutions(results: FileResults) -> list[str]:
     """Parse video resolution from filenames for statistical purposes.
+
+    Normalizes (width x height) to p-format ("854x480" -> "480p").
 
     Args:
         results (FileResults): Files to parse resolution from.
 
     Returns:
-        list[tuple[str, int]]: (resolution, count) pairs, sorted by resolution.
+        list[str]: All resolution strings found in filenames, normalized to p-format.
     """
     # \b - Word boundary to avoid partial matches
     # (?:...) - Non-capturing group for the alternation
@@ -45,14 +45,6 @@ def parse_resolution(results: FileResults) -> list[tuple[str, int]]:
             return resolution
         return None
 
-    resolution_counts = Counter(
-        [_parse_resolution(file.name) for file in results.get_paths()]
-    ).items()
-    resolution_counts = [
-        (name, count) for name, count in resolution_counts if name is not None
-    ]
-    resolution_counts = sorted(
-        resolution_counts,
-        key=lambda x: int("".join(filter(str.isdigit, x[0]))) if x[0] else 0,
-    )
-    return resolution_counts
+    resolutions = [_parse_resolution(file.name) for file in results.get_paths()]
+    resolutions = [res for res in resolutions if res is not None]
+    return resolutions
