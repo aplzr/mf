@@ -1,6 +1,7 @@
 import typer
 
 from .utils.cache import load_library_cache, rebuild_library_cache
+from .utils.config import read_config
 from .utils.console import console, print_ok
 from .utils.file import get_library_cache_file
 from .utils.parsers import parse_resolutions
@@ -44,7 +45,17 @@ def stats():
         top_n=20,
     )
 
-    # TODO: Extension histogram (media file extensions only)
+    # Extension histogram (media file extensions only)
+    media_extensions = read_config()["media_extensions"]
+
+    if media_extensions:
+        media_cache = cache.copy()
+        media_cache.filter_by_extension(media_extensions)
+        show_histogram(
+            [file.suffix for file in media_cache.get_paths()],
+            "Media file extension distribution",
+            sort=True,
+        )
 
     # Resolution distribution
     resolutions = parse_resolutions(cache)
