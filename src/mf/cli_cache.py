@@ -61,7 +61,7 @@ def stats():
     resolutions = parse_resolutions(cache)
     show_histogram(
         resolutions,
-        "File resolution distribution",
+        "Media file resolution distribution",
         sort=True,
         sort_key=lambda bar: int("".join(filter(str.isdigit, bar[0]))),
     )
