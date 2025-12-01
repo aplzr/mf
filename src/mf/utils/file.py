@@ -138,7 +138,7 @@ class FileResult:
         return cls(Path(path))
 
 
-class FileResults(UserList):
+class FileResults(UserList[FileResult]):
     """Collection of FileResult objects.
 
     Provides filtering and sorting on file search results.
@@ -151,8 +151,7 @@ class FileResults(UserList):
             results (list[FileResult] | None): List of FileResult objects, or None for
             empty collection.
         """
-        super().__init__(results or [])  # Goes to self.data
-        self.data: list[FileResult]
+        super().__init__(results or [])
 
     def __str__(self) -> str:
         """Returns newline-separated POSIX paths of all files.
