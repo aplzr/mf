@@ -6,7 +6,7 @@ from .config import build_config
 from .console import print_info, print_ok, print_warn
 from .file import FileResults, get_library_cache_file
 
-StatList = [
+StatList = tuple[
     int,  # st_mode
     int,  # st_ino
     int,  # st_dev
@@ -18,7 +18,7 @@ StatList = [
     int,  # st_mtime
     int,  # st_ctime
 ]
-FileEntry = list[
+FileEntry = tuple[
     str,  # File path
     StatList,
 ]

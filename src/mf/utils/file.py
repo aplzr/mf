@@ -182,7 +182,7 @@ class FileResults(UserList[FileResult]):
         """Create FileResults from cache loaded from disk.
 
         Args:
-            cache (dict): Loaded cache.
+            cache (CacheData): Loaded cache.
 
         Returns:
             FileResults: FileResults object.
