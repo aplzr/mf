@@ -9,8 +9,12 @@ from fnmatch import fnmatch
 from importlib.resources import files
 from operator import attrgetter
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..constants import FD_BINARIES
+
+if TYPE_CHECKING:
+    from .cache import CacheData
 
 
 def get_cache_dir() -> Path:
@@ -96,11 +100,11 @@ class FileResult:
 
     Attributes:
         file (Path): Filepath.
-        mtime (float, optional): Optional last modification timestamp.
+        stat (stat_result, optional): Optional stat result of the file.
     """
 
     file: Path
-    mtime: float | None = None
+    stat: os.stat_result | None = None
 
     def __str__(self) -> str:
         """Returns a POSIX string representation of the file path.
@@ -173,6 +177,23 @@ class FileResults(UserList[FileResult]):
         """
         return cls([FileResult.from_string(path) for path in paths])
 
+    @classmethod
+    def from_cache(cls, cache: CacheData) -> FileResults:
+        """Create FileResults from cache loaded from disk.
+
+        Args:
+            cache (dict): Loaded cache.
+
+        Returns:
+            FileResults: FileResults object.
+        """
+        return cls(
+            [
+                FileResult(Path(path_str), stat_info)
+                for path_str, stat_info in cache["files"]
+            ]
+        )
+
     def filter_by_extension(self, media_extensions: list[str] | None = None):
         """Filter files by media extensions (in-place).
 
@@ -216,7 +237,7 @@ class FileResults(UserList[FileResult]):
             ValueError: If by_mtime is True and any files lack modification time.
         """
         if by_mtime:
-            mtime_missing = [result for result in self.data if result.mtime is None]
+            mtime_missing = [result for result in self.data if result.stat is None]
 
             if mtime_missing:
                 raise ValueError(
@@ -225,7 +246,7 @@ class FileResults(UserList[FileResult]):
                 )
 
             self.data.sort(
-                key=attrgetter("mtime"),
+                key=attrgetter("stat.st_mtime"),
                 reverse=not reverse,  # Sort descending by default
             )
         else:
