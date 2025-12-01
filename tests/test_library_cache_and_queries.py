@@ -103,7 +103,7 @@ def test_scan_for_media_files_fd_fallback(monkeypatch, isolated_media_dir):
     cfg = read_config()
     cfg["prefer_fd"] = True
     write_config(cfg)
-    results = scan_search_paths(with_mtime=False, prefer_fd=True)
+    results = scan_search_paths(cache_stat=False, prefer_fd=True)
     assert any(r.file.name == "fd1.mkv" for r in results)
 
 

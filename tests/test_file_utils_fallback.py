@@ -62,7 +62,7 @@ def test_mtime_sorting(tmp_path):
     _set_search_paths(tmp_path, [media_dir], prefer_fd=False)
     # Request mtimes so results contain mtime and `sort_scan_results` will
     # order by mtime descending.
-    results = scan_search_paths(with_mtime=True)
+    results = scan_search_paths(cache_stat=True)
     results.sort(by_mtime=True)
     names = [r.file.name for r in results]
     assert names[:2] == ["second.mp4", "first.mp4"]
