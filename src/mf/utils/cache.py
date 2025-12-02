@@ -27,7 +27,7 @@ FileEntry = tuple[
 class CacheData(TypedDict):
     """Media library cache data structure.
 
-    Contains metadata for all media files found during library scanning,
+    Contains metadata for all files found during library scanning,
     including file paths and their filesystem stat information.
 
     Attributes:
