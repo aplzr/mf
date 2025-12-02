@@ -12,7 +12,7 @@ from .misc import format_size
 
 
 def show_histogram(
-    items: list[str],
+    bins: list[tuple[str, int]],
     title: str,
     sort: bool = False,
     sort_reverse: bool = False,
@@ -21,43 +21,41 @@ def show_histogram(
 ):
     """Plot histogram.
 
-    Counts the items by producing (item, count) tuples which are then sorted if sorting
-    is requested (using sort_key if given). The resulting tuples are then used to
-    produce the histogram, where each tuple produces a histogram bar.
+    Uses (label, count) pairs to produce a histogram where each pair represents one bin.
 
     Args:
-        items (list[str]): Data whose distribution should be shown.
+        bins (list[tuple[str, int]]): Length n_bins list where each element is a
+            (label, count) pair that represents one histogram bin.
         title (str): Histogram title.
-        sort (bool, optional): Whether to sort item counts. Defaults to False.
+        sort (bool, optional): Whether to sort bins. Sorts by bin size if no sort_key is
+            given. Defaults to False.
         sort_reverse (bool, optional): Reverse sort order of sort==True. Defaults to
             False.
         sort_key (Callable[[str], Any] | None, optional): Sorting function to use if
             sort==True. Defaults to None.
-        top_n (int | None, optional): Only use top n counts (after sorting). Defaults to
+        top_n (int | None, optional): Only use top n bins (after sorting). Defaults to
             None.
     """
-    item_counts = list(Counter(items).items())
-
     if sort:
-        item_counts = sorted(item_counts, key=sort_key, reverse=sort_reverse)
+        bins = sorted(bins, key=sort_key, reverse=sort_reverse)
 
     if top_n:
-        item_counts = item_counts[:top_n]
+        bins = bins[:top_n]
         title = title + f" (top {top_n})"
 
-    max_count = max(count for _, count in item_counts)
-    total_count = sum(count for _, count in item_counts)
-    no_name = "(no_name)"  # Name used for items where name is ""
-    len_no_name = len(no_name)
-    max_name_len = max(
-        max(len(name) for name, _ in item_counts),
-        len_no_name if "" in item_counts else 0,
+    max_count = max(count for _, count in bins)
+    total_count = sum(count for _, count in bins)
+    no_label = "(no_name)"  # Label used for items where label is ""
+    len_no_label = len(no_label)
+    max_label_len = max(
+        max(len(label) for label, _ in bins),
+        len_no_label if "" in bins else 0,
     )
 
     bar_char = "▆"
     bars = []
 
-    for name, count in item_counts:
+    for label, count in bins:
         percentage = (count / total_count) * 100
         bar_width = int((count / max_count) * 40)
         bar = bar_char * bar_width
@@ -65,9 +63,9 @@ def show_histogram(
         # Bar examples:
         #  .bdjo │▆▆▆▆▆▆▆                                 │  198 (11.3%)
         #  .bdmv │▆▆                                      │   69 ( 4.0%)
-        name_display = name if name else no_name
+        name_display = label if label else no_label
         bars.append(
-            f"{name_display:>{max_name_len}} "
+            f"{name_display:>{max_label_len}} "
             f"│[bold cyan]{bar:<40}[/bold cyan]│ "
             f"{count:>{len(str(max_count))}} ({percentage:4.1f}%)"
         )
@@ -89,13 +87,16 @@ def create_log_bins(
     """Create logarithmic histogram bins.
 
     Args:
-        min_size (float): Smallest value in the distribution.
-        max_size (float): Largest value in the distribution.
+        min_size (float): Lower histogram edge. Must be >= 1.
+        max_size (float): Upper histogram edge.
         bins_per_decade (int): How many bins per 10x range. Defaults to 4.
 
     Returns:
         list[float]: Bin edges.
     """
+    if min_size <= 1:
+        min_size = 1
+
     log_min = math.log10(min_size)
     log_max = math.log10(max_size)
     n_bins = int((log_max - log_min) * bins_per_decade) + 1
@@ -155,3 +156,52 @@ def bin_values(values: list[float], bin_edges: list[float]) -> list[list[float]]
         bins[bin_idx].append(value)
 
     return bins
+
+
+def get_string_counts(values: list[str]) -> list[tuple[str, int]]:
+    """Calculate the frequency distribution of string values.
+
+    Takes a list of strings and returns the unique values along with their
+    occurrence counts, similar to creating bins for a histogram of categorical data.
+
+    Args:
+        values (list[str]): List of string values to analyze.
+
+    Returns:
+        list[tuple[str, int]]: List of (unique string, count) pairs.
+
+    Example:
+        >>> get_string_counts(['apple', 'banana', 'apple', 'banana', 'apple'])
+        [('apple', 3), ('banana', 2)]
+    """
+    return list(Counter(values).items())
+
+
+def get_log_histogram(
+    values: list[Number], bins_per_decade: int = 4
+) -> list[tuple[str, int]]:
+    """Create a logarithmic histogram of numeric values.
+
+    Bins values using logarithmically-spaced intervals and returns labeled bins
+    with their counts. For data spanning multiple orders of magnitude, such as file
+    sizes or response times.
+
+    Args:
+        values (list[Number]): List of numeric values to bin. Must be non-empty.
+        bins_per_decade (int, optional): Number of bins per 10x range. Defaults to 4.
+            Higher values create finer granularity.
+
+    Returns:
+        list[tuple[str, int]]: List of (bin_label, count) pairs, where bin_label
+            is a string like "1.5 GB" representing the bin center.
+
+    Example:
+        >>> file_sizes = [100_000_000, 500_000_000, 2_000_000_000, 5_000_000_000]
+        >>> get_log_histogram(file_sizes, bins_per_decade=3)
+        [('95.4 MB', 1), ('302 MB', 1), ('955 MB', 0), ('3.02 GB', 1), ('9.55 GB', 1)]
+    """
+    bin_edges = create_log_bins(min(values), max(values), bins_per_decade)
+    bin_labels = create_log_bin_labels(bin_edges)
+    bins = bin_values(values, bin_edges)
+
+    return [(bin_label, len(bin)) for bin_label, bin in zip(bin_labels, bins)]
