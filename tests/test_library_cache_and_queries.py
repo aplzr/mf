@@ -111,10 +111,11 @@ def test_new_query_cache_enabled(monkeypatch, isolated_media_dir):
     # Build pre-existing (non-expired) cache file; ensure NewQuery uses cached path.
     file_path = isolated_media_dir / "new1.mkv"
     file_path.write_text("x")
+    stat_info = [0] * 10
     cache_file = get_library_cache_file()
     cache_data = {
         "timestamp": datetime.now().isoformat(),
-        "files": [file_path.as_posix()],
+        "files": [(file_path.as_posix(), stat_info)],
     }
     cache_file.parent.mkdir(parents=True, exist_ok=True)
     cache_file.write_text(json.dumps(cache_data))
@@ -134,10 +135,14 @@ def test_find_query_cache_enabled(monkeypatch, isolated_media_dir):
     file_path.write_text("x")
     other_path = isolated_media_dir / "other.txt"
     other_path.write_text("x")
+    stat_info = [0] * 10
     cache_file = get_library_cache_file()
     cache_data = {
         "timestamp": datetime.now().isoformat(),
-        "files": [file_path.as_posix(), other_path.as_posix()],
+        "files": [
+            (file_path.as_posix(), stat_info),
+            (other_path.as_posix(), stat_info),
+        ],
     }
     cache_file.parent.mkdir(parents=True, exist_ok=True)
     cache_file.write_text(json.dumps(cache_data))
