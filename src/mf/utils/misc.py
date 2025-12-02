@@ -95,3 +95,28 @@ def validate_search_paths() -> list[Path]:
         )
 
     return validated
+
+
+def format_size(size_bytes: int) -> str:
+    """Format a size in bytes to human-readable string with appropriate prefix.
+
+    Args:
+        size_bytes (int): Size in bytes.
+
+    Returns:
+        str: Formatted string like "1.5 GB" or "250 MB".
+    """
+    units = [(1024**3, "GB"), (1024**2, "MB"), (1024**1, "kB"), (1, "B")]
+
+    for threshold, unit in units:
+        if size_bytes >= threshold:
+            value = size_bytes / threshold
+            # Use appropriate decimal places based on magnitude
+            if value >= 100:
+                return f"{value:.0f} {unit}"
+            elif value >= 10:
+                return f"{value:.1f} {unit}"
+            else:
+                return f"{value:.2f} {unit}"
+
+    return f"{size_bytes} B"

@@ -5,7 +5,7 @@ from .utils.config import read_config
 from .utils.console import console, print_ok
 from .utils.file import get_library_cache_file
 from .utils.parsers import parse_resolutions
-from .utils.stats import show_histogram
+from .utils.stats import get_log_histogram, get_string_counts, show_histogram
 
 app_cache = typer.Typer(help="Manage mf's library cache.")
 
@@ -37,7 +37,7 @@ def stats():
     # Extension histogram (all files)
     console.print("")
     show_histogram(
-        [file.suffix for file in cache.get_paths()],
+        get_string_counts(file.suffix for file in cache.get_paths()),
         "File extension distribution",
         sort=True,
         # Sort by frequency descending, then name ascending
@@ -52,18 +52,21 @@ def stats():
         media_cache = cache.copy()
         media_cache.filter_by_extension(media_extensions)
         show_histogram(
-            [file.suffix for file in media_cache.get_paths()],
+            get_string_counts(file.suffix for file in media_cache.get_paths()),
             "Media file extension distribution",
             sort=True,
         )
 
     # Resolution distribution
-    resolutions = parse_resolutions(cache)
     show_histogram(
-        resolutions,
+        get_string_counts(parse_resolutions(cache)),
         "Media file resolution distribution",
         sort=True,
         sort_key=lambda bar: int("".join(filter(str.isdigit, bar[0]))),
     )
 
-    # TODO: file size distribution
+    # File size distribution
+    show_histogram(
+        get_log_histogram([result.stat.st_size for result in media_cache]),
+        "Media file size distribution",
+    )
