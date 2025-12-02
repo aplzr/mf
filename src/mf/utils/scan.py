@@ -23,7 +23,7 @@ from .normalizers import normalize_pattern
 
 def scan_search_paths(
     *,
-    with_mtime: bool = False,
+    cache_stat: bool = False,
     prefer_fd: bool | None = None,
     show_progress: bool = False,
 ) -> FileResults:
@@ -32,23 +32,24 @@ def scan_search_paths(
     Returns paths of all files stored in the search paths.
 
     Args:
-        with_mtime (bool): Add mtime info for later sorting by new (Python scan only).
-        prefer_fd (bool): Prefer the faster fd scanner unless mtime sorting is
-            requested. If None, value is read from the configuration file.
+        cache_stat (bool): Cache each file's stat info at the cost of an additional
+            syscall per file.
+        prefer_fd (bool): Prefer the faster fd scanner unless stat caching is requested.
+            If None, value is read from the configuration file.
         show_progress (bool): Show progress bar during scanning.
 
     Raises:
         RuntimeError: From fd resolution if platform unsupported.
 
     Returns:
-        FileResults: Results, optionally paired with mtimes.
+        FileResults: Results, optionally with stat info.
     """
     search_paths = validate_search_paths()
 
     if prefer_fd is None:
         prefer_fd = read_config()["prefer_fd"]
 
-    use_fd = prefer_fd and not with_mtime
+    use_fd = prefer_fd and not cache_stat
 
     with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
         if use_fd:
@@ -81,7 +82,7 @@ def scan_search_paths(
 
                 scanner_with_progress = partial(
                     scan_path_with_python,
-                    with_mtime=with_mtime,
+                    with_mtime=cache_stat,
                     progress_callback=progress_callback,
                 )
 
@@ -95,7 +96,7 @@ def scan_search_paths(
                 )
             else:
                 partial_python_scanner = partial(
-                    scan_path_with_python, with_mtime=with_mtime
+                    scan_path_with_python, with_mtime=cache_stat
                 )
                 path_results = list(executor.map(partial_python_scanner, search_paths))
 
@@ -295,9 +296,7 @@ def scan_path_with_python(
                 for entry in entries:
                     if entry.is_file(follow_symlinks=False):
                         if with_mtime:
-                            file_result = FileResult(
-                                Path(entry.path), entry.stat().st_mtime
-                            )
+                            file_result = FileResult(Path(entry.path), entry.stat())
                         else:
                             file_result = FileResult(Path(entry.path))
 
@@ -410,7 +409,7 @@ class NewQuery(Query):
             results = load_library_cache()
         else:
             # Contains mtime but not sorted yet
-            results = scan_search_paths(with_mtime=True)
+            results = scan_search_paths(cache_stat=True)
             results.sort(by_mtime=True)
 
         results.filter_by_extension(

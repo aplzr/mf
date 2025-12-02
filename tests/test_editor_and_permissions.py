@@ -42,4 +42,4 @@ def test_scan_include_mtime(monkeypatch, tmp_path):
     f = d / "vid.mp4"
     f.write_text("x")
     res = scan_path_with_python(d, with_mtime=True)
-    assert res and hasattr(res[0], "mtime") and res[0].mtime is not None
+    assert res and hasattr(res[0], "stat") and res[0].stat.st_mtime is not None

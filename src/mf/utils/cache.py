@@ -1,9 +1,60 @@
 import json
 from datetime import datetime, timedelta
+from typing import TypedDict
 
 from .config import build_config
 from .console import print_info, print_ok, print_warn
 from .file import FileResults, get_library_cache_file
+
+StatList = tuple[
+    int,  # st_mode
+    int,  # st_ino
+    int,  # st_dev
+    int,  # st_nlink
+    int,  # st_uid
+    int,  # st_gid
+    int,  # st_size
+    int,  # st_atime
+    int,  # st_mtime
+    int,  # st_ctime
+]
+FileEntry = tuple[
+    str,  # File path
+    StatList,
+]
+
+
+class CacheData(TypedDict):
+    """Media library cache data structure.
+
+    Contains metadata for all files found during library scanning,
+    including file paths and their filesystem stat information.
+
+    Attributes:
+        timestamp: ISO format timestamp of when the cache was last rebuilt
+        files: List of [file_path, stat_list] pairs where:
+
+            - file_path: Absolute POSIX path to the media file
+            - stat_list: os.stat_result as 10-element list containing
+
+              [st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid,
+               st_size, st_atime, st_mtime, st_ctime]
+
+    Example:
+        {
+            "timestamp": "2025-01-02T10:30:00.123456",
+            "files": [
+                [
+                 "/path/to/movie.mkv",
+                 [33206, 0, 0, 0, 0, 0, 1234567890, 1640995200, 1640995200, 1640995200]
+                ],
+                ...
+            ]
+        }
+    """
+
+    timestamp: str
+    files: list[FileEntry]
 
 
 def rebuild_library_cache() -> FileResults:
@@ -18,11 +69,11 @@ def rebuild_library_cache() -> FileResults:
     from .scan import scan_search_paths
 
     print_info("Rebuilding cache.")
-    results = scan_search_paths(with_mtime=True, show_progress=True)
+    results = scan_search_paths(cache_stat=True, show_progress=True)
     results.sort(by_mtime=True)
     cache_data = {
         "timestamp": datetime.now().isoformat(),
-        "files": [result.file.as_posix() for result in results],
+        "files": [(result.file.as_posix(), tuple(result.stat)) for result in results],
     }
 
     with open(get_library_cache_file(), "w", encoding="utf-8") as f:
@@ -46,9 +97,9 @@ def _load_library_cache(allow_rebuild=True) -> FileResults:
     """
     try:
         with open(get_library_cache_file(), encoding="utf-8") as f:
-            cache_data = json.load(f)
+            cache_data: CacheData = json.load(f)
 
-        results = FileResults.from_paths(cache_data["files"])
+        results = FileResults.from_cache(cache_data)
     except (json.JSONDecodeError, KeyError):
         print_warn("Cache corrupted.")
 
