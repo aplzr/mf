@@ -54,7 +54,6 @@ def get_next() -> FileResult:
         index_last_played = -1
 
     try:
-        next = FileResult.from_string(results[index_last_played + 1])
-        return next
+        return FileResult.from_string(results[index_last_played + 1])
     except IndexError as e:
         print_and_raise("Last available file already played.", raise_from=e)

@@ -1,6 +1,4 @@
-import os
 import subprocess
-from pathlib import Path
 from random import randrange
 
 import typer
@@ -10,10 +8,16 @@ from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import read_config
 from .utils.console import console, print_and_raise, print_warn
-from .utils.misc import open_imdb_entry
+from .utils.file import FileResult, FileResults
+from .utils.misc import get_vlc_command, open_imdb_entry
 from .utils.playlist import get_next, save_last_played
 from .utils.scan import FindQuery, NewQuery
-from .utils.search import get_result_by_index, print_search_results, save_search_results
+from .utils.search import (
+    get_result_by_index,
+    load_search_results,
+    print_search_results,
+    save_search_results,
+)
 from .version import __version__, check_version
 
 app_mf = typer.Typer(help="Media file finder and player")
@@ -78,6 +82,8 @@ def play(
         if target.lower() == "next":
             file_to_play = get_next()
             save_last_played(file_to_play)
+        elif target.lower() == "list":
+            _, file_to_play, _ = load_search_results()
         else:
             # Play requested file
             try:
@@ -95,31 +101,24 @@ def play(
         all_files = FindQuery("*").execute()
         file_to_play = all_files[randrange(len(all_files))]
 
-    console.print(f"[green]Playing:[/green] {file_to_play.file.name}")
-    console.print(f"[blue]Location:[/blue] [white]{file_to_play.file.parent}[/white]")
-
-    # Launch VLC with the file
+    # Launch VLC with the file(s)
     try:
-        if os.name == "nt":  # Windows
-            # Try common VLC installation paths
-            vlc_paths = [
-                r"C:\Program Files\VideoLAN\VLC\vlc.exe",
-                r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
-            ]
-            vlc_cmd = None
-            for path in vlc_paths:
-                if Path(path).exists():
-                    vlc_cmd = path
-                    break
+        vlc_cmd = get_vlc_command()
+        vlc_args = [vlc_cmd]
 
-            if vlc_cmd is None:
-                # Try to find in PATH
-                vlc_cmd = "vlc"
-        else:  # Unix-like (Linux, macOS)
-            vlc_cmd = "vlc"
+        if isinstance(file_to_play, FileResult):
+            # Single file
+            console.print(f"[green]Playing:[/green] {file_to_play.file.name}")
+            console.print(
+                f"[blue]Location:[/blue] [white]{file_to_play.file.parent}[/white]"
+            )
+            vlc_args.append(str(file_to_play.file))
+        elif isinstance(file_to_play, FileResults):
+            # Last search results as playlist
+            console.print("[green]Playing:[/green] Last search results as playlist")
+            vlc_args.extend(str(result.file) for result in file_to_play)
 
         fullscreen_playback = read_config()["fullscreen_playback"]
-        vlc_args = [vlc_cmd, str(file_to_play.file)]
 
         if fullscreen_playback:
             vlc_args.extend(["--fullscreen", "--no-video-title-show"])
