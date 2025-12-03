@@ -27,7 +27,7 @@ def show_histogram(
         bins (list[tuple[str, int]]): Length n_bins list where each element is a
             (label, count) pair that represents one histogram bin.
         title (str): Histogram title.
-        sort (bool, optional): Whether to sort bins. Sorts by bin size if no sort_key is
+        sort (bool, optional): Whether to sort bins. Sorts by label if no sort_key is
             given. Defaults to False.
         sort_reverse (bool, optional): Reverse sort order of sort==True. Defaults to
             False.
