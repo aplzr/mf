@@ -120,3 +120,30 @@ def format_size(size_bytes: int) -> str:
                 return f"{value:.2f} {unit}"
 
     return f"{size_bytes} B"
+
+
+def get_vlc_command() -> str:
+    """Get the platform-specific VLC command.
+
+    Returns:
+        str: VLC command.
+    """
+    if os.name == "nt":
+        # Try common VLC installation paths
+        vlc_paths = [
+            r"C:\Program Files\VideoLAN\VLC\vlc.exe",
+            r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
+        ]
+        vlc_cmd = None
+        for path in vlc_paths:
+            if Path(path).exists():
+                vlc_cmd = path
+                break
+
+        if vlc_cmd is None:
+            # Try to find in PATH
+            vlc_cmd = "vlc"
+    else:  # Unix-like (Linux, macOS)
+        vlc_cmd = "vlc"
+
+    return vlc_cmd
