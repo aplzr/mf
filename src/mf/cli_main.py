@@ -164,7 +164,7 @@ def version(
     target: str = typer.Argument(
         None,
         help="None or 'check'. If None, displays mediafinder's version. "
-        "If 'check', checks if a newer version is aviable.",
+        "If 'check', checks if a newer version is available.",
     ),
 ):
     "Print version or perform version check."
