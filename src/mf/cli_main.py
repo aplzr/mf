@@ -72,8 +72,9 @@ def play(
     target: str = typer.Argument(
         None,
         help=(
-            "Index of the file to play or 'next' to play the next search result. "
-            "If None, plays a random file."
+            "Index of the file to play or 'next' to play the next search result or "
+            "'list' to play last search results as a playlist. If None, plays a random "
+            "file."
         ),
     ),
 ):
