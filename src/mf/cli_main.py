@@ -93,7 +93,7 @@ def play(
                 save_last_played(file_to_play)
             except ValueError as e:
                 print_and_raise(
-                    "Invalid taget: {target}. Use an index number or 'next'.",
+                    "Invalid target: {target}. Use an index number or 'next'.",
                     raise_from=e,
                 )
     else:
