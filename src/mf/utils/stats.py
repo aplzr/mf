@@ -47,17 +47,20 @@ def show_histogram(
     total_count = sum(count for _, count in bins)
     no_label = "(no_name)"  # Label used for items where label is ""
     len_no_label = len(no_label)
-    max_label_len = max(
+    len_max_label = max(
         max(len(label) for label, _ in bins),
         len_no_label if "" in bins else 0,
     )
+    len_max_count = len(str(max_count))
 
     bar_char = "▆"
     bars = []
 
     for label, count in bins:
         percentage = (count / total_count) * 100
-        bar_width = int((count / max_count) * 40)
+        max_bar_panel_width = 50
+        bar_panel_width = max_bar_panel_width - len_max_label - len_max_count
+        bar_width = int((count / max_count) * bar_panel_width)
         bar = bar_char * bar_width
 
         # Bar examples:
@@ -65,9 +68,9 @@ def show_histogram(
         #  .bdmv │▆▆                                      │   69 ( 4.0%)
         name_display = label if label else no_label
         bars.append(
-            f"{name_display:>{max_label_len}} "
-            f"│[bold cyan]{bar:<40}[/bold cyan]│ "
-            f"{count:>{len(str(max_count))}} ({percentage:4.1f}%)"
+            f"{name_display:>{len_max_label}} "
+            f"│[bold cyan]{bar:<{bar_panel_width}}[/bold cyan]│ "
+            f"{count:>{len_max_count}} ({percentage:4.1f}%)"
         )
 
     console.print(
@@ -106,27 +109,23 @@ def create_log_bins(
     ]
 
 
-def create_log_bin_labels(bin_edges: list[Number]) -> list[str]:
-    """Create labels for logarithmic histogram bins.
-
-    Creates a label for each bin that is the geometric mean of the bin edges.
+def get_log_bin_centers(bin_edges: list[float]) -> list[float]:
+    """Get the geometric mean of log-spaced histogram bins.
 
     Args:
-        bin_edges (list[Number]): List of bin edge values.
+        bin_edges (list[float]): Log-spaced histogram bin edges.
 
     Returns:
-        list[str]: Label strings like "250 MB" (bin center).
+        list[float]: Geometric bin centers.
     """
-    labels = []
-
-    for i in range(len(bin_edges) - 1):
-        center = math.sqrt(bin_edges[i] * bin_edges[i + 1])
-        labels.append(format_size(center))
-
-    return labels
+    return [
+        math.sqrt(bin_edges[i] * bin_edges[i + 1]) for i in range(len(bin_edges) - 1)
+    ]
 
 
-def bin_values(values: list[float], bin_edges: list[float]) -> list[list[float]]:
+def group_values_by_bins(
+    values: list[float], bin_edges: list[float]
+) -> list[list[float]]:
     """Assign values to bins and return bins with their values.
 
     Clamps values outside the bin edges to the lowest or highest bin.
@@ -179,7 +178,7 @@ def get_string_counts(values: list[str]) -> list[tuple[str, int]]:
 
 def get_log_histogram(
     values: list[Number], bins_per_decade: int = 4
-) -> list[tuple[str, int]]:
+) -> list[tuple[float, int]]:
     """Create a logarithmic histogram of numeric values.
 
     Bins values using logarithmically-spaced intervals and returns labeled bins
@@ -192,8 +191,7 @@ def get_log_histogram(
             Higher values create finer granularity.
 
     Returns:
-        list[tuple[str, int]]: List of (bin_label, count) pairs, where bin_label
-            is a string like "1.5 GB" representing the bin center.
+        list[tuple[float, int]]: List of (bin_center, count) pairs.
 
     Example:
         >>> file_sizes = [100_000_000, 500_000_000, 2_000_000_000, 5_000_000_000]
@@ -201,7 +199,8 @@ def get_log_histogram(
         [('95.4 MB', 1), ('302 MB', 1), ('955 MB', 0), ('3.02 GB', 1), ('9.55 GB', 1)]
     """
     bin_edges = create_log_bins(min(values), max(values), bins_per_decade)
-    bin_labels = create_log_bin_labels(bin_edges)
-    bins = bin_values(values, bin_edges)
+    bin_centers = get_log_bin_centers(bin_edges)
+    bin_labels = [format_size(bin_center) for bin_center in bin_centers]
+    bins = group_values_by_bins(values, bin_edges)
 
     return [(bin_label, len(bin)) for bin_label, bin in zip(bin_labels, bins)]
