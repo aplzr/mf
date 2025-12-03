@@ -33,12 +33,17 @@ def clear():
 def stats():
     """Show cache statistics."""
     cache = load_library_cache()
+    media_extensions = read_config()["media_extensions"]
+
+    if media_extensions:
+        media_cache = cache.copy()
+        media_cache.filter_by_extension(media_extensions)
 
     # Extension histogram (all files)
     console.print("")
     show_histogram(
         get_string_counts(file.suffix for file in cache.get_paths()),
-        "File extension distribution",
+        "File extensions (all files)",
         sort=True,
         # Sort by frequency descending, then name ascending
         sort_key=lambda bar: (-bar[1], bar[0]),
@@ -46,27 +51,24 @@ def stats():
     )
 
     # Extension histogram (media file extensions only)
-    media_extensions = read_config()["media_extensions"]
-
     if media_extensions:
-        media_cache = cache.copy()
-        media_cache.filter_by_extension(media_extensions)
         show_histogram(
             get_string_counts(file.suffix for file in media_cache.get_paths()),
-            "Media file extension distribution",
+            "File extensions (media files)",
             sort=True,
         )
 
     # Resolution distribution
     show_histogram(
         get_string_counts(parse_resolutions(cache)),
-        "Media file resolution distribution",
+        "Media file resolution",
         sort=True,
         sort_key=lambda bar: int("".join(filter(str.isdigit, bar[0]))),
     )
 
     # File size distribution
-    show_histogram(
-        get_log_histogram([result.stat.st_size for result in media_cache]),
-        "Media file size distribution",
-    )
+    if media_extensions:
+        show_histogram(
+            get_log_histogram([result.stat.st_size for result in media_cache]),
+            "Media file size",
+        )
