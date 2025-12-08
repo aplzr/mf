@@ -104,8 +104,8 @@ fix = false  # Fix safely fixable errors automatically
 indent-width = 4
 line-length = 88
 respect-gitignore = true
-src = ["src", "test"]
-exclude = ["docs"]
+src = ["src"]
+exclude = ["tests"]
 
 [tool.ruff.lint]
 select = [
