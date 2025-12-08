@@ -28,7 +28,7 @@ def test_start_editor_windows_notepadpp(monkeypatch, tmp_path):
 
     # Inject a stub os with desired platform name locally into module under test
     monkeypatch.setattr(misc_mod, "os", SimpleNamespace(name="nt", environ={}))
-    monkeypatch.setattr(shutil, "which", lambda exe: exe == "notepad++")
+    monkeypatch.setattr(misc_mod, "shutil", SimpleNamespace(which=lambda exe: exe == "notepad++"))
     monkeypatch.setattr(misc_mod, "subprocess", SimpleNamespace(run=lambda args: calls.append(tuple(args))))
 
     start_editor(target)
@@ -42,7 +42,7 @@ def test_start_editor_windows_notepad(monkeypatch, tmp_path):
     calls = []
 
     monkeypatch.setattr(misc_mod, "os", SimpleNamespace(name="nt", environ={}))
-    monkeypatch.setattr(shutil, "which", lambda exe: None)
+    monkeypatch.setattr(misc_mod, "shutil", SimpleNamespace(which=lambda exe: None))
     monkeypatch.setattr(misc_mod, "subprocess", SimpleNamespace(run=lambda args: calls.append(tuple(args))))
 
     start_editor(target)
@@ -58,7 +58,7 @@ def test_start_editor_posix_fallback(monkeypatch, tmp_path):
     monkeypatch.setattr(misc_mod, "os", SimpleNamespace(name="posix", environ={}))
     # First two missing, third present
     present = {"vim"}
-    monkeypatch.setattr(shutil, "which", lambda exe: exe if exe in present else None)
+    monkeypatch.setattr(misc_mod, "shutil", SimpleNamespace(which=lambda exe: exe if exe in present else None))
     monkeypatch.setattr(misc_mod, "subprocess", SimpleNamespace(run=lambda args: calls.append(tuple(args))))
 
     start_editor(target)

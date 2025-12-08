@@ -26,10 +26,23 @@ def test_scan_path_with_python_permission_error(monkeypatch, tmp_path: Path, cap
     d.mkdir()
 
     # Simulate PermissionError in scandir
-    def fake_scandir(path):
-        raise PermissionError("no access")
+    class FakeEntries:
+        def __enter__(self):
+            raise PermissionError("no access")
 
-    monkeypatch.setattr(os, "scandir", fake_scandir)
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    def fake_scandir(path):
+        return FakeEntries()
+
+    # Patch the helper used within scan_path_with_python by replacing os module locally
+    import mf.utils.scan as scan_mod
+    class _Os:
+        @staticmethod
+        def scandir(path):
+            return fake_scandir(path)
+    monkeypatch.setattr(scan_mod, "os", _Os())
     results = scan_path_with_python(d, with_mtime=False)
     assert len(results) == 0
 
