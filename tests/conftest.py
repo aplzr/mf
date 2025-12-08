@@ -3,11 +3,27 @@ from __future__ import annotations
 import os
 import shutil
 import tempfile
+import pathlib
 from pathlib import Path
 
 import pytest
 
 from mf.utils.config import get_config_file, read_config, write_config
+
+# --- Defensive guard against global Path class drift on CI ---
+# Some older Python/pytest combos can end up with pathlib.Path bound to
+# WindowsPath on POSIX if os.name is globally mutated by a test or plugin.
+# Ensure pathlib.Path matches the platform to avoid pytest INTERNALERRORs.
+if os.name != "nt":
+    try:
+        _p = pathlib.Path("")
+    except NotImplementedError:
+        pathlib.Path = pathlib.PosixPath  # type: ignore[attr-defined]
+elif os.name == "nt":
+    try:
+        _p = pathlib.Path("")
+    except NotImplementedError:
+        pathlib.Path = pathlib.WindowsPath  # type: ignore[attr-defined]
 
 # --- Fixtures for test isolation ---
 
