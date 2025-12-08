@@ -3,27 +3,11 @@ from __future__ import annotations
 import os
 import shutil
 import tempfile
-import pathlib
 from pathlib import Path
 
 import pytest
 
 from mf.utils.config import get_config_file, read_config, write_config
-
-# --- Defensive guard against global Path class drift on CI ---
-# Some older Python/pytest combos can end up with pathlib.Path bound to
-# WindowsPath on POSIX if os.name is globally mutated by a test or plugin.
-# Ensure pathlib.Path matches the platform to avoid pytest INTERNALERRORs.
-if os.name != "nt":
-    try:
-        _p = pathlib.Path("")
-    except NotImplementedError:
-        pathlib.Path = pathlib.PosixPath  # type: ignore[attr-defined]
-elif os.name == "nt":
-    try:
-        _p = pathlib.Path("")
-    except NotImplementedError:
-        pathlib.Path = pathlib.WindowsPath  # type: ignore[attr-defined]
 
 # --- Fixtures for test isolation ---
 
@@ -70,3 +54,28 @@ def fresh_config():
 def config_path() -> Path:
     """Return path to the isolated test config file."""
     return get_config_file()
+
+
+# --- Drift detector: fail fast if pathlib.Path class changes mid-session ---
+import pathlib
+import sys
+
+_expected_path_class = pathlib.WindowsPath if os.name == "nt" else pathlib.PosixPath
+
+def _current_path_class():
+    return type(pathlib.Path(""))
+
+def pytest_sessionstart(session):
+    cls = _current_path_class()
+    if cls is not _expected_path_class:
+        raise RuntimeError(f"Path class drift at session start: {cls} != {_expected_path_class}")
+
+def pytest_runtest_setup(item):
+    cls = _current_path_class()
+    if cls is not _expected_path_class:
+        raise RuntimeError(f"Path class drift before test {item.nodeid}: {cls} != {_expected_path_class}")
+
+def pytest_runtest_teardown(item):
+    cls = _current_path_class()
+    if cls is not _expected_path_class:
+        raise RuntimeError(f"Path class drift after test {item.nodeid}: {cls} != {_expected_path_class}")
