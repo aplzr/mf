@@ -4,7 +4,7 @@ from typing import TypedDict
 
 from .config import build_config
 from .console import print_info, print_ok, print_warn
-from .file import FileResults, get_library_cache_file
+from .file import FileResults, get_library_cache_file, open_utf8
 
 StatList = tuple[
     int,  # st_mode
@@ -76,7 +76,7 @@ def rebuild_library_cache() -> FileResults:
         "files": [(result.file.as_posix(), tuple(result.stat)) for result in results],
     }
 
-    with open(get_library_cache_file(), "w", encoding="utf-8") as f:
+    with open_utf8(get_library_cache_file(), "w") as f:
         json.dump(cache_data, f, indent=2)
 
     print_ok("Cache rebuilt.")
@@ -96,7 +96,7 @@ def _load_library_cache(allow_rebuild=True) -> FileResults:
         FileResults: Cached file paths.
     """
     try:
-        with open(get_library_cache_file(), encoding="utf-8") as f:
+        with open_utf8(get_library_cache_file()) as f:
             cache_data: CacheData = json.load(f)
 
         results = FileResults.from_cache(cache_data)

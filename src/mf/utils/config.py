@@ -9,6 +9,7 @@ import tomlkit
 from tomlkit import TOMLDocument, comment, document, nl
 
 from .console import print_ok, print_warn
+from .file import open_utf8
 from .normalizers import normalize_media_extension
 from .settings import REGISTRY, SettingSpec
 
@@ -46,7 +47,7 @@ def get_config_file() -> Path:
 
 def _read_config() -> TOMLDocument:
     try:
-        with open(get_config_file()) as f:
+        with open_utf8(get_config_file()) as f:
             cfg = tomlkit.load(f)
     except FileNotFoundError:
         print_warn(
@@ -156,7 +157,7 @@ def write_config(cfg: TOMLDocument):
     Args:
         cfg (TOMLDocument): Configuration object to write.
     """
-    with open(get_config_file(), "w") as f:
+    with open_utf8(get_config_file(), "w") as f:
         tomlkit.dump(cfg, f)
 
 
