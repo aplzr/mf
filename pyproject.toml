@@ -72,7 +72,7 @@ packages = ["src/mf"]
 "src/mf/bin/LICENSE-fd-MIT" = "mf/bin/LICENSE-fd-MIT"
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=src/mf --cov-report=term-missing --cov-report=xml --cov-report=html"
+addopts = "-q --cov=src/mf --cov-report=term-missing --cov-report=xml --cov-report=html -p no:cacheprovider"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
