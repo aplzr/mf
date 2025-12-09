@@ -47,6 +47,7 @@ def find(
 
     if not results:
         print_warn(f"No media files found matching '{query.pattern}'")
+        raise typer.Exit(0)
 
     save_search_results(query.pattern, results)
     print_search_results(f"Search pattern: {query.pattern}", results)
