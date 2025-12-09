@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -30,8 +31,12 @@ def test_validate_search_paths_none(monkeypatch, tmp_path: Path):
         validate_search_paths()
 
 
+@pytest.mark.skipif(
+    os.name != "nt",
+    reason="Test requires Windows (monkeypatching os.name causes Path instantiation errors on POSIX)"
+)
 def test_get_vlc_command_windows_paths(monkeypatch):
-    # Simulate Windows
+    # This test validates Windows VLC path logic on actual Windows systems
     monkeypatch.setattr("os.name", "nt")
 
     # Do not monkeypatch Path.exists globally; just assert acceptable outcomes
