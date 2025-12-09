@@ -63,18 +63,14 @@ jobs:
       - name: Run tests (with coverage if selected)
         shell: bash  # Ensures bash on all OSes
         env:
-          # Prevent auto-loading of any external pytest plugins (system/site) that could
-          # alter core behavior and pathlib classes during teardown on POSIX runners.
-          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
           PYTEST_ADDOPTS: "-p no:cacheprovider"
         run: |
           if [ "$COVERAGE" = "true" ]; then
             echo "Running tests WITH coverage"
-            # Explicitly enable pytest-cov when coverage is requested.
-            pytest -q --maxfail=1 --disable-warnings -p pytest_cov --cov=src/mf --cov-report=term-missing
+            pytest
           else
             echo "Running tests WITHOUT coverage"
-            pytest -q --maxfail=1 --disable-warnings
+            pytest -q --no-cov
           fi
 
       - name: Upload coverage artifacts
