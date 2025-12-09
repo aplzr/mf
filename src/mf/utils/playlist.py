@@ -1,7 +1,7 @@
 import json
 
 from .console import print_and_raise
-from .file import FileResult, get_search_cache_file
+from .file import FileResult, get_search_cache_file, open_utf8
 
 
 def save_last_played(result: FileResult):
@@ -10,14 +10,14 @@ def save_last_played(result: FileResult):
     Args:
         result (FileResult): File last played.
     """
-    with open(get_search_cache_file(), encoding="utf-8") as f:
+    with open_utf8(get_search_cache_file()) as f:
         cached = json.load(f)
 
     last_search_results: list[str] = cached["results"]
     last_played_index = last_search_results.index(str(result))
     cached["last_played_index"] = last_played_index
 
-    with open(get_search_cache_file(), "w", encoding="utf-8") as f:
+    with open_utf8(get_search_cache_file(), "w") as f:
         json.dump(cached, f, indent=2)
 
 
@@ -27,7 +27,7 @@ def get_last_played_index() -> int | None:
     Returns:
         int | None: Index or None if no file was played.
     """
-    with open(get_search_cache_file(), encoding="utf-8") as f:
+    with open_utf8(get_search_cache_file()) as f:
         cached = json.load(f)
 
     try:
@@ -42,7 +42,7 @@ def get_next() -> FileResult:
     Returns:
         FileResult: Next file to play.
     """
-    with open(get_search_cache_file(), encoding="utf-8") as f:
+    with open_utf8(get_search_cache_file()) as f:
         cached = json.load(f)
 
     results: list[str] = cached["results"]

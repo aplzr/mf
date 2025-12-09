@@ -47,6 +47,7 @@ def find(
 
     if not results:
         print_warn(f"No media files found matching '{query.pattern}'")
+        raise typer.Exit(0)
 
     save_search_results(query.pattern, results)
     print_search_results(f"Search pattern: {query.pattern}", results)
@@ -93,7 +94,7 @@ def play(
                 save_last_played(file_to_play)
             except ValueError as e:
                 print_and_raise(
-                    "Invalid target: {target}. Use an index number or 'next'.",
+                    "Invalid target: {target}. Use an index number, 'next', or 'list'.",
                     raise_from=e,
                 )
     else:
@@ -164,7 +165,7 @@ def version(
     target: str = typer.Argument(
         None,
         help="None or 'check'. If None, displays mediafinder's version. "
-        "If 'check', checks if a newer version is aviable.",
+        "If 'check', checks if a newer version is available.",
     ),
 ):
     "Print version or perform version check."

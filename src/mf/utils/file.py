@@ -7,14 +7,31 @@ from collections import UserList
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from importlib.resources import files
+from io import TextIOWrapper
 from operator import attrgetter
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from ..constants import FD_BINARIES
 
 if TYPE_CHECKING:
     from .cache import CacheData
+
+
+def open_utf8(
+    file: str | Path, mode: Literal["r", "w"] = "r", **kwargs
+) -> TextIOWrapper:
+    """Open a text file with utf-8 encoding.
+
+    Args:
+        file (str | Path): File to open.
+        mode (Literal["r", "w"], optional): Read or write mode. Defaults to "r".
+        kwargs: Additional keyword arguments passed on to open().
+
+    Returns:
+        TextIOWrapper: Opened file.
+    """
+    return open(file, mode, encoding="utf-8", **kwargs)
 
 
 def get_cache_dir() -> Path:

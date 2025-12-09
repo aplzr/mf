@@ -5,7 +5,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .console import console, print_and_raise
-from .file import FileResult, FileResults, get_search_cache_file
+from .file import FileResult, FileResults, get_search_cache_file, open_utf8
 from .playlist import get_last_played_index
 
 
@@ -59,7 +59,7 @@ def save_search_results(pattern: str, results: FileResults) -> None:
 
     cache_file = get_search_cache_file()
 
-    with open(cache_file, "w", encoding="utf-8") as f:
+    with open_utf8(cache_file, "w") as f:
         json.dump(cache_data, f, indent=2)
 
 
@@ -74,7 +74,7 @@ def load_search_results() -> tuple[str, FileResults, datetime]:
     """
     cache_file = get_search_cache_file()
     try:
-        with open(cache_file, encoding="utf-8") as f:
+        with open_utf8(cache_file) as f:
             cache_data = json.load(f)
 
         pattern = cache_data["pattern"]
