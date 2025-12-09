@@ -34,18 +34,22 @@ def test_validate_search_paths_none_raises(monkeypatch):
         validate_search_paths()
 
 
-def test_get_vlc_command_windows_prefers_known_paths(monkeypatch):
-    # Simulate Windows without touching Path.exists to avoid global side effects
-    monkeypatch.setattr(os, "name", "nt", raising=False)
-
+@pytest.mark.skipif(
+    os.name != "nt",
+    reason="Test requires Windows (monkeypatching os.name causes Path instantiation errors on POSIX)"
+)
+def test_get_vlc_command_windows_prefers_known_paths():
+    # Test Windows VLC path resolution
     cmd = get_vlc_command()
     # Depending on environment, it may fall back to 'vlc'
     assert cmd == "vlc" or cmd.endswith("vlc.exe")
 
 
-def test_get_vlc_command_windows_falls_back_to_path(monkeypatch):
-    # Simulate Windows; since we don't force Path.exists, default behavior may be 'vlc'
-    monkeypatch.setattr(os, "name", "nt", raising=False)
-
+@pytest.mark.skipif(
+    os.name != "nt",
+    reason="Test requires Windows (monkeypatching os.name causes Path instantiation errors on POSIX)"
+)
+def test_get_vlc_command_windows_falls_back_to_path():
+    # Test Windows VLC fallback behavior
     cmd = get_vlc_command()
     assert cmd == "vlc" or cmd.endswith("vlc.exe")

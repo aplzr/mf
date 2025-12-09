@@ -35,10 +35,7 @@ def test_validate_search_paths_none(monkeypatch, tmp_path: Path):
     os.name != "nt",
     reason="Test requires Windows (monkeypatching os.name causes Path instantiation errors on POSIX)"
 )
-def test_get_vlc_command_windows_paths(monkeypatch):
-    # This test validates Windows VLC path logic on actual Windows systems
-    monkeypatch.setattr("os.name", "nt")
-
-    # Do not monkeypatch Path.exists globally; just assert acceptable outcomes
+def test_get_vlc_command_windows_paths():
+    # Validate Windows VLC path logic
     cmd = get_vlc_command()
     assert cmd == "vlc" or cmd.endswith("vlc.exe")
