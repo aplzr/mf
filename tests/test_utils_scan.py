@@ -84,6 +84,7 @@ def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
             "media_extensions": [".mp4", ".mkv"],
             "match_extensions": True,
             "search_paths": [tmp_path.as_posix()],
+            "auto_wildcards": True,
         },
     )
     # Create files
@@ -126,3 +127,27 @@ def test_new_query_latest(monkeypatch, tmp_path: Path):
     results = q.execute()
     names = [r.file.name for r in results]
     assert names == ["b.mp4", "a.mp4"]
+
+def test_find_query_auto_wildcards_setting(monkeypatch):
+    """Test FindQuery pattern setting respects auto_wildcards config."""
+    # With auto_wildcards=True, pattern should be wrapped
+    monkeypatch.setattr("mf.utils.scan.read_config", lambda: {
+        "auto_wildcards": True,
+        "cache_library": False,
+        "prefer_fd": False,
+        "media_extensions": [".mp4"],
+        "match_extensions": True,
+    })
+    query = FindQuery("batman")
+    assert query.pattern == "*batman*"
+
+    # With auto_wildcards=False, pattern should stay as-is
+    monkeypatch.setattr("mf.utils.scan.read_config", lambda: {
+        "auto_wildcards": False,
+        "cache_library": False,
+        "prefer_fd": False,
+        "media_extensions": [".mp4"],
+        "match_extensions": True,
+    })
+    query = FindQuery("batman")
+    assert query.pattern == "batman"

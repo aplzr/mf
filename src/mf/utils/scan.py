@@ -367,7 +367,11 @@ class FindQuery(Query):
         Args:
             pattern (str): Glob pattern to search for (e.g., "*.mp4", "*2023*").
         """
-        self.pattern = normalize_pattern(pattern)
+        if read_config()["auto_wildcards"]:
+            self.pattern = normalize_pattern(pattern)
+        else:
+            self.pattern = pattern
+
         super().__init__()
 
     def execute(self) -> FileResults:
