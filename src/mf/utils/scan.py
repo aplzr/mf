@@ -9,6 +9,7 @@ from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
+from subprocess import CalledProcessError
 
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
@@ -56,12 +57,7 @@ def scan_search_paths(
         if use_fd:
             try:
                 path_results = list(executor.map(scan_path_with_fd, search_paths))
-            except (
-                FileNotFoundError,
-                subprocess.CalledProcessError,
-                OSError,
-                PermissionError,
-            ):
+            except (FileNotFoundError, CalledProcessError, OSError):
                 partial_fd_scanner = partial(scan_path_with_python, with_mtime=False)
                 path_results = list(executor.map(partial_fd_scanner, search_paths))
         else:
