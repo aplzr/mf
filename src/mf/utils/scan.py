@@ -71,14 +71,10 @@ def scan_search_paths(
                 else:
                     estimated_total = None
 
-                # Set up progress tracking, use list to make it mutable for the helper
-                # function
-                files_found = [0]
-                progress_lock = threading.Lock()
+                progress_counter = ProgressCounter()
 
                 def progress_callback(file_result: FileResult):
-                    with progress_lock:
-                        files_found[0] += 1
+                    progress_counter.increment()
 
                 scanner_with_progress = partial(
                     scan_path_with_python,
@@ -92,7 +88,7 @@ def scan_search_paths(
                 ]
 
                 path_results = _scan_with_progress_bar(
-                    futures, estimated_total, files_found, progress_lock
+                    futures, estimated_total, progress_counter
                 )
             else:
                 partial_python_scanner = partial(
@@ -111,8 +107,7 @@ def scan_search_paths(
 def _scan_with_progress_bar(
     futures: list,
     estimated_total: int | None,
-    files_found: list[int],
-    progress_lock: threading.Lock,
+    progress_counter: ProgressCounter,
 ) -> FileResults:
     """Handle progress bar display while futures complete.
 
@@ -124,9 +119,7 @@ def _scan_with_progress_bar(
         futures (list): List of Future objects from ThreadPoolExecutor.
         estimated_total (int | None): Estimated number of files for progress bar.
             If None, no progress bar is shown.
-        files_found (list[int]): Mutable list containing current file count.
-            Modified by progress callback during scanning.
-        progress_lock (threading.Lock): Lock for thread-safe access to files_found.
+        progress_counter (ProgressCounter): Thread-safe progress counter.
 
     Returns:
         FileResults: Combined results from all completed futures.
@@ -151,12 +144,8 @@ def _scan_with_progress_bar(
             for future in done_futures:
                 remaining_futures.remove(future)
 
-            # Check progress counter
-            with progress_lock:
-                current_count = files_found[0]  # Use list to make it mutable
-
             # Exit if first file found
-            if current_count > 0:
+            if progress_counter.count > 0:
                 first_file_found = True
                 break
 
@@ -192,9 +181,7 @@ def _scan_with_progress_bar(
                 for future in done_futures:
                     remaining_futures.remove(future)
 
-                # Update progress bar
-                with progress_lock:
-                    current_count = files_found[0]
+                current_count = progress_counter.count
 
                 # Only update if we've found enough new files
                 if current_count - last_update_count >= update_threshold:
@@ -215,9 +202,9 @@ def _scan_with_progress_bar(
                 time.sleep(0.1)
 
             # Final update
-            with progress_lock:
-                final_count = files_found[0]
-                progress.update(task, completed=final_count, total=final_count)
+            final_count = progress_counter.count
+            progress.update(task, completed=final_count, total=final_count)
+
     else:
         # No cache size estimate, continue silently
         while remaining_futures:
@@ -312,6 +299,34 @@ def scan_path_with_python(
 
     scan_dir(str(search_path))
     return results
+
+
+class ProgressCounter:
+    """Thread-safe counter for tracking progress across multiple threads.
+
+    Provides thread-safe increment operations and read access to the
+    current count value via the count property.
+    """
+
+    def __init__(self):
+        """Initialize counter to zero with a new lock."""
+        self._count = 0
+        self._lock = threading.Lock()
+
+    def increment(self):
+        """Increment the counter by one in a thread-safe manner."""
+        with self._lock:
+            self._count += 1
+
+    @property
+    def count(self) -> int:
+        """Get the current count value in a thread-safe manner.
+
+        Returns:
+            int: Current count.
+        """
+        with self._lock:
+            return self._count
 
 
 class Query(ABC):
