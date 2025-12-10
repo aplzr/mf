@@ -65,7 +65,7 @@ def open_imdb_entry(result: FileResult):
         console.print(f"IMDB entry for [green]{title}[/green]: {imdb_url}")
         typer.launch(imdb_url)
     else:
-        print_and_raise("No IMDB results found for parsed title {title}.")
+        print_and_raise(f"No IMDB results found for parsed title {title}.")
 
 
 def validate_search_paths() -> list[Path]:
