@@ -7,6 +7,7 @@ from mf.utils.scan import (
     NewQuery,
     _scan_with_progress_bar,
     scan_path_with_python,
+    ProgressCounter
 )
 
 
@@ -67,8 +68,7 @@ def test__scan_with_progress_bar_no_estimate(tmp_path: Path):
     res = _scan_with_progress_bar(
         futures,
         estimated_total=None,
-        files_found=[0],
-        progress_lock=lock,
+        progress_counter=ProgressCounter(),
     )
     # FileResults returned should contain file-like entries; assert callable interface
     assert hasattr(res, "extend") and hasattr(res, "__iter__")
