@@ -64,6 +64,7 @@ mf find "2023" # Finds files from 2023
 ```bash
 mf play 1 # Play first result
 mf play next # Search results as playlist: play next result
+mf play list # Send current search results to VLC as a playlist
 mf play # Play random file
 ```
 
