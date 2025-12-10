@@ -22,3 +22,5 @@ db.py
 dummy_movies/
 dummy_shows/
 .genie/
+.claude/
+CLAUDE.md
