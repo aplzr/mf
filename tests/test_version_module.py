@@ -5,7 +5,7 @@ import typer
 from packaging.version import Version
 
 from mf.version import check_version, get_pypi_version
-
+from urllib.error import URLError
 
 class DummyResponse:
     def __init__(self, payload: dict):
@@ -31,7 +31,7 @@ def test_get_pypi_version_success(monkeypatch):
 
 def test_get_pypi_version_error(monkeypatch):
     def boom(url):
-        raise RuntimeError("network down")
+        raise URLError("network down")
 
     monkeypatch.setattr("urllib.request.urlopen", boom)
     with pytest.raises(typer.Exit):
