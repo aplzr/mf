@@ -1,17 +1,19 @@
 import os
 from pathlib import Path
 
-from mf.utils.file import FileResult
+from mf.utils.file import FileResult, FileResults
 from mf.utils.scan import (
     FindQuery,
     NewQuery,
     _scan_with_progress_bar,
     scan_path_with_python,
     ProgressCounter,
-    get_max_workers
+    get_max_workers,
+    _process_completed_futures
 
 )
 from mf.utils.config import read_config
+from concurrent.futures import Future
 
 
 def test_scan_path_with_python_basic(tmp_path: Path):
@@ -160,3 +162,23 @@ def test_find_query_auto_wildcards_setting(monkeypatch):
 def test_get_max_workers(monkeypatch, tmp_path: Path):
     assert get_max_workers(["path_1", "path_2"], parallel_search=True) == 2
     assert get_max_workers(["path_1", "path_2"], parallel_search=False) == 1
+
+def test_process_completed_futures():
+    completed_future_1 = Future()
+    completed_future_2 = Future()
+    pending_future = Future()
+
+    result_1 = FileResult(Path("/path/to/file1.mp4"))
+    result_2 = FileResult(Path("/path/to/file2.mp4"))
+    completed_future_1.set_result(result_1)
+    completed_future_2.set_result(result_2)
+
+    results = FileResults()
+    futures = [completed_future_1, pending_future, completed_future_2]
+    remaining = _process_completed_futures(futures, results)
+
+    assert len(results) == 2
+    assert results[0] == result_1
+    assert results[1] == result_2
+    assert len(remaining) == 1
+    assert remaining[0] is pending_future
