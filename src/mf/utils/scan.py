@@ -130,16 +130,9 @@ def _scan_with_progress_bar(
         "[bright_cyan]Waiting for file system to respond...[/bright_cyan]"
     ):
         while remaining_futures and not first_file_found:
-            # Check for completed futures (non-blocking)
-            done_futures = []
-            for future in remaining_futures:
-                if future.done():
-                    path_results.append(future.result())  # Type FileResult
-                    done_futures.append(future)
-
-            # Remove completed futures
-            for future in done_futures:
-                remaining_futures.remove(future)
+            remaining_futures = _process_completed_futures(
+                remaining_futures, path_results
+            )
 
             # Exit if first file found
             if progress_counter.count > 0:
@@ -166,17 +159,9 @@ def _scan_with_progress_bar(
             update_threshold = max(1, estimated_total // 20)
 
             while remaining_futures:
-                # Check for completed futures (non-blocking)
-                done_futures = []
-
-                for future in remaining_futures:
-                    if future.done():
-                        path_results.append(future.result())
-                        done_futures.append(future)
-
-                # Remove completed futures
-                for future in done_futures:
-                    remaining_futures.remove(future)
+                remaining_futures = _process_completed_futures(
+                    remaining_futures, path_results
+                )
 
                 current_count = progress_counter.count
 
@@ -205,19 +190,37 @@ def _scan_with_progress_bar(
     else:
         # No cache size estimate, continue silently
         while remaining_futures:
-            done_futures = []
-            for future in remaining_futures:
-                if future.done():
-                    path_results.append(future.result())
-                    done_futures.append(future)
-
-            # Remove completed futures
-            for future in done_futures:
-                remaining_futures.remove(future)
+            remaining_futures = _process_completed_futures(
+                remaining_futures, path_results
+            )
 
             time.sleep(0.1)
 
     return path_results
+
+
+def _process_completed_futures(
+    futures: list[Future], results: FileResults
+) -> list[Future]:
+    """Processes completed futures and adds them to the results accumulator.
+
+    Args:
+        futures (list[Future]): List of futures, some of which may be completed.
+        results (FileResults): Accumulator for completed future results (modified
+            in-place).
+
+    Returns:
+        list[Future]: Remaining futures yet to be processed.
+    """
+    remaining_futures = []
+
+    for future in futures:
+        if future.done():
+            results.append(future.result())
+        else:
+            remaining_futures.append(future)
+
+    return remaining_futures
 
 
 def scan_path_with_fd(
