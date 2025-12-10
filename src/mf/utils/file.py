@@ -274,7 +274,7 @@ class FileResults(UserList[FileResult]):
 
         Args:
             by_mtime (bool): If True, sort by modification time. If False, sort by file
-                path.
+                name (case insensitive).
             reverse (bool): If True, sort in descending order.
 
         Returns:
