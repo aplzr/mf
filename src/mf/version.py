@@ -1,5 +1,7 @@
 import json
+from json import JSONDecodeError
 from urllib import request
+from urllib.error import URLError
 
 from packaging.version import Version
 
@@ -21,8 +23,12 @@ def get_pypi_version() -> Version:
         with request.urlopen(url) as response:
             data = json.loads(response.read().decode())
             return Version(data["info"]["version"])
-    except Exception as e:
-        print_and_raise(f"Version check failed with error: {e}", raise_from=e)
+    except URLError as e:
+        print_and_raise(f"Network error checking version: {e}", raise_from=e)
+    except JSONDecodeError as e:
+        print_and_raise(f"Invalid response from PyPI: {e}", raise_from=e)
+    except KeyError as e:
+        print_and_raise(f"Unexpected PyPI API response format: {e}", raise_from=e)
 
 
 def check_version():
