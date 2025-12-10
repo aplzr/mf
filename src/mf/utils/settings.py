@@ -163,7 +163,7 @@ REGISTRY: dict[str, SettingSpec] = {
         display=normalize_bool_to_toml,
         help=(
             "Parallelize file searches over search paths. Turn off if search paths are "
-            "located on the same physical drive."
+            "located on the same mechanical drive (but leave on for SSD/NVME)."
         ),
     ),
 }
