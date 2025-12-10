@@ -3,16 +3,18 @@ from bisect import bisect_left
 from collections import Counter
 from collections.abc import Callable
 from numbers import Number
-from typing import Any
+from typing import Any, TypeAlias
 
 from rich.panel import Panel
 
 from .console import console
 from .misc import format_size
 
+BinData: TypeAlias = tuple[str, int]  # (label, count)
+
 
 def show_histogram(
-    bins: list[tuple[str, int]],
+    bins: list[BinData],
     title: str,
     sort: bool = False,
     sort_reverse: bool = False,
@@ -24,8 +26,8 @@ def show_histogram(
     Uses (label, count) pairs to produce a histogram where each pair represents one bin.
 
     Args:
-        bins (list[tuple[str, int]]): Length n_bins list where each element is a
-            (label, count) pair that represents one histogram bin.
+        bins (list[BinData]): List of (label, count) pairs that represent one histogram
+            bin each.
         title (str): Histogram title.
         sort (bool, optional): Whether to sort bins. Sorts by label if no sort_key is
             given. Defaults to False.
