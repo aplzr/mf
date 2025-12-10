@@ -140,6 +140,19 @@ REGISTRY: dict[str, SettingSpec] = {
             "cache rebuilding. Default value of 86400 s is 1 day."
         ),
     ),
+    "auto_wildcards": SettingSpec(
+        key="auto_wildcards",
+        kind="scalar",
+        value_type=bool,
+        actions={"set"},
+        normalize=normalize_bool_str,
+        default=True,
+        display=normalize_bool_to_toml,
+        help=(
+            "Automatically wrap search patterns with '*' if they don't contain "
+            "any wildcards (* ? [ ]). 'batman' becomes '*batman*'."
+        ),
+    ),
 }
 
 

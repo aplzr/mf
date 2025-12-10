@@ -144,6 +144,19 @@ mf config set match_extensions true # Only return configured media types
 mf config set match_extensions false # Return all files matching pattern
 ```
 
+#### Automatic wildcard wrapping
+Toggle whether search patterns should be wrapped with wildcards automatically:
+
+```bash
+# Wraps search patterns with '*' if no wildcards (* ? [ ]) present.
+# 'mf find batman' searches for files matching *batman*.
+mf config set auto_wildcards true
+
+# Does not wrap search patterns.
+# 'mf find batman' searches for files exactly named batman.
+mf config set auto_wildcards false
+```
+
 #### Other Settings
 
 - `fullscreen_playback` (bool): If true, `mf play` launches VLC with `--fullscreen --no-video-title-show`.
