@@ -157,6 +157,19 @@ mf config set auto_wildcards true
 mf config set auto_wildcards false
 ```
 
+#### Parallel search
+Toggle whether file searches should be parallelized over search paths:
+
+```bash
+# Runs file searches concurrently over all paths defined in search_paths (potentially faster).
+mf config set parallel_search true
+
+# Runs file searches sequentially over all paths defined in search_paths. Use this if
+# your search paths are on the same mechanical (but not solid state) hard drive to avoid
+# disk thrashing.
+mf config set parallel_search false
+```
+
 #### Other Settings
 
 - `fullscreen_playback` (bool): If true, `mf play` launches VLC with `--fullscreen --no-video-title-show`.
