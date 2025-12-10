@@ -18,7 +18,7 @@ def show_histogram(
     title: str,
     sort: bool = False,
     sort_reverse: bool = False,
-    sort_key: Callable[[str], Any] | None = None,
+    sort_key: Callable[[BinData], Any] | None = None,
     top_n: int | None = None,
 ):
     """Plot histogram.
@@ -33,7 +33,7 @@ def show_histogram(
             given. Defaults to False.
         sort_reverse (bool, optional): Reverse sort order of sort==True. Defaults to
             False.
-        sort_key (Callable[[str], Any] | None, optional): Sorting function to use if
+        sort_key (Callable[[Bindata], Any] | None, optional): Sorting function to use if
             sort==True. Defaults to None.
         top_n (int | None, optional): Only use top n bins (after sorting). Defaults to
             None.
