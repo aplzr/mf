@@ -6,7 +6,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
 
@@ -106,7 +106,7 @@ def scan_search_paths(
 
 
 def _scan_with_progress_bar(
-    futures: list,
+    futures: list[Future],
     estimated_total: int | None,
     progress_counter: ProgressCounter,
 ) -> FileResults:
@@ -117,7 +117,7 @@ def _scan_with_progress_bar(
     as files are discovered.
 
     Args:
-        futures (list): List of Future objects from ThreadPoolExecutor.
+        futures (list[Future]): List of Future objects from ThreadPoolExecutor.
         estimated_total (int | None): Estimated number of files for progress bar.
             If None, no progress bar is shown.
         progress_counter (ProgressCounter): Thread-safe progress counter.
