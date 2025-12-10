@@ -153,6 +153,19 @@ REGISTRY: dict[str, SettingSpec] = {
             "any wildcards (* ? [ ]). 'batman' becomes '*batman*'."
         ),
     ),
+    "parallel_search": SettingSpec(
+        key="parallel_search",
+        kind="scalar",
+        value_type=bool,
+        actions={"set"},
+        normalize=normalize_bool_str,
+        default=True,
+        display=normalize_bool_to_toml,
+        help=(
+            "Parallelize file searches over search paths. Turn off if search paths are "
+            "located on the same physical drive."
+        ),
+    ),
 }
 
 

@@ -7,8 +7,11 @@ from mf.utils.scan import (
     NewQuery,
     _scan_with_progress_bar,
     scan_path_with_python,
-    ProgressCounter
+    ProgressCounter,
+    get_max_workers
+
 )
+from mf.utils.config import read_config
 
 
 def test_scan_path_with_python_basic(tmp_path: Path):
@@ -85,6 +88,7 @@ def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
             "match_extensions": True,
             "search_paths": [tmp_path.as_posix()],
             "auto_wildcards": True,
+            "parallel_search": True,
         },
     )
     # Create files
@@ -110,6 +114,7 @@ def test_new_query_latest(monkeypatch, tmp_path: Path):
             "media_extensions": [".mp4"],
             "match_extensions": True,
             "search_paths": [tmp_path.as_posix()],
+            "parallel_search": True,
         },
     )
 
@@ -151,3 +156,7 @@ def test_find_query_auto_wildcards_setting(monkeypatch):
     })
     query = FindQuery("batman")
     assert query.pattern == "batman"
+
+def test_get_max_workers(monkeypatch, tmp_path: Path):
+    assert get_max_workers(["path_1", "path_2"], parallel_search=True) == 2
+    assert get_max_workers(["path_1", "path_2"], parallel_search=False) == 1

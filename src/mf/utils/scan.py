@@ -50,8 +50,9 @@ def scan_search_paths(
         prefer_fd = read_config()["prefer_fd"]
 
     use_fd = prefer_fd and not cache_stat
+    max_workers = get_max_workers(search_paths, read_config()["parallel_search"])
 
-    with ThreadPoolExecutor(max_workers=len(search_paths)) as executor:
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         if use_fd:
             try:
                 path_results = list(executor.map(scan_path_with_fd, search_paths))
@@ -299,6 +300,22 @@ def scan_path_with_python(
 
     scan_dir(str(search_path))
     return results
+
+
+def get_max_workers(search_paths: list[Path], parallel_search: bool) -> int:
+    """Determines the number of workers for file searching.
+
+    Returns 1 if parallel searching is turned off via the parallel_search setting.
+    Returns the number of search paths otherwise.
+
+    Args:
+        search_paths (list[Path]): List of configured search paths.
+        parallel_search (bool): Whether parallel searching is turned on.
+
+    Returns:
+        int: Number of workers to use for file searching.
+    """
+    return len(search_paths) if parallel_search else 1
 
 
 class ProgressCounter:
