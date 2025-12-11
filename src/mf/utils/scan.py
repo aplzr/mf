@@ -219,6 +219,7 @@ def _scan_with_progress_bar(
         FileResults: Combined results from all completed futures.
     """
     polling_interval = 0.1  # [s]
+    update_threshold_divisor = 20  # Progress bar is updated this many times
     path_results = FileResults()
     remaining_futures = futures.copy()
     first_file_found = False
@@ -254,7 +255,7 @@ def _scan_with_progress_bar(
                 total=estimated_total,
             )
             last_update_count = 0
-            update_threshold = max(1, estimated_total // 20)
+            update_threshold = max(1, estimated_total // update_threshold_divisor)
 
             while remaining_futures:
                 remaining_futures = _process_completed_futures(
