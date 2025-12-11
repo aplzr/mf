@@ -4,20 +4,19 @@ from datetime import datetime
 from rich.panel import Panel
 from rich.table import Table
 
-from .config import read_config
 from .console import console, print_and_raise
 from .file import FileResult, FileResults, get_search_cache_file, open_utf8
 from .playlist import get_last_played_index
 
 
-def print_search_results(title: str, results: FileResults):
+def print_search_results(title: str, results: FileResults, display_paths: bool):
     """Render a table of search results.
 
     Args:
         title (str): Title displayed above table.
         results (FileResults): Search results.
+        display_paths (bool): Whether to display file paths.
     """
-    display_paths = read_config()["display_paths"]
     max_index_width = len(str(len(results))) if results else 1
 
     table = Table(show_header=False, box=None, padding=(0, 1))
