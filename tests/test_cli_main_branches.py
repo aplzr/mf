@@ -265,9 +265,8 @@ def test_filepath_prints(monkeypatch):
 @pytest.mark.parametrize("display_paths", [True, False])
 def test_find_display_paths_setting(monkeypatch, tmp_path, display_paths):
     """Test that display_paths setting controls whether file paths are shown."""
-    from mf.utils.config import read_config, write_config
-    from pathlib import Path
-    import mf.utils.config
+    from mf.utils.search import print_search_results
+    from mf.utils.file import FileResult, FileResults
 
     # Create a test media file with a distinctive parent directory name
     media_dir = tmp_path / "unique_test_dir_12345"
@@ -275,27 +274,39 @@ def test_find_display_paths_setting(monkeypatch, tmp_path, display_paths):
     test_file = media_dir / "test_movie.mkv"
     test_file.write_text("test content")
 
-    # Configure search paths and display_paths setting
-    cfg = read_config()
-    cfg["search_paths"] = [media_dir.as_posix()]
-    cfg["display_paths"] = display_paths
-    write_config(cfg)
+    # Mock read_config to return our desired display_paths setting
+    def mock_read_config():
+        from tomlkit import document
+        cfg = document()
+        cfg["display_paths"] = display_paths
+        return cfg
 
-    # Clear cache so runner.invoke reads fresh config from disk
-    mf.utils.config._config = None
+    monkeypatch.setattr("mf.utils.search.read_config", mock_read_config)
 
-    # Run find command
-    result = runner.invoke(app_mf, ["find", "test_movie"])
-    assert result.exit_code == 0
+    # Mock get_last_played_index to avoid cache file dependency
+    monkeypatch.setattr("mf.utils.search.get_last_played_index", lambda: None)
+
+    # Create test results
+    results = FileResults([FileResult(test_file)])
+
+    # Capture output by calling print_search_results directly
+    from io import StringIO
+    from mf.utils.console import console
+
+    buffer = StringIO()
+    test_console = console.__class__(file=buffer, force_terminal=True, width=80)
+    monkeypatch.setattr("mf.utils.search.console", test_console)
+
+    print_search_results("Test Results", results)
+    output = buffer.getvalue()
 
     # Check that file name is always present
-    assert "test_movie.mkv" in result.stdout
+    assert "test_movie.mkv" in output
 
     # Check that file path is present/absent based on setting
-    # Use the distinctive directory name to verify paths are shown/hidden
     if display_paths:
         # When paths are shown, the parent directory name should appear
-        assert "unique_test_dir_12345" in result.stdout
+        assert "unique_test_dir_12345" in output
     else:
         # When paths are hidden, the parent directory name shouldn't appear
-        assert "unique_test_dir_12345" not in result.stdout
+        assert "unique_test_dir_12345" not in output
