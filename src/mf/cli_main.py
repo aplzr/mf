@@ -101,6 +101,10 @@ def play(
         # Play random file without saving it as last played. This way a random file
         # can be played without disrupting the 'next' logic.
         all_files = FindQuery("*").execute()
+
+        if not all_files:
+            print_and_raise("No media files found (empty collection).")
+
         file_to_play = all_files[randrange(len(all_files))]
 
     # Launch VLC with the file(s)
