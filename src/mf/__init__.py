@@ -13,4 +13,9 @@ __all__ = [
 
 
 def main():
+    """Main entry point for the mf CLI application.
+
+    This function is called when the package is executed as a script
+    or via the installed console script 'mf' or 'mediafinder'.
+    """
     app_mf()
