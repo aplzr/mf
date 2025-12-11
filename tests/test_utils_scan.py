@@ -9,8 +9,11 @@ from mf.utils.scan import (
     scan_path_with_python,
     ProgressCounter,
     get_max_workers,
-    _process_completed_futures
-
+    _process_completed_futures,
+    concatenate_fileresults,
+    get_scan_strategy,
+    FdScanStrategy,
+    PythonScanStrategy,
 )
 from mf.utils.config import read_config
 from concurrent.futures import Future
@@ -182,3 +185,154 @@ def test_process_completed_futures():
     assert results[1] == result_2
     assert len(remaining) == 1
     assert remaining[0] is pending_future
+
+
+def test_concatenate_fileresults():
+    """Test concatenation of multiple FileResults objects."""
+    # Create individual FileResults
+    results1 = FileResults([
+        FileResult(Path("/path/to/file1.mp4")),
+        FileResult(Path("/path/to/file2.mp4")),
+    ])
+    results2 = FileResults([
+        FileResult(Path("/path/to/file3.mkv")),
+    ])
+    results3 = FileResults()  # Empty
+
+    # Concatenate
+    concatenated = concatenate_fileresults([results1, results2, results3])
+
+    assert len(concatenated) == 3
+    assert concatenated[0].file == Path("/path/to/file1.mp4")
+    assert concatenated[1].file == Path("/path/to/file2.mp4")
+    assert concatenated[2].file == Path("/path/to/file3.mkv")
+
+
+def test_concatenate_fileresults_empty():
+    """Test concatenation with empty list."""
+    concatenated = concatenate_fileresults([])
+    assert len(concatenated) == 0
+    assert isinstance(concatenated, FileResults)
+
+
+def test_get_scan_strategy_prefer_fd():
+    """Test get_scan_strategy returns FdScanStrategy when prefer_fd=True and cache_stat=False."""
+    strategy = get_scan_strategy(cache_stat=False, prefer_fd=True, show_progress=False)
+    assert isinstance(strategy, FdScanStrategy)
+
+
+def test_get_scan_strategy_cache_stat():
+    """Test get_scan_strategy returns PythonScanStrategy when cache_stat=True."""
+    strategy = get_scan_strategy(cache_stat=True, prefer_fd=True, show_progress=False)
+    assert isinstance(strategy, PythonScanStrategy)
+    assert strategy.cache_stat is True
+    assert strategy.show_progress is False
+
+
+def test_get_scan_strategy_no_prefer_fd():
+    """Test get_scan_strategy returns PythonScanStrategy when prefer_fd=False."""
+    strategy = get_scan_strategy(cache_stat=False, prefer_fd=False, show_progress=True)
+    assert isinstance(strategy, PythonScanStrategy)
+    assert strategy.cache_stat is False
+    assert strategy.show_progress is True
+
+
+def test_python_scan_strategy_basic(tmp_path: Path):
+    """Test PythonScanStrategy.scan() with basic files."""
+    # Create test files
+    (tmp_path / "file1.mp4").write_text("x")
+    (tmp_path / "file2.mkv").write_text("y")
+
+    strategy = PythonScanStrategy(cache_stat=False, show_progress=False)
+    results = strategy.scan([tmp_path], max_workers=1)
+
+    assert len(results) == 2
+    names = {r.file.name for r in results}
+    assert names == {"file1.mp4", "file2.mkv"}
+
+
+def test_python_scan_strategy_with_mtime(tmp_path: Path):
+    """Test PythonScanStrategy.scan() with cache_stat=True collects mtime."""
+    (tmp_path / "file1.mp4").write_text("x")
+
+    strategy = PythonScanStrategy(cache_stat=True, show_progress=False)
+    results = strategy.scan([tmp_path], max_workers=1)
+
+    assert len(results) == 1
+    # When cache_stat=True, stat info should be collected
+    assert results[0].stat is not None
+    assert results[0].stat.st_mtime is not None
+
+
+def test_python_scan_strategy_multiple_paths(tmp_path: Path):
+    """Test PythonScanStrategy.scan() with multiple search paths."""
+    path1 = tmp_path / "dir1"
+    path2 = tmp_path / "dir2"
+    path1.mkdir()
+    path2.mkdir()
+
+    (path1 / "file1.mp4").write_text("x")
+    (path2 / "file2.mkv").write_text("y")
+
+    strategy = PythonScanStrategy(cache_stat=False, show_progress=False)
+    results = strategy.scan([path1, path2], max_workers=2)
+
+    assert len(results) == 2
+    names = {r.file.name for r in results}
+    assert names == {"file1.mp4", "file2.mkv"}
+
+
+def test_fd_scan_strategy_basic(tmp_path: Path, monkeypatch):
+    """Test FdScanStrategy.scan() successfully scans with fd."""
+    # Create test files
+    (tmp_path / "file1.mp4").write_text("x")
+    (tmp_path / "file2.mkv").write_text("y")
+
+    strategy = FdScanStrategy()
+
+    # This will use the real fd binary if available, or fall back to Python
+    results = strategy.scan([tmp_path], max_workers=1)
+
+    assert len(results) == 2
+    names = {r.file.name for r in results}
+    assert names == {"file1.mp4", "file2.mkv"}
+
+
+def test_fd_scan_strategy_fallback_to_python(tmp_path: Path, monkeypatch):
+    """Test FdScanStrategy.scan() falls back to Python when fd fails."""
+    # Create test files
+    (tmp_path / "file1.mp4").write_text("x")
+
+    # Mock scan_path_with_fd to raise an error
+    def mock_scan_path_with_fd(path):
+        raise FileNotFoundError("fd binary not found")
+
+    monkeypatch.setattr("mf.utils.scan.scan_path_with_fd", mock_scan_path_with_fd)
+
+    strategy = FdScanStrategy()
+    results = strategy.scan([tmp_path], max_workers=1)
+
+    # Should fall back to Python and still find the file
+    assert len(results) == 1
+    assert results[0].file.name == "file1.mp4"
+
+
+def test_fd_scan_strategy_fallback_on_os_error(tmp_path: Path, monkeypatch, capsys):
+    """Test FdScanStrategy.scan() falls back on OSError and prints warning."""
+    (tmp_path / "file1.mp4").write_text("x")
+
+    # Mock scan_path_with_fd to raise OSError
+    def mock_scan_path_with_fd(path):
+        raise OSError("Permission denied")
+
+    monkeypatch.setattr("mf.utils.scan.scan_path_with_fd", mock_scan_path_with_fd)
+
+    strategy = FdScanStrategy()
+    results = strategy.scan([tmp_path], max_workers=1)
+
+    # Should fall back and find the file
+    assert len(results) == 1
+
+    # Check warning was printed
+    captured = capsys.readouterr()
+    assert "fd scanner unavailable" in captured.out or "fd scanner unavailable" in captured.err
