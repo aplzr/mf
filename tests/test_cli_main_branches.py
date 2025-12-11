@@ -281,6 +281,10 @@ def test_find_display_paths_setting(monkeypatch, tmp_path, display_paths):
         cfg["display_paths"] = display_paths
         return cfg
 
+    # Clear the global config cache so our mock will be used
+    import mf.utils.config
+    mf.utils.config._config = None
+
     monkeypatch.setattr("mf.utils.search.read_config", mock_read_config)
 
     # Mock get_last_played_index to avoid cache file dependency
