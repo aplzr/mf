@@ -205,6 +205,7 @@ def _scan_with_progress_bar(
     Returns:
         FileResults: Combined results from all completed futures.
     """
+    polling_interval = 0.1  # [s]
     path_results = FileResults()
     remaining_futures = futures.copy()
     first_file_found = False
@@ -223,7 +224,7 @@ def _scan_with_progress_bar(
                 first_file_found = True
                 break
 
-            time.sleep(0.1)
+            time.sleep(polling_interval)
 
     # Phase 2: Show progress bar after first file found
     if estimated_total and estimated_total > 0:
@@ -265,7 +266,7 @@ def _scan_with_progress_bar(
 
                     last_update_count = current_count
 
-                time.sleep(0.1)
+                time.sleep(polling_interval)
 
             # Final update
             final_count = progress_counter.count
@@ -278,7 +279,7 @@ def _scan_with_progress_bar(
                 remaining_futures, path_results
             )
 
-            time.sleep(0.1)
+            time.sleep(polling_interval)
 
     return path_results
 
