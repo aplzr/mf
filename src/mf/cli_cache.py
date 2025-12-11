@@ -4,8 +4,9 @@ from .utils.cache import load_library_cache, rebuild_library_cache
 from .utils.config import read_config
 from .utils.console import console, print_ok
 from .utils.file import get_library_cache_file
+from .utils.misc import format_size
 from .utils.parsers import parse_resolutions
-from .utils.stats import get_log_histogram, get_string_counts, show_histogram
+from .utils.stats import BinData, get_log_histogram, get_string_counts, show_histogram
 
 app_cache = typer.Typer(help="Manage mf's library cache.")
 
@@ -68,7 +69,15 @@ def stats():
 
     # File size distribution
     if media_extensions:
-        show_histogram(
-            get_log_histogram([result.stat.st_size for result in media_cache]),
-            "Media file size",
+        bin_centers, bin_counts = get_log_histogram(
+            [result.stat.st_size for result in media_cache]
         )
+
+        # Centers are file sizes in bytes.
+        # Convert to string with appropriate size prefix.
+        bin_labels = [format_size(bin_center) for bin_center in bin_centers]
+
+        bin_data: list[BinData] = [
+            (label, count) for label, count in zip(bin_labels, bin_counts)
+        ]
+        show_histogram(bin_data, "Media file size")

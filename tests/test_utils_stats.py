@@ -50,13 +50,16 @@ def test_get_string_counts_basic():
 
 def test_get_log_histogram_and_labels():
     values = [100_000, 1_000_000, 10_000_000]
-    hist = get_log_histogram(values, bins_per_decade=3)
-    # Returns list of (label, count)
-    assert all(isinstance(lbl, str) and isinstance(cnt, int) for lbl, cnt in hist)
+    bin_centers, bin_counts = get_log_histogram(values, bins_per_decade=3)
+    # Returns tuple of (bin_centers: list[float], bin_counts: list[int])
+    assert isinstance(bin_centers, list)
+    assert isinstance(bin_counts, list)
+    assert all(isinstance(center, float) for center in bin_centers)
+    assert all(isinstance(count, (int, float)) for count in bin_counts)
     # Counts must sum to number of values
-    assert sum(cnt for _, cnt in hist) == len(values)
-    # Labels are human-readable sizes
-    assert any("kB" in lbl or "MB" in lbl or "GB" in lbl for lbl, _ in hist)
+    assert sum(bin_counts) == len(values)
+    # Bin centers should be positive numbers
+    assert all(center > 0 for center in bin_centers)
 
 
 def test_show_histogram_runs_without_error():

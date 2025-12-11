@@ -8,7 +8,6 @@ from typing import Any, TypeAlias
 from rich.panel import Panel
 
 from .console import console
-from .misc import format_size
 
 BinData: TypeAlias = tuple[str, int]  # (label, count)
 
@@ -180,7 +179,7 @@ def get_string_counts(values: list[str]) -> list[tuple[str, int]]:
 
 def get_log_histogram(
     values: list[Number], bins_per_decade: int = 4
-) -> list[tuple[float, int]]:
+) -> tuple[list[float], list[float]]:
     """Create a logarithmic histogram of numeric values.
 
     Bins values using logarithmically-spaced intervals and returns labeled bins
@@ -193,16 +192,19 @@ def get_log_histogram(
             Higher values create finer granularity.
 
     Returns:
-        list[tuple[float, int]]: List of (bin_center, count) pairs.
+        tuple[list[float], list[float]]: Bin centers and bin counts.
 
     Example:
-        >>> file_sizes = [100_000_000, 500_000_000, 2_000_000_000, 5_000_000_000]
-        >>> get_log_histogram(file_sizes, bins_per_decade=3)
-        [('95.4 MB', 1), ('302 MB', 1), ('955 MB', 0), ('3.02 GB', 1), ('9.55 GB', 1)]
+        >>> values = [100_000_000, 500_000_000, 2_000_000_000, 5_000_000_000]
+        >>> ([147875763.6628315,
+              323363503.2886788,
+              707106781.1865475,
+              1546247473.5549579,
+              3381216689.0312037],
+             [1, 0, 1, 1, 1])
     """
     bin_edges = create_log_bins(min(values), max(values), bins_per_decade)
     bin_centers = get_log_bin_centers(bin_edges)
-    bin_labels = [format_size(bin_center) for bin_center in bin_centers]
     bins = group_values_by_bins(values, bin_edges)
 
-    return [(bin_label, len(bin)) for bin_label, bin in zip(bin_labels, bins)]
+    return bin_centers, [len(bin) for bin in bins]
