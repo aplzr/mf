@@ -174,7 +174,7 @@ mf config set parallel_search false
 
 - `fullscreen_playback` (bool): If true, `mf play` launches VLC with `--fullscreen --no-video-title-show`.
 - `prefer_fd` (bool): Use the bundled `fd` scanner when possible. Automatically ignored for mtime-sorted searches (`mf new`) which always use the Python scanner.
-
+- `display_paths` (bool): Turn filepath display in search results on or off.
 
 #### Editing the Config
 
