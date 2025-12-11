@@ -274,19 +274,6 @@ def test_find_display_paths_setting(monkeypatch, tmp_path, display_paths):
     test_file = media_dir / "test_movie.mkv"
     test_file.write_text("test content")
 
-    # Mock read_config to return our desired display_paths setting
-    def mock_read_config():
-        from tomlkit import document
-        cfg = document()
-        cfg["display_paths"] = display_paths
-        return cfg
-
-    # Clear the global config cache so our mock will be used
-    import mf.utils.config
-    mf.utils.config._config = None
-
-    monkeypatch.setattr("mf.utils.search.read_config", mock_read_config)
-
     # Mock get_last_played_index to avoid cache file dependency
     monkeypatch.setattr("mf.utils.search.get_last_played_index", lambda: None)
 
@@ -301,7 +288,8 @@ def test_find_display_paths_setting(monkeypatch, tmp_path, display_paths):
     test_console = console.__class__(file=buffer, force_terminal=True, width=80)
     monkeypatch.setattr("mf.utils.search.console", test_console)
 
-    print_search_results("Test Results", results)
+    # Pass display_paths directly as a parameter
+    print_search_results("Test Results", results, display_paths)
     output = buffer.getvalue()
 
     # Check that file name is always present
