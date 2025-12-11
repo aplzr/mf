@@ -94,7 +94,7 @@ REGISTRY: dict[str, SettingSpec] = {
         normalize=normalize_bool_str,
         default=True,
         display=normalize_bool_to_toml,
-        help="If true, filter results by media_extensions.",
+        help="Filter results by media_extensions.",
     ),
     "fullscreen_playback": SettingSpec(
         key="fullscreen_playback",
@@ -104,7 +104,7 @@ REGISTRY: dict[str, SettingSpec] = {
         normalize=normalize_bool_str,
         default=True,
         display=normalize_bool_to_toml,
-        help="If true, files are played in fullscreen mode.",
+        help="Play files in fullscreen mode.",
     ),
     "prefer_fd": SettingSpec(
         key="prefer_fd",
@@ -114,7 +114,7 @@ REGISTRY: dict[str, SettingSpec] = {
         normalize=normalize_bool_str,
         default=True,
         display=normalize_bool_to_toml,
-        help="If true, uses fd for file searches where possible.",
+        help="Use fd for file searches where possible.",
     ),
     "cache_library": SettingSpec(
         key="cache_library",
@@ -125,7 +125,7 @@ REGISTRY: dict[str, SettingSpec] = {
         default=False,
         display=normalize_bool_to_toml,
         after_update=lambda _: _rebuild_cache_if_enabled(),
-        help="If true, caches library metadata locally.",
+        help="Cache library metadata locally.",
     ),
     "library_cache_interval": SettingSpec(
         key="library_cache_interval",
