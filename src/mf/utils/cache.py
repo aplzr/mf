@@ -128,14 +128,11 @@ def is_cache_expired() -> bool:
         cache_timestamp (datetime): Last cache timestamp.
 
     Returns:
-        bool: True if cache has expired, False otherwise.
+        bool: True if cache has expired or doesn't exist, False otherwise.
     """
     cache_file = get_library_cache_file()
 
     if not cache_file.exists():
-        # is_cache_expired is only called if caching is turned on, so if the cache file
-        # doesn't exist we always have to build the cache, even if rebuilding is turned
-        # off via library_cache_interval = 0.
         return True
 
     cache_timestamp = datetime.fromtimestamp(cache_file.stat().st_mtime)
