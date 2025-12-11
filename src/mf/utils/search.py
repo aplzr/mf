@@ -9,33 +9,44 @@ from .file import FileResult, FileResults, get_search_cache_file, open_utf8
 from .playlist import get_last_played_index
 
 
-def print_search_results(title: str, results: FileResults):
+def print_search_results(title: str, results: FileResults, display_paths: bool):
     """Render a table of search results.
 
     Args:
         title (str): Title displayed above table.
         results (FileResults): Search results.
+        display_paths (bool): Whether to display file paths.
     """
     max_index_width = len(str(len(results))) if results else 1
+
     table = Table(show_header=False, box=None, padding=(0, 1))
     table.add_column("#", style="cyan", width=max_index_width, justify="right")
     table.add_column("File", style="green", overflow="fold")
-    table.add_column("Location", style="blue", overflow="fold")
+
+    if display_paths:
+        table.add_column("Location", style="blue", overflow="fold")
 
     last_played_index = get_last_played_index()
 
     for idx, result in enumerate(results):
         is_last_played = idx == last_played_index
 
-        if is_last_played:
-            # Highlight last played file in the search results
-            table.add_row(
-                f"[bright_cyan]{str(idx + 1)}[/bright_cyan]",
-                f"[bright_cyan]{result.file.name}[/bright_cyan]",
-                str(result.file.parent),
-            )
-        else:
-            table.add_row(str(idx + 1), result.file.name, str(result.file.parent))
+        idx_str = (
+            f"[bright_cyan]{str(idx + 1)}[/bright_cyan]"
+            if is_last_played
+            else str(idx + 1)
+        )
+        name_str = (
+            f"[bright_cyan]{result.file.name}[/bright_cyan]"
+            if is_last_played
+            else result.file.name
+        )
+        path_str = str(result.file.parent)
+
+        row_elements = (
+            [idx_str, name_str, path_str] if display_paths else [idx_str, name_str]
+        )
+        table.add_row(*row_elements)
 
     panel = Panel(
         table, title=f"[bold]{title}[/bold]", title_align="left", padding=(1, 1)

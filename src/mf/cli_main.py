@@ -50,7 +50,9 @@ def find(
         raise typer.Exit(0)
 
     save_search_results(query.pattern, results)
-    print_search_results(f"Search pattern: {query.pattern}", results)
+    print_search_results(
+        f"Search pattern: {query.pattern}", results, read_config()["display_paths"]
+    )
 
 
 @app_mf.command()
@@ -65,7 +67,7 @@ def new(
         print_and_raise("No media files found (empty collection).")
 
     save_search_results(pattern, newest_files)
-    print_search_results(pattern, newest_files)
+    print_search_results(pattern, newest_files, read_config()["display_paths"])
 
 
 @app_mf.command()
