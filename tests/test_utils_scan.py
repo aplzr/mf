@@ -14,6 +14,8 @@ from mf.utils.scan import (
     get_scan_strategy,
     FdScanStrategy,
     PythonScanStrategy,
+    PythonSilentScanStrategy,
+    PythonProgressScanStrategy,
 )
 from mf.utils.config import read_config
 from concurrent.futures import Future
@@ -222,28 +224,26 @@ def test_get_scan_strategy_prefer_fd():
 
 
 def test_get_scan_strategy_cache_stat():
-    """Test get_scan_strategy returns PythonScanStrategy when cache_stat=True."""
+    """Test get_scan_strategy returns PythonSilentScanStrategy when cache_stat=True."""
     strategy = get_scan_strategy(cache_stat=True, prefer_fd=True, show_progress=False)
-    assert isinstance(strategy, PythonScanStrategy)
+    assert isinstance(strategy, PythonSilentScanStrategy)
     assert strategy.cache_stat is True
-    assert strategy.show_progress is False
 
 
 def test_get_scan_strategy_no_prefer_fd():
-    """Test get_scan_strategy returns PythonScanStrategy when prefer_fd=False."""
+    """Test get_scan_strategy returns PythonProgressScanStrategy when prefer_fd=False."""
     strategy = get_scan_strategy(cache_stat=False, prefer_fd=False, show_progress=True)
-    assert isinstance(strategy, PythonScanStrategy)
+    assert isinstance(strategy, PythonProgressScanStrategy)
     assert strategy.cache_stat is False
-    assert strategy.show_progress is True
 
 
 def test_python_scan_strategy_basic(tmp_path: Path):
-    """Test PythonScanStrategy.scan() with basic files."""
+    """Test PythonSilentScanStrategy.scan() with basic files."""
     # Create test files
     (tmp_path / "file1.mp4").write_text("x")
     (tmp_path / "file2.mkv").write_text("y")
 
-    strategy = PythonScanStrategy(cache_stat=False, show_progress=False)
+    strategy = PythonSilentScanStrategy(cache_stat=False)
     results = strategy.scan([tmp_path], max_workers=1)
 
     assert len(results) == 2
@@ -252,10 +252,10 @@ def test_python_scan_strategy_basic(tmp_path: Path):
 
 
 def test_python_scan_strategy_with_mtime(tmp_path: Path):
-    """Test PythonScanStrategy.scan() with cache_stat=True collects mtime."""
+    """Test PythonSilentScanStrategy.scan() with cache_stat=True collects mtime."""
     (tmp_path / "file1.mp4").write_text("x")
 
-    strategy = PythonScanStrategy(cache_stat=True, show_progress=False)
+    strategy = PythonSilentScanStrategy(cache_stat=True)
     results = strategy.scan([tmp_path], max_workers=1)
 
     assert len(results) == 1
@@ -265,7 +265,7 @@ def test_python_scan_strategy_with_mtime(tmp_path: Path):
 
 
 def test_python_scan_strategy_multiple_paths(tmp_path: Path):
-    """Test PythonScanStrategy.scan() with multiple search paths."""
+    """Test PythonSilentScanStrategy.scan() with multiple search paths."""
     path1 = tmp_path / "dir1"
     path2 = tmp_path / "dir2"
     path1.mkdir()
@@ -274,7 +274,7 @@ def test_python_scan_strategy_multiple_paths(tmp_path: Path):
     (path1 / "file1.mp4").write_text("x")
     (path2 / "file2.mkv").write_text("y")
 
-    strategy = PythonScanStrategy(cache_stat=False, show_progress=False)
+    strategy = PythonSilentScanStrategy(cache_stat=False)
     results = strategy.scan([path1, path2], max_workers=2)
 
     assert len(results) == 2
