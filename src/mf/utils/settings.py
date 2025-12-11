@@ -166,6 +166,16 @@ REGISTRY: dict[str, SettingSpec] = {
             "located on the same mechanical drive (but leave on for SSD/NVME)."
         ),
     ),
+    "display_paths": SettingSpec(
+        key="display_paths",
+        kind="scalar",
+        value_type=bool,
+        actions={"set"},
+        normalize=normalize_bool_str,
+        default=True,
+        display=normalize_bool_to_toml,
+        help="Display file paths in search results.",
+    ),
 }
 
 

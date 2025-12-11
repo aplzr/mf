@@ -20,6 +20,10 @@ def isolated_config(monkeypatch):
     touch the user's real configuration or cache files. Automatically creates
     a fresh default config on first access.
     """
+    # Clear global config cache before each test
+    import mf.utils.config
+    mf.utils.config._config = None
+
     tmp_root = Path(tempfile.mkdtemp(prefix="mf-test-"))
     if os.name == "nt":
         monkeypatch.setenv("LOCALAPPDATA", str(tmp_root))

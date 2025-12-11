@@ -260,3 +260,38 @@ def test_filepath_prints(monkeypatch):
     result = runner.invoke(app_mf, ["filepath", "1"])
     assert result.exit_code == 0
     assert "/tmp/x.mp4" in result.stdout
+
+
+@pytest.mark.parametrize("display_paths", [True, False])
+def test_find_display_paths_setting(monkeypatch, tmp_path, display_paths):
+    """Test that display_paths setting controls whether file paths are shown."""
+    from mf.utils.config import read_config, write_config
+    from pathlib import Path
+
+    # Create a test media file with a distinctive parent directory name
+    media_dir = tmp_path / "unique_test_dir_12345"
+    media_dir.mkdir()
+    test_file = media_dir / "test_movie.mkv"
+    test_file.write_text("test content")
+
+    # Configure search paths and display_paths setting
+    cfg = read_config()
+    cfg["search_paths"] = [media_dir.as_posix()]
+    cfg["display_paths"] = display_paths
+    write_config(cfg)
+
+    # Run find command
+    result = runner.invoke(app_mf, ["find", "test_movie"])
+    assert result.exit_code == 0
+
+    # Check that file name is always present
+    assert "test_movie.mkv" in result.stdout
+
+    # Check that file path is present/absent based on setting
+    # Use the distinctive directory name to verify paths are shown/hidden
+    if display_paths:
+        # When paths are shown, the parent directory name should appear
+        assert "unique_test_dir_12345" in result.stdout
+    else:
+        # When paths are hidden, the parent directory name shouldn't appear
+        assert "unique_test_dir_12345" not in result.stdout
