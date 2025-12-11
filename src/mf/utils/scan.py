@@ -17,7 +17,7 @@ from ..constants import STATUS_SYMBOLS
 from .cache import get_library_cache_size, load_library_cache
 from .config import read_config
 from .console import console, print_warn
-from .file import FileResult, FileResults, get_fd_binary, get_library_cache_file
+from .file import FileResult, FileResults, get_fd_binary
 from .misc import validate_search_paths
 from .normalizers import normalize_pattern
 
@@ -84,10 +84,7 @@ class PythonScanStrategy(ScanStrategy):
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             if self.show_progress:
                 # Get estimated total from cache
-                if get_library_cache_file().exists():
-                    estimated_total = get_library_cache_size()
-                else:
-                    estimated_total = None
+                estimated_total = get_library_cache_size()
 
                 progress_counter = ProgressCounter()
 

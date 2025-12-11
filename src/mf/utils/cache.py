@@ -148,10 +148,14 @@ def is_cache_expired() -> bool:
     return datetime.now() - cache_timestamp > cache_interval
 
 
-def get_library_cache_size() -> int:
+def get_library_cache_size() -> int | None:
     """Get the size of the library cache.
 
     Returns:
-        int: Number of cached file paths.
+        int | None: Number of cached file paths or None if cache doesn't exist.
     """
-    return len(_load_library_cache(allow_rebuild=False))
+    return (
+        len(_load_library_cache(allow_rebuild=False))
+        if get_library_cache_file().exists()
+        else None
+    )
