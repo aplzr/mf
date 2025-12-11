@@ -267,6 +267,7 @@ def test_find_display_paths_setting(monkeypatch, tmp_path, display_paths):
     """Test that display_paths setting controls whether file paths are shown."""
     from mf.utils.config import read_config, write_config
     from pathlib import Path
+    import mf.utils.config
 
     # Create a test media file with a distinctive parent directory name
     media_dir = tmp_path / "unique_test_dir_12345"
@@ -279,6 +280,9 @@ def test_find_display_paths_setting(monkeypatch, tmp_path, display_paths):
     cfg["search_paths"] = [media_dir.as_posix()]
     cfg["display_paths"] = display_paths
     write_config(cfg)
+
+    # Clear cache so runner.invoke reads fresh config from disk
+    mf.utils.config._config = None
 
     # Run find command
     result = runner.invoke(app_mf, ["find", "test_movie"])
