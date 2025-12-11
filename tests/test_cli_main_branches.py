@@ -182,6 +182,58 @@ def test_play_random_file_branch(monkeypatch):
     assert "VLC launched successfully" in result.stdout
 
 
+def test_play_by_index_valid(monkeypatch):
+    """Test play with valid numeric index."""
+    class DummyFile:
+        name = "movie.mp4"
+        parent = "/tmp"
+
+        def __str__(self):
+            return "/tmp/movie.mp4"
+
+    class DummyResult:
+        file = DummyFile()
+
+    monkeypatch.setattr("mf.cli_main.get_result_by_index", lambda i: DummyResult())
+    monkeypatch.setattr("mf.cli_main.save_last_played", lambda fr: None)
+    monkeypatch.setattr("mf.cli_main.get_vlc_command", lambda: "vlc")
+
+    import subprocess
+
+    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: None)
+
+    result = runner.invoke(app_mf, ["play", "5"])
+    assert result.exit_code == 0
+    assert "VLC launched successfully" in result.stdout
+
+
+def test_play_by_index_out_of_bounds(monkeypatch):
+    """Test play with invalid index raises error."""
+    import typer
+
+    def raise_exit(i):
+        from mf.utils.console import print_and_raise
+        print_and_raise(f"Index {i} not found")
+
+    monkeypatch.setattr("mf.cli_main.get_result_by_index", raise_exit)
+
+    result = runner.invoke(app_mf, ["play", "999"])
+    assert result.exit_code != 0
+
+
+def test_play_random_empty_collection(monkeypatch):
+    """Test play random when no files exist."""
+    class DummyQuery:
+        def execute(self):
+            return []
+
+    monkeypatch.setattr("mf.cli_main.FindQuery", lambda p: DummyQuery())
+
+    result = runner.invoke(app_mf, ["play"])
+    assert result.exit_code != 0
+    assert "No media files found" in (result.stdout + result.stderr)
+
+
 def test_imdb_opens(monkeypatch):
     # Ensure imdb command calls open_imdb_entry with desired index
     called = {"idx": None}
