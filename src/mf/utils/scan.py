@@ -57,59 +57,68 @@ class FdScanStrategy(ScanStrategy):
                 path_results = list(executor.map(scan_path_with_fd, search_paths))
             except (FileNotFoundError, CalledProcessError, OSError):
                 print_warn("fd scanner unavailable, falling back to python scanner.")
-                fallback_strategy = PythonScanStrategy(
-                    cache_stat=False, show_progress=False
-                )
+                fallback_strategy = PythonSilentScanStrategy(cache_stat=False)
                 return fallback_strategy.scan(search_paths, max_workers)
 
             return concatenate_fileresults(path_results)
 
 
 class PythonScanStrategy(ScanStrategy):
-    """Uses the python scanner, optionally with stat caching and a progress bar."""
+    """Uses the python scanner, optionally with stat caching."""
 
-    def __init__(self, cache_stat: bool, show_progress: bool):
+    def __init__(self, cache_stat: bool):
         """Initialize the scanning strategy.
 
         Args:
             cache_stat (bool): Caches each file's stat information at the cost of an
                 additional syscall per file.
-            show_progress (bool): Shows a progress bar while scanning.
         """
         self.cache_stat = cache_stat
-        self.show_progress = show_progress
 
-    def scan(self, search_paths: list[Path], max_workers: int) -> FileResults:
-        """Scan using the python scanner."""
+
+class PythonSilentScanStrategy(PythonScanStrategy):
+    """Uses the python scanner without a progress bar."""
+
+    def scan(self, search_paths: list[Path], max_workers: int):
+        """Scan using the python scanner without progress bar."""
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            if self.show_progress:
-                # Get estimated total from cache
-                estimated_total = get_library_cache_size()
+            partial_python_scanner = partial(
+                scan_path_with_python, with_mtime=self.cache_stat
+            )
+            path_results = list(executor.map(partial_python_scanner, search_paths))
 
-                progress_counter = ProgressCounter()
+        return concatenate_fileresults(path_results)
 
-                def progress_callback(file_result: FileResult):
-                    progress_counter.increment()
 
-                scanner_with_progress = partial(
-                    scan_path_with_python,
-                    with_mtime=self.cache_stat,
-                    progress_callback=progress_callback,
-                )
+class PythonProgressScanStrategy(PythonScanStrategy):
+    """Uses the python scanner with a live progress bar."""
 
-                futures = [
-                    executor.submit(scanner_with_progress, path)
-                    for path in search_paths
-                ]
+    def scan(self, search_paths: list[Path], max_workers: int):
+        """Scan using the python scanner with a live progress bar."""
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Get estimated total from cache
+            # NOTE: This leads to a silent scan if the total can't be estimated, e.g.
+            #   because the cache doesn't exist yet.
+            estimated_total = get_library_cache_size()
 
-                path_results = _scan_with_progress_bar(
-                    futures, estimated_total, progress_counter
-                )
-            else:
-                partial_python_scanner = partial(
-                    scan_path_with_python, with_mtime=self.cache_stat
-                )
-                path_results = list(executor.map(partial_python_scanner, search_paths))
+            progress_counter = ProgressCounter()
+
+            def progress_callback(file_result: FileResult):
+                progress_counter.increment()
+
+            scanner_with_progress = partial(
+                scan_path_with_python,
+                with_mtime=self.cache_stat,
+                progress_callback=progress_callback,
+            )
+
+            futures = [
+                executor.submit(scanner_with_progress, path) for path in search_paths
+            ]
+
+            path_results = _scan_with_progress_bar(
+                futures, estimated_total, progress_counter
+            )
 
         return concatenate_fileresults(path_results)
 
@@ -123,7 +132,7 @@ def get_scan_strategy(
         cache_stat (bool): Cache each file's stat info at the cost of an additional
             syscall per file.
         prefer_fd (bool): Prefer the faster fd scanner unless stat caching is requested.
-        show_progress (bool): Show progress bar during scanning.
+        show_progress (bool): Show progress bar during scanning (python scanner only).
 
     Returns:
         ScanStrategy: Selected strategy.
@@ -131,7 +140,10 @@ def get_scan_strategy(
     if prefer_fd and not cache_stat:
         return FdScanStrategy()
 
-    return PythonScanStrategy(cache_stat=cache_stat, show_progress=show_progress)
+    if show_progress:
+        return PythonProgressScanStrategy(cache_stat=cache_stat)
+    else:
+        return PythonSilentScanStrategy(cache_stat=cache_stat)
 
 
 def concatenate_fileresults(path_results: list[FileResults]) -> FileResults:
