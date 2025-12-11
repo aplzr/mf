@@ -197,10 +197,14 @@ def _scan_with_progress_bar(
     as files are discovered.
 
     Args:
-        futures (list[Future]): List of Future objects from ThreadPoolExecutor.
+        futures (list[Future]): List of futures from ThreadPoolExecutor. Each
+            future represents a search path.
         estimated_total (int | None): Estimated number of files for progress bar.
             If None, no progress bar is shown.
-        progress_counter (ProgressCounter): Thread-safe progress counter.
+        progress_counter (ProgressCounter): Thread-safe progress counter that tracks
+            the number of discovered files during (potentially parallel) scanning of all
+            search paths. Updated via callbacks invoked by each scanning thread as files
+            are discovered.
 
     Returns:
         FileResults: Combined results from all completed futures.
@@ -355,7 +359,7 @@ def scan_path_with_python(
         search_path (Path): Root directory to scan.
         with_mtime (bool): Include modification time in results.
         progress_callback (Callable[[FileResult], None] | None): Called for each file
-            found (optional, defaults to None).
+            found. Can be used for live progress tracking (optional, defaults to None).
 
     Returns:
         FileResults: All files in the search path, optionally paired with mtime.
