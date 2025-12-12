@@ -6,8 +6,6 @@ import subprocess
 from pathlib import Path
 
 import typer
-from guessit import guessit
-from imdbinfo import search_title
 
 from ..constants import FALLBACK_EDITORS_POSIX
 from .console import console, print_and_raise
@@ -49,6 +47,10 @@ def open_imdb_entry(result: FileResult):
     Args:
         result (FileResult): File for which to open the IMDB entry.
     """
+    # Heavy imports, import here lazily so they don't slow down every mf invocation
+    from guessit import guessit
+    from imdbinfo import search_title
+
     filestem = result.file.stem
     parsed = guessit(filestem)
 
