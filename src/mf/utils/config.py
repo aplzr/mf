@@ -77,6 +77,22 @@ def get_config() -> TOMLDocument:
     return _config
 
 
+def _clear_config_cache():
+    global _config
+    _config = None
+
+
+def reload_config() -> TOMLDocument:
+    """Reloads the configuration from disk and updates the cached configuration
+    instance.
+
+    Returns:
+        TOMLDocument: Parsed configuration.
+    """
+    _clear_config_cache()
+    return get_config()
+
+
 def build_config() -> Configuration:
     """Build integrated Configuration from the raw TOML configuration.
 
