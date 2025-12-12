@@ -18,8 +18,8 @@ from .cache import get_library_cache_size, load_library_cache
 from .config import get_config
 from .console import console, print_warn
 from .file import FileResult, FileResults, get_fd_binary
-from .misc import validate_search_paths
 from .normalizers import normalize_pattern
+from .validation import validate_search_paths
 
 
 class ScanStrategy(ABC):
