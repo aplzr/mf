@@ -174,11 +174,13 @@ def scan_search_paths(
     Returns paths of all files stored in the search paths.
 
     Args:
-        cache_stat (bool): Cache each file's stat info at the cost of an additional
-            syscall per file.
-        prefer_fd (bool): Prefer the faster fd scanner unless stat caching is requested.
-            If None, value is read from the configuration file.
-        show_progress (bool): Show progress bar during scanning.
+        cache_stat (bool, optional): Cache each file's stat info at the cost of an
+            additional syscall per file. Defaults to False.
+        prefer_fd (bool | None, optional): Prefer the faster fd scanner unless stat
+            caching is requested. If None, value is read from the configuration file.
+            Defaults to None.
+        show_progress (bool, optional): Show progress bar during scanning. Defaults to
+            False.
 
     Returns:
         FileResults: Results, optionally with stat info.
