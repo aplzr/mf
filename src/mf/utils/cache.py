@@ -5,6 +5,7 @@ from typing import TypedDict
 from .config import build_config
 from .console import print_info, print_ok, print_warn
 from .file import FileResults, get_library_cache_file, open_utf8
+from .validation import validate_cache_structure
 
 StatList = tuple[
     int,  # st_mode
@@ -97,7 +98,7 @@ def _load_library_cache(allow_rebuild=True) -> FileResults:
     """
     try:
         with open_utf8(get_library_cache_file()) as f:
-            cache_data: CacheData = json.load(f)
+            cache_data: CacheData = validate_cache_structure(json.load(f))
 
         results = FileResults.from_cache(cache_data)
     except (json.JSONDecodeError, KeyError):
