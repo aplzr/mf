@@ -30,7 +30,7 @@ def test_play_vlc_not_found(monkeypatch):
     )
     monkeypatch.setattr("mf.cli_main.get_vlc_command", lambda: "vlc")
     monkeypatch.setattr(
-        "mf.cli_main.read_config", lambda: {"fullscreen_playback": False}
+        "mf.cli_main.get_config", lambda: {"fullscreen_playback": False}
     )
 
     import subprocess
@@ -50,7 +50,7 @@ def test_play_vlc_generic_error(monkeypatch):
     )
     monkeypatch.setattr("mf.cli_main.get_vlc_command", lambda: "vlc")
     monkeypatch.setattr(
-        "mf.cli_main.read_config", lambda: {"fullscreen_playback": False}
+        "mf.cli_main.get_config", lambda: {"fullscreen_playback": False}
     )
 
     import subprocess

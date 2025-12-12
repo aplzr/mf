@@ -131,7 +131,7 @@ def test_play_list_branch_and_fullscreen(monkeypatch, fullscreen):
 
     monkeypatch.setattr("mf.cli_main.get_vlc_command", lambda: "vlc")
     monkeypatch.setattr(
-        "mf.cli_main.read_config", lambda: {"fullscreen_playback": fullscreen}
+        "mf.cli_main.get_config", lambda: {"fullscreen_playback": fullscreen}
     )
 
     import subprocess

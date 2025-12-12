@@ -17,7 +17,7 @@ __all__ = [
     "get_config_file",
     "get_default_cfg",
     "normalize_media_extension",
-    "read_config",
+    "get_config",
     "write_config",
     "write_default_config",
 ]
@@ -58,10 +58,13 @@ def _read_config() -> TOMLDocument:
     return cfg
 
 
-def read_config() -> TOMLDocument:
-    """Read raw configuration from disk.
+def get_config() -> TOMLDocument:
+    """Get the raw configuration.
 
     Falls back to creating a default configuration when the file is missing.
+
+    Caches the configuration on first read from disk and returns the cached instance on
+    subsequent calls to avoid unnecessary disk reads.
 
     Returns:
         TOMLDocument: Parsed configuration.
@@ -74,6 +77,22 @@ def read_config() -> TOMLDocument:
     return _config
 
 
+def _clear_config_cache():
+    global _config
+    _config = None
+
+
+def reload_config() -> TOMLDocument:
+    """Reloads the configuration from disk and updates the cached configuration
+    instance.
+
+    Returns:
+        TOMLDocument: Parsed configuration.
+    """
+    _clear_config_cache()
+    return get_config()
+
+
 def build_config() -> Configuration:
     """Build integrated Configuration from the raw TOML configuration.
 
@@ -82,7 +101,7 @@ def build_config() -> Configuration:
     Returns:
         Configuration: Configuration object with settings as attributes.
     """
-    return Configuration(read_config(), REGISTRY)
+    return Configuration(get_config(), REGISTRY)
 
 
 class Configuration:

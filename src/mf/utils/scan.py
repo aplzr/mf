@@ -15,7 +15,7 @@ from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
 from ..constants import STATUS_SYMBOLS
 from .cache import get_library_cache_size, load_library_cache
-from .config import read_config
+from .config import get_config
 from .console import console, print_warn
 from .file import FileResult, FileResults, get_fd_binary
 from .misc import validate_search_paths
@@ -186,9 +186,9 @@ def scan_search_paths(
     search_paths = validate_search_paths()
 
     if prefer_fd is None:
-        prefer_fd = read_config()["prefer_fd"]
+        prefer_fd = get_config()["prefer_fd"]
 
-    max_workers = get_max_workers(search_paths, read_config()["parallel_search"])
+    max_workers = get_max_workers(search_paths, get_config()["parallel_search"])
     strategy = get_scan_strategy(cache_stat, prefer_fd, show_progress)
 
     return strategy.scan(search_paths, max_workers)
@@ -449,7 +449,7 @@ class Query(ABC):
 
     def __init__(self):
         """Initialize query."""
-        config = read_config()
+        config = get_config()
         self.cache_library = config["cache_library"]
         self.prefer_fd = config["prefer_fd"]
         self.media_extensions = config["media_extensions"]
@@ -482,7 +482,7 @@ class FindQuery(Query):
         Args:
             pattern (str): Glob pattern to search for (e.g., "*.mp4", "*2023*").
         """
-        if read_config()["auto_wildcards"]:
+        if get_config()["auto_wildcards"]:
             self.pattern = normalize_pattern(pattern)
         else:
             self.pattern = pattern

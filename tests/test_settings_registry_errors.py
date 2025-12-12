@@ -1,7 +1,7 @@
 from typer.testing import CliRunner
 
 from mf.cli_config import app_config
-from mf.utils.config import read_config
+from mf.utils.config import get_config
 
 runner = CliRunner()
 
@@ -23,7 +23,7 @@ def test_scalar_multi_value_error(monkeypatch):
     # Ensure original value not overwritten unpredictably; it should remain whatever
     # single normalization of first value would have been if code proceeded.
     # Config may be unchanged since exit occurred before write.
-    cfg = read_config()
+    cfg = get_config()
     # Value should still be boolean (default) either True/False;
     # we just assert key exists.
     assert "match_extensions" in cfg

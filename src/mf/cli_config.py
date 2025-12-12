@@ -4,7 +4,7 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Column, Table
 
-from .utils.config import get_config_file, read_config, write_config
+from .utils.config import get_config, get_config_file, write_config
 from .utils.console import console, print_and_raise
 from .utils.misc import start_editor
 from .utils.settings import REGISTRY, apply_action
@@ -30,7 +30,7 @@ def list_config():
     console.print(f"Configuration file: {get_config_file()}\n", style="dim")
     console.print(
         Syntax(
-            code=tomlkit.dumps(read_config()),
+            code=tomlkit.dumps(get_config()),
             lexer="toml",
             line_numbers=True,
         )
@@ -41,7 +41,7 @@ def list_config():
 def get(key: str):
     """Get a setting."""
     try:
-        setting = read_config()[key]
+        setting = get_config()[key]
     except tomlkit.exceptions.NonExistentKey as e:
         print_and_raise(
             f"Invalid key: '{key}'. Available keys: "
@@ -55,7 +55,7 @@ def get(key: str):
 @app_config.command()
 def set(key: str, values: list[str]):
     """Set a setting."""
-    cfg = read_config()
+    cfg = get_config()
     cfg = apply_action(cfg, key, "set", values)
     write_config(cfg)
 
@@ -63,7 +63,7 @@ def set(key: str, values: list[str]):
 @app_config.command()
 def add(key: str, values: list[str]):
     """Add value(s) to a list setting."""
-    cfg = read_config()
+    cfg = get_config()
     cfg = apply_action(cfg, key, "add", values)
     write_config(cfg)
 
@@ -71,7 +71,7 @@ def add(key: str, values: list[str]):
 @app_config.command()
 def remove(key: str, values: list[str]):
     """Remove value(s) from a list setting."""
-    cfg = read_config()
+    cfg = get_config()
     cfg = apply_action(cfg, key, "remove", values)
     write_config(cfg)
 
@@ -79,7 +79,7 @@ def remove(key: str, values: list[str]):
 @app_config.command()
 def clear(key: str):
     """Clear a setting."""
-    cfg = read_config()
+    cfg = get_config()
     cfg = apply_action(cfg, key, "clear", None)
     write_config(cfg)
 

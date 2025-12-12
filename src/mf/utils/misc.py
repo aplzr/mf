@@ -9,7 +9,7 @@ import typer
 from guessit import guessit
 from imdbinfo import search_title
 
-from mf.utils.config import read_config
+from mf.utils.config import get_config
 
 from ..constants import FALLBACK_EDITORS_POSIX
 from .console import console, print_and_raise, print_warn
@@ -77,7 +77,7 @@ def validate_search_paths() -> list[Path]:
     Returns:
         list[Path]: List of validated existing search paths.
     """
-    search_paths = read_config()["search_paths"]
+    search_paths = get_config()["search_paths"]
     validated: list[Path] = []
 
     for search_path in search_paths:
