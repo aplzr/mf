@@ -16,7 +16,7 @@ def test_validate_search_paths_mixed_valid_and_invalid(monkeypatch, tmp_path: Pa
 
     # Inject search_paths via config
     monkeypatch.setattr(
-        "mf.utils.misc.read_config",
+        "mf.utils.misc.get_config",
         lambda: {"search_paths": [str(valid1), str(invalid), str(valid2)]},
     )
 
@@ -27,7 +27,7 @@ def test_validate_search_paths_mixed_valid_and_invalid(monkeypatch, tmp_path: Pa
 def test_validate_search_paths_none_raises(monkeypatch):
     # Empty list configured -> should exit via typer.Exit
     monkeypatch.setattr(
-        "mf.utils.misc.read_config",
+        "mf.utils.misc.get_config",
         lambda: {"search_paths": []},
     )
     with pytest.raises(typer.Exit):

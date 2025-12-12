@@ -25,9 +25,9 @@ __all__ = [
 def _rebuild_cache_if_enabled():
     # Helper function with lazy imports to avoid circular import
     from .cache import rebuild_library_cache
-    from .config import read_config
+    from .config import get_config
 
-    if read_config()["cache_library"]:
+    if get_config()["cache_library"]:
         rebuild_library_cache()
 
 

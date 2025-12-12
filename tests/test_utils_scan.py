@@ -17,7 +17,7 @@ from mf.utils.scan import (
     PythonSilentScanStrategy,
     PythonProgressScanStrategy,
 )
-from mf.utils.config import read_config
+from mf.utils.config import get_config
 from concurrent.futures import Future
 
 
@@ -87,7 +87,7 @@ def test__scan_with_progress_bar_no_estimate(tmp_path: Path):
 def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
     # Configure to not use cache and to match extensions
     monkeypatch.setattr(
-        "mf.utils.scan.read_config",
+        "mf.utils.scan.get_config",
         lambda: {
             "cache_library": False,
             "prefer_fd": False,
@@ -114,7 +114,7 @@ def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
 def test_new_query_latest(monkeypatch, tmp_path: Path):
     # No cache; collect mtimes and sort by newest first
     monkeypatch.setattr(
-        "mf.utils.scan.read_config",
+        "mf.utils.scan.get_config",
         lambda: {
             "cache_library": False,
             "prefer_fd": False,
@@ -143,7 +143,7 @@ def test_new_query_latest(monkeypatch, tmp_path: Path):
 def test_find_query_auto_wildcards_setting(monkeypatch):
     """Test FindQuery pattern setting respects auto_wildcards config."""
     # With auto_wildcards=True, pattern should be wrapped
-    monkeypatch.setattr("mf.utils.scan.read_config", lambda: {
+    monkeypatch.setattr("mf.utils.scan.get_config", lambda: {
         "auto_wildcards": True,
         "cache_library": False,
         "prefer_fd": False,
@@ -154,7 +154,7 @@ def test_find_query_auto_wildcards_setting(monkeypatch):
     assert query.pattern == "*batman*"
 
     # With auto_wildcards=False, pattern should stay as-is
-    monkeypatch.setattr("mf.utils.scan.read_config", lambda: {
+    monkeypatch.setattr("mf.utils.scan.get_config", lambda: {
         "auto_wildcards": False,
         "cache_library": False,
         "prefer_fd": False,

@@ -6,7 +6,7 @@ import typer
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
-from .utils.config import read_config
+from .utils.config import get_config
 from .utils.console import console, print_and_raise, print_warn
 from .utils.file import FileResult, FileResults
 from .utils.misc import get_vlc_command, open_imdb_entry
@@ -51,7 +51,7 @@ def find(
 
     save_search_results(query.pattern, results)
     print_search_results(
-        f"Search pattern: {query.pattern}", results, read_config()["display_paths"]
+        f"Search pattern: {query.pattern}", results, get_config()["display_paths"]
     )
 
 
@@ -67,7 +67,7 @@ def new(
         print_and_raise("No media files found (empty collection).")
 
     save_search_results(pattern, newest_files)
-    print_search_results(pattern, newest_files, read_config()["display_paths"])
+    print_search_results(pattern, newest_files, get_config()["display_paths"])
 
 
 @app_mf.command()
@@ -126,7 +126,7 @@ def play(
             console.print("[green]Playing:[/green] Last search results as playlist")
             vlc_args.extend(str(result.file) for result in file_to_play)
 
-        fullscreen_playback = read_config()["fullscreen_playback"]
+        fullscreen_playback = get_config()["fullscreen_playback"]
 
         if fullscreen_playback:
             vlc_args.extend(["--fullscreen", "--no-video-title-show"])

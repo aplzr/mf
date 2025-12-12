@@ -67,7 +67,7 @@ def test_cache_stats_with_minimal_cache(monkeypatch, tmp_path: Path):
         ]
     )
     monkeypatch.setattr("mf.utils.cache.load_library_cache", lambda: dc)
-    monkeypatch.setattr("mf.utils.config.read_config", lambda: {"media_extensions": []})
+    monkeypatch.setattr("mf.utils.config.get_config", lambda: {"media_extensions": []})
     # Ensure resolution parsing returns non-empty to avoid empty histograms
     monkeypatch.setattr(
         "mf.cli_cache.parse_resolutions",
@@ -114,7 +114,7 @@ def test_cache_stats_media_branches(monkeypatch, tmp_path: Path, media_exts):
     )
     monkeypatch.setattr("mf.utils.cache.load_library_cache", lambda: dc)
     monkeypatch.setattr(
-        "mf.utils.config.read_config", lambda: {"media_extensions": media_exts}
+        "mf.utils.config.get_config", lambda: {"media_extensions": media_exts}
     )
     monkeypatch.setattr(
         "mf.cli_cache.parse_resolutions",

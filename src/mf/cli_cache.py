@@ -1,7 +1,7 @@
 import typer
 
 from .utils.cache import load_library_cache, rebuild_library_cache
-from .utils.config import read_config
+from .utils.config import get_config
 from .utils.console import console, print_ok
 from .utils.file import get_library_cache_file
 from .utils.misc import format_size
@@ -34,7 +34,7 @@ def clear():
 def stats():
     """Show cache statistics."""
     cache = load_library_cache()
-    media_extensions = read_config()["media_extensions"]
+    media_extensions = get_config()["media_extensions"]
 
     if media_extensions:
         media_cache = cache.copy()

@@ -6,7 +6,7 @@ from mf.utils.scan import scan_search_paths
 def test_scan_search_paths_progress_no_estimate(monkeypatch, tmp_path: Path):
     # Ensure progress branch without estimate
     monkeypatch.setattr(
-        "mf.utils.scan.read_config",
+        "mf.utils.scan.get_config",
         lambda: {
             "prefer_fd": False,
             "cache_stat": False,

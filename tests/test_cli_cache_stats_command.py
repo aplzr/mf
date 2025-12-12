@@ -36,7 +36,7 @@ def test_cli_cache_stats_invokes_histograms(monkeypatch, tmp_path):
 
     monkeypatch.setattr(cli_cache, "load_library_cache", lambda: fake_cache)
     monkeypatch.setattr(
-        cli_cache, "read_config", lambda: {"media_extensions": [".mp4", ".mkv"]}
+        cli_cache, "get_config", lambda: {"media_extensions": [".mp4", ".mkv"]}
     )
 
     # Stub dependent functions to no-op while tracking calls

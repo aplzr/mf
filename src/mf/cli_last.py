@@ -1,6 +1,6 @@
 import typer
 
-from .utils.config import read_config
+from .utils.config import get_config
 from .utils.console import console, print_ok
 from .utils.file import (
     get_search_cache_file,
@@ -26,7 +26,7 @@ def show():
     if "latest additions" not in pattern:
         pattern = f"Search pattern: {pattern}"
 
-    print_search_results(pattern, results, read_config()["display_paths"])
+    print_search_results(pattern, results, get_config()["display_paths"])
 
 
 @app_last.command()

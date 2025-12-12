@@ -11,7 +11,7 @@ def test_validate_search_paths_mixed(monkeypatch, tmp_path: Path):
     existing.mkdir()
 
     monkeypatch.setattr(
-        "mf.utils.misc.read_config",
+        "mf.utils.misc.get_config",
         lambda: {
             "search_paths": [existing.as_posix(), (tmp_path / "missing").as_posix()]
         },
@@ -23,7 +23,7 @@ def test_validate_search_paths_mixed(monkeypatch, tmp_path: Path):
 
 def test_validate_search_paths_none(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(
-        "mf.utils.misc.read_config",
+        "mf.utils.misc.get_config",
         lambda: {"search_paths": [(tmp_path / "missing").as_posix()]},
     )
 
