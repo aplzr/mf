@@ -71,7 +71,7 @@ def _read_config() -> TOMLDocument:
         return cfg
 
     # Migrate missing settings silently
-    cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     if modified:
         write_config(cfg)
@@ -226,15 +226,15 @@ def write_default_config() -> TOMLDocument:
     return default_cfg
 
 
-def migrate_config(cfg: TOMLDocument) -> tuple[TOMLDocument, bool]:
+def migrate_config(cfg: TOMLDocument) -> bool:
     """Migrate configuration by updating settings and adding missing settings from the
-    registry.
+    registry (in-place).
 
     Args:
         cfg (TOMLDocument): Configuration to migrate.
 
     Returns:
-        tuple[TOMLDocument, bool]: Tuple of (migrated config, was modified).
+        bool: True if configuration was modified in-place, false otherwise.
     """
     modified = False
 
@@ -266,4 +266,4 @@ def migrate_config(cfg: TOMLDocument) -> tuple[TOMLDocument, bool]:
 
         modified = True
 
-    return cfg, modified
+    return modified

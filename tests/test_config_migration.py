@@ -28,12 +28,12 @@ def test_migrate_config_adds_missing_settings(isolated_config):
     cfg["search_paths"] = ["/test/path"]
 
     # Migrate
-    migrated_cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     # Assert all REGISTRY settings present
     assert modified
     for setting in REGISTRY:
-        assert setting in migrated_cfg
+        assert setting in cfg
 
 
 def test_migrate_config_preserves_existing_settings(isolated_config):
@@ -45,12 +45,12 @@ def test_migrate_config_preserves_existing_settings(isolated_config):
     cfg["match_extensions"] = False
 
     # Migrate
-    migrated_cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     # Assert existing settings preserved
-    assert migrated_cfg["search_paths"] == ["/custom/path"]
-    assert migrated_cfg["media_extensions"] == [".mkv", ".avi"]
-    assert migrated_cfg["match_extensions"] is False
+    assert cfg["search_paths"] == ["/custom/path"]
+    assert cfg["media_extensions"] == [".mkv", ".avi"]
+    assert cfg["match_extensions"] is False
 
 
 def test_migrate_config_no_changes_when_complete(isolated_config):
@@ -61,7 +61,7 @@ def test_migrate_config_no_changes_when_complete(isolated_config):
         add_default_setting(cfg, setting)
 
     # Migrate
-    migrated_cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     # Assert no modification
     assert not modified
@@ -73,12 +73,12 @@ def test_migrate_config_empty_config(isolated_config):
     cfg = document()
 
     # Migrate
-    migrated_cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     # Assert all REGISTRY settings added
     assert modified
     for setting in REGISTRY:
-        assert setting in migrated_cfg
+        assert setting in cfg
 
 
 def test_migrate_config_adds_comments(isolated_config):
@@ -89,13 +89,13 @@ def test_migrate_config_adds_comments(isolated_config):
         cfg[setting] = REGISTRY[setting].default
 
     # Migrate
-    migrated_cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     # Assert modified
     assert modified
 
     # Convert to string and check for help text
-    cfg_str = tomlkit.dumps(migrated_cfg)
+    cfg_str = tomlkit.dumps(cfg)
     last_setting = list(REGISTRY.keys())[-1]
     help_text = REGISTRY[last_setting].help
 
@@ -116,14 +116,14 @@ def test_migrate_config_preserves_formatting(isolated_config):
     original_lines = tomlkit.dumps(cfg).splitlines()[:3]
 
     # Migrate
-    migrated_cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     # Verify modification
     assert modified
 
     # Verify original content preserved
-    migrated_lines = tomlkit.dumps(migrated_cfg).splitlines()
-    assert "# My custom comment" in tomlkit.dumps(migrated_cfg)
+    migrated_lines = tomlkit.dumps(cfg).splitlines()
+    assert "# My custom comment" in tomlkit.dumps(cfg)
     assert migrated_lines[:3] == original_lines
 
 
@@ -134,11 +134,11 @@ def test_migrate_config_idempotent(isolated_config):
     cfg["search_paths"] = []
 
     # First migration
-    cfg, modified1 = migrate_config(cfg)
+    modified1 = migrate_config(cfg)
     assert modified1
 
     # Second migration
-    cfg, modified2 = migrate_config(cfg)
+    modified2 = migrate_config(cfg)
     assert not modified2
 
 
@@ -154,11 +154,11 @@ def test_migrate_config_library_cache_interval_old_format(isolated_config):
     cfg["library_cache_interval"] = "1d"  # Old format: "<number><unit>"
 
     # Migrate
-    migrated_cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     # Assert migration occurred
     assert modified
-    assert migrated_cfg["library_cache_interval"] == 86400  # 1 day in seconds
+    assert cfg["library_cache_interval"] == 86400  # 1 day in seconds
 
 
 def test_migrate_config_library_cache_interval_new_format(isolated_config):
@@ -171,11 +171,11 @@ def test_migrate_config_library_cache_interval_new_format(isolated_config):
     cfg["library_cache_interval"] = 3600  # Already in new format (int)
 
     # Migrate
-    migrated_cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     # Assert no modification (all settings present, value already correct)
     assert not modified
-    assert migrated_cfg["library_cache_interval"] == 3600
+    assert cfg["library_cache_interval"] == 3600
 
 
 def test_migrate_config_library_cache_interval_invalid_format(isolated_config):
@@ -189,10 +189,10 @@ def test_migrate_config_library_cache_interval_invalid_format(isolated_config):
     cfg["library_cache_interval"] = "invalid"  # Invalid format
 
     # Migrate (should not crash, should suppress ValueError)
-    migrated_cfg, modified = migrate_config(cfg)
+    modified = migrate_config(cfg)
 
     # Assert value unchanged (migration failed silently)
-    assert migrated_cfg["library_cache_interval"] == "invalid"
+    assert cfg["library_cache_interval"] == "invalid"
 
 
 # --- Integration tests for _read_config() ---
