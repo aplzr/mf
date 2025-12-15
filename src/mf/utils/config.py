@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import os
+from contextlib import suppress
 from pathlib import Path
 from textwrap import wrap
 from typing import Any
 
 import tomlkit
 from tomlkit import TOMLDocument, comment, document, nl
+from tomlkit.exceptions import ParseError, TOMLKitError
 
 from .console import print_ok, print_warn
 from .file import open_utf8
 from .normalizers import normalize_media_extension
+from .parsers import parse_timedelta_str
 from .settings import REGISTRY, SettingSpec
 
 __all__ = [
@@ -54,6 +57,24 @@ def _read_config() -> TOMLDocument:
             "Configuration file doesn't exist, creating it with default settings."
         )
         cfg = write_default_config()
+        return cfg
+    except (TOMLKitError, ParseError):
+        # Configuration file is corrupted, back up and write default configuration.
+        config_file = get_config_file()
+        backup_path = config_file.with_suffix(".toml.backup")
+        print_warn(
+            f"Configuration file is corrupted, backing up to '{backup_path}' "
+            "and writing default configuration."
+        )
+        config_file.rename(backup_path)
+        cfg = write_default_config()
+        return cfg
+
+    # Migrate missing settings silently
+    cfg, modified = migrate_config(cfg)
+
+    if modified:
+        write_config(cfg)
 
     return cfg
 
@@ -61,8 +82,8 @@ def _read_config() -> TOMLDocument:
 def get_config() -> TOMLDocument:
     """Get the raw configuration.
 
-    Falls back to creating a default configuration when the file is missing.
-
+    Migrates the loaded configuration by adding missing keys with default values if
+    necessary. Falls back to creating a default configuration when the file is missing.
     Caches the configuration on first read from disk and returns the cached instance on
     subsequent calls to avoid unnecessary disk reads.
 
@@ -150,6 +171,22 @@ class Configuration:
         setattr(self, key, value)
 
 
+def add_default_setting(cfg: TOMLDocument, key: str):
+    """Add setting with default value to the configuration (in-place).
+
+    Args:
+        cfg (TOMLDocument): mediafinder configuration.
+        key (str): Setting name as defined in the registry.
+    """
+    spec = REGISTRY[key]
+
+    for line in wrap(spec.help, width=80):
+        cfg.add(comment(line))
+
+    cfg.add(key, spec.default)
+    cfg.add(nl())
+
+
 def get_default_cfg() -> TOMLDocument:
     """Get the default configuration.
 
@@ -160,12 +197,8 @@ def get_default_cfg() -> TOMLDocument:
     """
     default_cfg = document()
 
-    for setting, spec in REGISTRY.items():
-        for line in wrap(spec.help, width=80):
-            default_cfg.add(comment(line))
-
-        default_cfg.add(setting, spec.default)
-        default_cfg.add(nl())
+    for setting in REGISTRY:
+        add_default_setting(default_cfg, setting)
 
     return default_cfg
 
@@ -191,3 +224,46 @@ def write_default_config() -> TOMLDocument:
     print_ok(f"Written default configuration to '{get_config_file()}'.")
 
     return default_cfg
+
+
+def migrate_config(cfg: TOMLDocument) -> tuple[TOMLDocument, bool]:
+    """Migrate configuration by updating settings and adding missing settings from the
+    registry.
+
+    Args:
+        cfg (TOMLDocument): Configuration to migrate.
+
+    Returns:
+        tuple[TOMLDocument, bool]: Tuple of (migrated config, was modified).
+    """
+    modified = False
+
+    # Before it got simplified to a value in seconds, the library_cache_interval setting
+    # was of the format "<number><unit>", with unit one of s, m, h, d, w. Migrate to new
+    # format if necessary.
+    key_interval = "library_cache_interval"
+
+    if key_interval in cfg:
+        interval_value = cfg[key_interval]
+
+        if isinstance(interval_value, str):
+            with suppress(AttributeError, ValueError):
+                # Convert from old to new format
+                interval_s = int(parse_timedelta_str(interval_value).total_seconds())
+
+                # Update with old value converted to new format (this will not update
+                # the help text comment)
+                cfg[key_interval] = interval_s
+
+                modified = True
+
+    # Add missing settings with default values.
+    missing_settings = set(REGISTRY.keys()) - set(cfg.keys())
+
+    if missing_settings:
+        for missing_setting in missing_settings:
+            add_default_setting(cfg, missing_setting)
+
+        modified = True
+
+    return cfg, modified
