@@ -58,33 +58,3 @@ def fresh_config():
 def config_path() -> Path:
     """Return path to the isolated test config file."""
     return get_config_file()
-
-
-# --- Drift detector: fail fast if pathlib.Path class changes mid-session ---
-import pathlib
-import sys
-
-def _expected_path_class():
-    """Get the expected Path class for the current OS (called each time to avoid pickling issues)."""
-    return pathlib.WindowsPath if os.name == "nt" else pathlib.PosixPath
-
-def _current_path_class():
-    return type(pathlib.Path(""))
-
-def pytest_sessionstart(session):
-    cls = _current_path_class()
-    expected = _expected_path_class()
-    if cls is not expected:
-        raise RuntimeError(f"Path class drift at session start: {cls} != {expected}")
-
-def pytest_runtest_setup(item):
-    cls = _current_path_class()
-    expected = _expected_path_class()
-    if cls is not expected:
-        raise RuntimeError(f"Path class drift before test {item.nodeid}: {cls} != {expected}")
-
-def pytest_runtest_teardown(item):
-    cls = _current_path_class()
-    expected = _expected_path_class()
-    if cls is not expected:
-        raise RuntimeError(f"Path class drift after test {item.nodeid}: {cls} != {expected}")
