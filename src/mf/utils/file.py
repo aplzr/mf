@@ -69,9 +69,9 @@ def get_library_cache_file() -> Path:
     """Return path to the library cache file.
 
     Returns:
-        Path: Location of the JSON library cache file.
+        Path: Location of the pickle library cache file.
     """
-    return get_cache_dir() / "library.json"
+    return get_cache_dir() / "library.pkl"
 
 
 def get_fd_binary() -> Path:

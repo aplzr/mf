@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from .config import get_config
 from .console import print_and_raise, print_warn
-
-if TYPE_CHECKING:
-    from .cache import CacheData
 
 
 def validate_search_paths() -> list[Path]:
@@ -37,17 +33,3 @@ def validate_search_paths() -> list[Path]:
         )
 
     return validated
-
-
-def validate_cache_structure(data: dict) -> CacheData:
-    """Validate that cache has the required structure."""
-    if not isinstance(data, dict):
-        raise ValueError("Cache must be a dictionary.")
-
-    if "timestamp" not in data or "files" not in data:
-        raise ValueError("Cache missing required keys.")
-
-    if not isinstance(data["files"], list):
-        raise ValueError("Cache 'files' must be a list.")
-
-    return data

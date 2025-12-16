@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-import json
+import pickle
+from contextlib import suppress
 from datetime import datetime, timedelta
+from pickle import UnpicklingError
 from typing import TypedDict
 
 from .config import build_config
 from .console import print_info, print_ok, print_warn
-from .file import FileResults, get_library_cache_file, open_utf8
-from .validation import validate_cache_structure
+from .file import FileResults, get_cache_dir, get_library_cache_file
+
+PICKLE_PROTOCOL = 5
 
 StatList = tuple[
     int,  # st_mode
@@ -72,6 +75,7 @@ def rebuild_library_cache() -> FileResults:
     from .scan import scan_search_paths
 
     print_info("Rebuilding cache.")
+    remove_old_json_cache()
     results = scan_search_paths(cache_stat=True, show_progress=True)
     results.sort(by_mtime=True)
     cache_data = {
@@ -79,8 +83,8 @@ def rebuild_library_cache() -> FileResults:
         "files": [(result.file.as_posix(), tuple(result.stat)) for result in results],
     }
 
-    with open_utf8(get_library_cache_file(), "w") as f:
-        json.dump(cache_data, f, indent=2)
+    with open(get_library_cache_file(), "wb") as f:
+        pickle.dump(cache_data, f, protocol=PICKLE_PROTOCOL)
 
     print_ok("Cache rebuilt.")
     return results
@@ -99,11 +103,11 @@ def _load_library_cache(allow_rebuild=True) -> FileResults:
         FileResults: Cached file paths.
     """
     try:
-        with open_utf8(get_library_cache_file()) as f:
-            cache_data: CacheData = validate_cache_structure(json.load(f))
+        with open(get_library_cache_file(), "rb") as f:
+            cache_data: CacheData = pickle.load(f)
 
         results = FileResults.from_cache(cache_data)
-    except (json.JSONDecodeError, KeyError):
+    except (UnpicklingError, EOFError, OSError):
         print_warn("Cache corrupted.")
 
         results = rebuild_library_cache() if allow_rebuild else []
@@ -159,3 +163,13 @@ def get_library_cache_size() -> int | None:
         if get_library_cache_file().exists()
         else None
     )
+
+
+def remove_old_json_cache():
+    """Deletes the old JSON cache if it exists."""
+    json_cache = get_cache_dir() / "library.json"
+
+    if json_cache.exists():
+        with suppress(OSError):
+            json_cache.unlink()
+            print_info("Removed old JSON cache.")
