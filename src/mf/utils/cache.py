@@ -4,6 +4,7 @@ import pickle
 from contextlib import suppress
 from datetime import datetime, timedelta
 from pickle import UnpicklingError
+from pprint import pprint
 from typing import TypedDict
 
 from .config import build_config
@@ -173,3 +174,9 @@ def remove_old_json_cache():
         with suppress(OSError):
             json_cache.unlink()
             print_info("Removed old JSON cache.")
+
+
+def print_cache():
+    """Print library cache contents for debugging purposes."""
+    with open(get_library_cache_file(), "rb") as f:
+        pprint(pickle.load(f), compact=True)
