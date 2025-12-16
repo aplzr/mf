@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 from ..constants import BOOLEAN_FALSE_VALUES, BOOLEAN_TRUE_VALUES

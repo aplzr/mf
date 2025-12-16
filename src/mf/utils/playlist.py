@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 
 from .console import print_and_raise

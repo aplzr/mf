@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typer
 
 from .utils.cache import load_library_cache, rebuild_library_cache

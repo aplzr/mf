@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import tomlkit
 import typer
 from rich.panel import Panel
