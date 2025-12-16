@@ -1,14 +1,16 @@
 import json
 import os
+import pickle
 from datetime import datetime
 from pathlib import Path
 
 import pytest
 
-from mf.utils.cache import load_library_cache
+from mf.utils.cache import PICKLE_PROTOCOL, load_library_cache
 from mf.utils.config import get_config, write_config
 from mf.utils.file import (
     FileResult,
+    get_cache_dir,
     get_library_cache_file,
 )
 from mf.utils.scan import FindQuery, NewQuery, scan_search_paths
@@ -67,10 +69,10 @@ def test_library_cache_no_expiry_zero_interval(isolated_media_dir):
 
 
 def test_library_cache_corruption_rebuild(isolated_media_dir, capsys):
-    # Write corrupt library.json then call load_library_cache; should warn and rebuild.
+    # Write corrupt pickle then call load_library_cache; should warn and rebuild.
     create_files(isolated_media_dir, ["d1.mkv"])  # seed directory
     cache_file = get_library_cache_file()
-    cache_file.write_text("{ invalid json")
+    cache_file.write_bytes(b"invalid pickle data")
     results = load_library_cache()
     captured = capsys.readouterr()
     assert "Cache corrupted" in captured.out
@@ -118,7 +120,8 @@ def test_new_query_cache_enabled(monkeypatch, isolated_media_dir):
         "files": [(file_path.as_posix(), stat_info)],
     }
     cache_file.parent.mkdir(parents=True, exist_ok=True)
-    cache_file.write_text(json.dumps(cache_data))
+    with open(cache_file, "wb") as f:
+        pickle.dump(cache_data, f, protocol=PICKLE_PROTOCOL)
 
     # Monkeypatch scan_search_paths to raise if called (we expect cached path).
     monkeypatch.setattr(
@@ -145,7 +148,8 @@ def test_find_query_cache_enabled(monkeypatch, isolated_media_dir):
         ],
     }
     cache_file.parent.mkdir(parents=True, exist_ok=True)
-    cache_file.write_text(json.dumps(cache_data))
+    with open(cache_file, "wb") as f:
+        pickle.dump(cache_data, f, protocol=PICKLE_PROTOCOL)
     monkeypatch.setattr(
         "mf.utils.scan.scan_search_paths",
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("should not scan")),
@@ -153,3 +157,39 @@ def test_find_query_cache_enabled(monkeypatch, isolated_media_dir):
     results = FindQuery("*.mkv").execute()
     # Only the .mkv file should remain after filtering
     assert [r.file.name for r in results] == ["find1.mkv"]
+
+
+def test_library_cache_json_removal_and_rebuild(isolated_media_dir, capsys):
+    """Test automatic removal of old JSON cache and rebuild in pickle format."""
+    # Create old JSON cache with dummy data
+    create_files(isolated_media_dir, ["migrate_test.mkv"])
+    json_cache = get_cache_dir() / "library.json"
+    json_cache.parent.mkdir(parents=True, exist_ok=True)
+
+    cache_data = {
+        "timestamp": datetime.now().isoformat(),
+        "files": [("fake_path.mkv", [0] * 10)],
+    }
+    with open(json_cache, "w", encoding="utf-8") as f:
+        json.dump(cache_data, f)
+
+    # Verify JSON exists, pickle doesn't
+    assert json_cache.exists()
+    assert not get_library_cache_file().exists()
+
+    # Load cache - should delete JSON and rebuild with pickle
+    results = load_library_cache()
+    captured = capsys.readouterr()
+
+    # Verify old cache removed and new one built
+    assert "Removed old JSON cache" in captured.out
+    assert not json_cache.exists()  # JSON removed
+    assert get_library_cache_file().exists()  # Pickle created
+    # Should have real file from rebuild, not fake_path from old JSON
+    assert any(r.file.name == "migrate_test.mkv" for r in results)
+
+    # Verify pickle format is valid
+    with open(get_library_cache_file(), "rb") as f:
+        loaded_data = pickle.load(f)
+    assert "timestamp" in loaded_data
+    assert "files" in loaded_data

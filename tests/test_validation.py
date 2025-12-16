@@ -1,6 +1,6 @@
 from pathlib import Path
 from mf.utils.config import get_config, write_config
-from mf.utils.validation import validate_search_paths, validate_cache_structure
+from mf.utils.validation import validate_search_paths
 
 import pytest
 import typer
@@ -73,16 +73,3 @@ def test_validate_search_paths_mixed_valid_and_invalid(monkeypatch, tmp_path: Pa
 
     validated = validate_search_paths()
     assert validated == [valid1, valid2]
-
-def test_validate_cache_structure():
-    with pytest.raises(ValueError):
-        validate_cache_structure(1)
-
-    with pytest.raises(ValueError):
-        validate_cache_structure({"timestamp": ...})
-
-    with pytest.raises(ValueError):
-        validate_cache_structure({"files": ...})
-
-    with pytest.raises(ValueError):
-        validate_cache_structure({"timestamp": ..., "files": ...})
