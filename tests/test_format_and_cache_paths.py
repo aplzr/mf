@@ -13,6 +13,6 @@ def test_format_size_thresholds():
 def test_library_cache_file_isolated_env(isolated_config):
     cache_dir = get_cache_dir()
     path = get_library_cache_file()
-    assert path.name == "library.json"
+    assert path.name == "library.pkl"
     assert path.parent == cache_dir
     assert cache_dir.exists()
