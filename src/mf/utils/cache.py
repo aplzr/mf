@@ -39,22 +39,22 @@ class CacheData(TypedDict):
 
     Attributes:
         timestamp: ISO format timestamp of when the cache was last rebuilt
-        files: List of [file_path, stat_list] pairs where:
+        files: List of (file_path, stat_list) pairs where:
 
             - file_path: Absolute POSIX path to the media file
-            - stat_list: os.stat_result as 10-element list containing
+            - stat_list: os.stat_result as 10-element tuple containing
 
-              [st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid,
-               st_size, st_atime, st_mtime, st_ctime]
+              (st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid,
+               st_size, st_atime, st_mtime, st_ctime)
 
     Example:
         {
             "timestamp": "2025-01-02T10:30:00.123456",
             "files": [
-                [
+                (
                  "/path/to/movie.mkv",
-                 [33206, 0, 0, 0, 0, 0, 1234567890, 1640995200, 1640995200, 1640995200]
-                ],
+                 (33206, 0, 0, 0, 0, 0, 1234567890, 1640995200, 1640995200, 1640995200)
+                ),
                 ...
             ]
         }
