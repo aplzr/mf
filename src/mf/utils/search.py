@@ -76,14 +76,14 @@ def save_search_results(pattern: str, results: FileResults) -> None:
         json.dump(cache_data, f, indent=2)
 
 
-def load_search_results() -> tuple[str, FileResults, datetime]:
+def load_search_results() -> tuple[FileResults, str, datetime]:
     """Load cached search results.
 
     Raises:
         typer.Exit: If cache is missing or invalid.
 
     Returns:
-        tuple[str, FileResults, datetime]: Pattern, results, timestamp.
+        tuple[FileResults, str, datetime]: Results, pattern, timestamp.
     """
     cache_file = get_search_cache_file()
     try:
@@ -94,7 +94,7 @@ def load_search_results() -> tuple[str, FileResults, datetime]:
         results = FileResults.from_paths(cache_data["results"])
         timestamp = datetime.fromisoformat(cache_data["timestamp"])
 
-        return pattern, results, timestamp
+        return results, pattern, timestamp
     except (json.JSONDecodeError, KeyError, FileNotFoundError) as e:
         print_and_raise(
             "Cache is empty or doesn't exist. "
@@ -115,7 +115,7 @@ def get_result_by_index(index: int) -> FileResult:
     Returns:
         FileResult: File for the given index.
     """
-    pattern, results, _ = load_search_results()
+    results, pattern, _ = load_search_results()
 
     try:
         result = results[index - 1]

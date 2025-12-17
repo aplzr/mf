@@ -23,7 +23,7 @@ def test_save_and_load_cache(tmp_path, monkeypatch):
     results = FileResults.from_paths(relative_paths)
     save_search_results("*movie*", results)
 
-    pattern, loaded_results, timestamp = load_search_results()
+    loaded_results, pattern, timestamp = load_search_results()
     assert pattern == "*movie*"
 
     for expected, actual in zip(relative_paths, loaded_results):

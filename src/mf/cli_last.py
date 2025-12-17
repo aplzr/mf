@@ -4,9 +4,7 @@ import typer
 
 from .utils.config import get_config
 from .utils.console import console, print_ok
-from .utils.file import (
-    get_search_cache_file,
-)
+from .utils.file import get_search_cache_file
 from .utils.search import load_search_results, print_search_results
 
 app_last = typer.Typer(
@@ -20,7 +18,7 @@ app_last = typer.Typer(
 @app_last.command()
 def show():
     """Print last search results."""
-    pattern, results, timestamp = load_search_results()
+    results, pattern, timestamp = load_search_results()
     console.print(f"[yellow]Cache file:[/yellow] {get_search_cache_file()}")
     console.print(f"[yellow]Timestamp:[/yellow] [grey70]{str(timestamp)}[/grey70]")
     console.print("[yellow]Cached results:[/yellow]")
