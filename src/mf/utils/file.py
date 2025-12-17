@@ -242,7 +242,7 @@ class FileResults(UserList[FileResult]):
             if fnmatch(result.file.name.lower(), pattern.lower())
         ]
 
-    def sort(self, *, by_mtime: bool = False, reverse: bool = False):
+    def sort(self, *, by_mtime: bool = False, reverse: bool = False):  # type: ignore[override]
         """Sort collection in-place by file path or modification time.
 
         Args:
