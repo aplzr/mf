@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import NoReturn
+
 import typer
 from rich.console import Console
 
@@ -35,7 +37,7 @@ def print_warn(msg: str):
     console.print(f"{STATUS_SYMBOLS['warn']}  {msg}", style="yellow")
 
 
-def print_and_raise(msg: str, raise_from: Exception | None = None):
+def print_and_raise(msg: str, raise_from: Exception | None = None) -> NoReturn:
     """Print error message and exit with status 1.
 
     Args:
