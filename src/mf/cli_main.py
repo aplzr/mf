@@ -89,7 +89,7 @@ def play(
             file_to_play = get_next()
             save_last_played(file_to_play)
         elif target.lower() == "list":
-            _, file_to_play, _ = load_search_results()
+            file_to_play, _, _ = load_search_results()
         else:
             # Play requested file
             try:
