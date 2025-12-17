@@ -99,7 +99,7 @@ def get_fd_binary() -> Path:
     if not binary_name:
         raise RuntimeError(f"Unsupported platform: {system}-{machine}")
 
-    bin_path = files("mf").joinpath("bin", binary_name)
+    bin_path = files("mf").joinpath("bin").joinpath(binary_name)
     bin_path = Path(str(bin_path))
 
     if system in ("linux", "darwin"):
