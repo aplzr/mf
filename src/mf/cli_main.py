@@ -84,6 +84,8 @@ def play(
     ),
 ):
     """Play a media file by its index."""
+    file_to_play: FileResult | FileResults  # Single file vs playlist
+
     if target:
         if target.lower() == "next":
             file_to_play = get_next()
