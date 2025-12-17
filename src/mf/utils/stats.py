@@ -4,7 +4,6 @@ import math
 from bisect import bisect_left
 from collections import Counter
 from collections.abc import Callable
-from numbers import Number
 from typing import Any, TypeAlias
 
 from rich.panel import Panel
@@ -180,7 +179,7 @@ def get_string_counts(values: list[str]) -> list[tuple[str, int]]:
 
 
 def get_log_histogram(
-    values: list[Number], bins_per_decade: int = 4
+    values: list[float], bins_per_decade: int = 4
 ) -> tuple[list[float], list[float]]:
     """Create a logarithmic histogram of numeric values.
 
@@ -189,7 +188,7 @@ def get_log_histogram(
     sizes or response times.
 
     Args:
-        values (list[Number]): List of numeric values to bin. Must be non-empty.
+        values (list[float]): List of numeric values to bin. Must be non-empty.
         bins_per_decade (int, optional): Number of bins per 10x range. Defaults to 4.
             Higher values create finer granularity.
 
