@@ -140,7 +140,7 @@ def group_values_by_bins(
     Returns:
         list[list[float]]: (len(bin_edges) - 1,) list of bins with their values.
     """
-    bins = [[] for _ in range(len(bin_edges) - 1)]
+    bins: list[list[float]] = [[] for _ in range(len(bin_edges) - 1)]
 
     for value in values:
         bin_idx = bisect_left(bin_edges, value)
