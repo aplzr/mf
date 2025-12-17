@@ -93,7 +93,7 @@ class PythonSilentScanStrategy(PythonScanStrategy):
 class PythonProgressScanStrategy(PythonScanStrategy):
     """Uses the python scanner with a live progress bar."""
 
-    def scan(self, search_paths: list[Path], max_workers: int):
+    def scan(self, search_paths: list[Path], max_workers: int) -> FileResults:
         """Scan using the python scanner with a live progress bar."""
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Get estimated total from cache
@@ -200,7 +200,7 @@ def _scan_with_progress_bar(
     futures: list[Future],
     estimated_total: int | None,
     progress_counter: ProgressCounter,
-) -> FileResults:
+) -> list[FileResults]:
     """Handle progress bar display while futures complete.
 
     Shows a spinner until first file is found, then displays a progress bar
@@ -218,11 +218,11 @@ def _scan_with_progress_bar(
             are discovered.
 
     Returns:
-        FileResults: Combined results from all completed futures.
+        list[FileResults]: FileResults from all futures / search paths.
     """
     polling_interval = 0.1  # [s]
     update_threshold_divisor = 20  # Progress bar is updated this many times
-    path_results = FileResults()
+    path_results: list[FileResults] = []  # Results accumulator for all search paths
     remaining_futures = futures.copy()
     first_file_found = False
 
@@ -301,13 +301,13 @@ def _scan_with_progress_bar(
 
 
 def _process_completed_futures(
-    futures: list[Future], results: FileResults
+    futures: list[Future], results: list[FileResults]
 ) -> list[Future]:
     """Processes completed futures and adds them to the results accumulator.
 
     Args:
         futures (list[Future]): List of futures, some of which may be completed.
-        results (FileResults): Accumulator for completed future results (modified
+        results (list[FileResults]): Accumulator for completed future results (modified
             in-place).
 
     Returns:
@@ -317,7 +317,8 @@ def _process_completed_futures(
 
     for future in futures:
         if future.done():
-            results.append(future.result())
+            results.append(future.result())  # FileResults of one search path
+
         else:
             remaining_futures.append(future)
 
