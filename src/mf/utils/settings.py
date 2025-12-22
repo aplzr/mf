@@ -226,6 +226,9 @@ def apply_action(
         print_ok(f"Cleared {key}.")
         return cfg
 
+    if action is None:
+        print_and_raise(f"Action '{action}' requires values for '{key}'.")
+
     normalized_values = [spec.normalize(value) for value in raw_values]
 
     if action == "set":
