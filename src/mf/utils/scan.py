@@ -188,10 +188,10 @@ def scan_search_paths(
     search_paths = validate_search_paths()
 
     if prefer_fd is None:
-        prefer_fd = get_config()["prefer_fd"]
+        prefer_fd = get_config()["prefer_fd"]  # type: ignore [assignment]
 
-    max_workers = get_max_workers(search_paths, get_config()["parallel_search"])
-    strategy = get_scan_strategy(cache_stat, prefer_fd, show_progress)
+    max_workers = get_max_workers(search_paths, get_config()["parallel_search"])  # type: ignore [arg-type]
+    strategy = get_scan_strategy(cache_stat, prefer_fd, show_progress)  # type: ignore [arg-type]
 
     return strategy.scan(search_paths, max_workers)
 

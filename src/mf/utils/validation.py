@@ -18,7 +18,7 @@ def validate_search_paths() -> list[Path]:
     search_paths = get_config()["search_paths"]
     validated: list[Path] = []
 
-    for search_path in search_paths:
+    for search_path in search_paths:  # type: ignore [union-attr]
         p = Path(search_path)
 
         if not p.exists():

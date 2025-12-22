@@ -46,15 +46,14 @@ def find(
     # Find, cache, and print media file paths
     query = FindQuery(pattern)
     results = query.execute()
+    display_paths: bool = get_config()["display_paths"]  # type: ignore [assignment]
 
     if not results:
         print_warn(f"No media files found matching '{query.pattern}'")
         raise typer.Exit(0)
 
     save_search_results(query.pattern, results)
-    print_search_results(
-        f"Search pattern: {query.pattern}", results, get_config()["display_paths"]
-    )
+    print_search_results(f"Search pattern: {query.pattern}", results, display_paths)
 
 
 @app_mf.command()
@@ -64,12 +63,13 @@ def new(
     """Find the latest additions to the media database."""
     newest_files = NewQuery(n).execute()
     pattern = f"{n} latest additions"
+    display_paths: bool = get_config()["display_paths"]  # type: ignore [assignment]
 
     if not newest_files:
         print_and_raise("No media files found (empty collection).")
 
     save_search_results(pattern, newest_files)
-    print_search_results(pattern, newest_files, get_config()["display_paths"])
+    print_search_results(pattern, newest_files, display_paths)
 
 
 @app_mf.command()
