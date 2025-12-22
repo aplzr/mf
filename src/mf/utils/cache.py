@@ -81,7 +81,10 @@ def rebuild_library_cache() -> FileResults:
     results.sort(by_mtime=True)
     cache_data = {
         "timestamp": datetime.now().isoformat(),
-        "files": [(result.file.as_posix(), tuple(result.stat)) for result in results],
+        "files": [
+            (result.file.as_posix(), tuple(result.stat) if result.stat else None)
+            for result in results
+        ],
     }
 
     with open(get_library_cache_file(), "wb") as f:
@@ -94,8 +97,6 @@ def rebuild_library_cache() -> FileResults:
 def _load_library_cache(allow_rebuild=True) -> FileResults:
     """Load cached library metadata. Rebuilds the cache if it is corrupted and
     rebuilding is allowed.
-
-    Returns [] if cache is corrupted and rebuilding is not allowed.
 
     Args:
         allow_rebuild (bool, optional): Allow cache rebuilding. Defaults to True.
@@ -111,7 +112,7 @@ def _load_library_cache(allow_rebuild=True) -> FileResults:
     except (UnpicklingError, EOFError, OSError):
         print_warn("Cache corrupted.")
 
-        results = rebuild_library_cache() if allow_rebuild else []
+        results = rebuild_library_cache() if allow_rebuild else FileResults()
 
     return results
 

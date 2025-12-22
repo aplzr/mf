@@ -222,29 +222,32 @@ def apply_action(
 
     # List setting
     if action == "clear":
-        cfg[key].clear()
+        cfg[key].clear()  # type: ignore [union-attr]
         print_ok(f"Cleared {key}.")
         return cfg
+
+    if raw_values is None:
+        print_and_raise(f"Action '{action}' requires values for '{key}'.")
 
     normalized_values = [spec.normalize(value) for value in raw_values]
 
     if action == "set":
-        cfg[key].clear()
-        cfg[key].extend(normalized_values)
+        cfg[key].clear()  # type: ignore [union-attr]
+        cfg[key].extend(normalized_values)  # type: ignore [union-attr]
         print_ok(f"Set {key} to {normalized_values}.")
 
     elif action == "add":
         for value in normalized_values:
-            if value not in cfg[key]:
-                cfg[key].append(value)
+            if value not in cfg[key]:  # type: ignore [operator]
+                cfg[key].append(value)  # type: ignore [operator, union-attr, call-arg]
                 print_ok(f"Added '{value}' to {key}.")
             else:
                 print_warn(f"{key} already contains '{value}', skipping.")
 
     elif action == "remove":
         for value in normalized_values:
-            if value in cfg[key]:
-                cfg[key].remove(value)
+            if value in cfg[key]:  # type: ignore [operator]
+                cfg[key].remove(value)  # type: ignore [union-attr]
                 print_ok(f"Removed '{value}' from {key}.")
             else:
                 print_warn(f"'{value}' not found in {key}, skipping.")
