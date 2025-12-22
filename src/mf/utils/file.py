@@ -206,7 +206,10 @@ class FileResults(UserList[FileResult]):
         """
         return cls(
             [
-                FileResult(Path(path_str), os.stat_result(stat_info))
+                FileResult(
+                    Path(path_str),
+                    os.stat_result(stat_info) if stat_info else None,
+                )
                 for path_str, stat_info in cache["files"]
             ]
         )

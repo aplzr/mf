@@ -81,7 +81,10 @@ def rebuild_library_cache() -> FileResults:
     results.sort(by_mtime=True)
     cache_data = {
         "timestamp": datetime.now().isoformat(),
-        "files": [(result.file.as_posix(), tuple(result.stat)) for result in results],
+        "files": [
+            (result.file.as_posix(), tuple(result.stat) if result.stat else None)
+            for result in results
+        ],
     }
 
     with open(get_library_cache_file(), "wb") as f:
