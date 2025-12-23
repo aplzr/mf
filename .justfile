@@ -46,10 +46,6 @@ format:
 install:
     uv pip install -e .[dev]
 
-# Build distribution
-build:
-    uv build
-
 # Clean build artifacts
 [windows]
 clean:
@@ -59,13 +55,101 @@ clean:
 clean:
     rm -rf dist/ build/ *.egg-info
 
-# Clean tool caches
+# Clean tool caches (Windows)
 [windows]
 clean-cache:
     uv clean
     if (Test-Path .pytest_cache) { Remove-Item -Recurse -Force .pytest_cache }; if (Test-Path .ruff_cache) { Remove-Item -Recurse -Force .ruff_cache }
 
+# Clean tool caches (Unix)
 [unix]
 clean-cache:
     uv clean
     rm -rf .pytest_cache .ruff_cache
+
+# Build distribution from the current repository state
+build:
+    just clean
+    uv build
+
+# NOTE: all recipes that take a VERSION parameter will stash all uncommitted changes,
+# check out the corresponding version tag, do what they're supposed to do with that
+# version (build, publish, etc.), then check out the previous revision and re-apply the
+# stashed changes (if there where any).
+
+# Publish to TestPyPI (Unix)
+[unix]
+pypi-test VERSION TOKEN:
+    #!/usr/bin/env bash
+    set -e
+    HAS_CHANGES=0
+    git diff-index --quiet HEAD || HAS_CHANGES=1
+    if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "pypi-test"; fi
+    git checkout "v{{VERSION}}"
+    just build
+    uv publish --publish-url https://test.pypi.org/legacy/ --token {{TOKEN}}
+    git checkout -
+    if [ $HAS_CHANGES -eq 1 ]; then git stash pop; fi
+
+# Publish to TestPyPI (Windows)
+[windows]
+pypi-test VERSION TOKEN:
+    $hasChanges = (git status --porcelain).Length -gt 0
+    if ($hasChanges) { git stash push -u -m "pypi-test" }
+    git checkout "v{{VERSION}}"
+    just build
+    uv publish --publish-url https://test.pypi.org/legacy/ --token {{TOKEN}}
+    git checkout -
+    if ($hasChanges) { git stash pop }
+
+# NOTE: In the verify recipes, the pinning of `jmespath<99.99.99` is necessary
+# because one of mediafinder's direct dependencies depends on it and it has a
+# bogus version `99.99.99` on test.pypi.org which can't be installed.
+
+# Verify TestPyPI package (Unix)
+[unix]
+pypi-verify VERSION:
+    #!/usr/bin/env bash
+    set -e
+    HAS_CHANGES=0
+    git diff-index --quiet HEAD || HAS_CHANGES=1
+    if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "pypi-verify"; fi
+    git checkout "v{{VERSION}}"
+    uvx --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --index-strategy unsafe-best-match --with "jmespath<99.99.99, mediafinder=={{VERSION}}, pytest, pytest-cov" pytest --no-cov tests
+    git checkout -
+    if [ $HAS_CHANGES -eq 1 ]; then git stash pop; fi
+
+# Verify TestPyPI package (Windows)
+[windows]
+pypi-verify VERSION:
+    $hasChanges = (git status --porcelain).Length -gt 0
+    if ($hasChanges) { git stash push -u -m "pypi-verify" }
+    git checkout "v{{VERSION}}"
+    uvx --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --index-strategy unsafe-best-match --with "jmespath<99.99.99, mediafinder=={{VERSION}}, pytest, pytest-cov" pytest --no-cov tests
+    git checkout -
+    if ($hasChanges) { git stash pop }
+
+# Publish to PyPI (Unix)
+[unix]
+pypi-production VERSION TOKEN:
+    #!/usr/bin/env bash
+    set -e
+    HAS_CHANGES=0
+    git diff-index --quiet HEAD || HAS_CHANGES=1
+    if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "pypi-production"; fi
+    git checkout "v{{VERSION}}"
+    just build
+    uv publish --token {{TOKEN}}
+    git checkout -
+    if [ $HAS_CHANGES -eq 1 ]; then git stash pop; fi
+
+# Publish to PyPI (Windows)
+[windows]
+pypi-production VERSION TOKEN:
+    $hasChanges = (git status --porcelain).Length -gt 0
+    if ($hasChanges) { git stash push -u -m "pypi-production" }
+    git checkout "v{{VERSION}}"
+    just build
+    uv publish --token {{TOKEN}}
+    git checkout -
+    if ($hasChanges) { git stash pop }
