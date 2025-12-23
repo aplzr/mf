@@ -46,6 +46,32 @@ format:
 install:
     uv pip install -e .[dev]
 
+# Clean build artifacts
+[windows]
+clean:
+    if (Test-Path dist) { Remove-Item -Recurse -Force dist }; if (Test-Path build) { Remove-Item -Recurse -Force build }; Get-ChildItem -Filter "*.egg-info" -Recurse | Remove-Item -Recurse -Force
+
+[unix]
+clean:
+    rm -rf dist/ build/ *.egg-info
+
+# Clean tool caches (Windows)
+[windows]
+clean-cache:
+    uv clean
+    if (Test-Path .pytest_cache) { Remove-Item -Recurse -Force .pytest_cache }; if (Test-Path .ruff_cache) { Remove-Item -Recurse -Force .ruff_cache }
+
+# Clean tool caches (Unix)
+[unix]
+clean-cache:
+    uv clean
+    rm -rf .pytest_cache .ruff_cache
+
+# NOTE: all recipes that take a VERSION parameter will stash all uncommitted changes,
+# check out the corresponding version tag, do what they're supposed to do with that
+# version (build, publish, etc.), then check out the previous revision and re-apply the
+# stashed changes (if there where any).
+
 # Build distribution (Unix)
 [unix]
 build VERSION:
@@ -70,27 +96,6 @@ build VERSION:
     uv build
     git checkout -
     if ($hasChanges) { git stash pop }
-
-# Clean build artifacts
-[windows]
-clean:
-    if (Test-Path dist) { Remove-Item -Recurse -Force dist }; if (Test-Path build) { Remove-Item -Recurse -Force build }; Get-ChildItem -Filter "*.egg-info" -Recurse | Remove-Item -Recurse -Force
-
-[unix]
-clean:
-    rm -rf dist/ build/ *.egg-info
-
-# Clean tool caches (Windows)
-[windows]
-clean-cache:
-    uv clean
-    if (Test-Path .pytest_cache) { Remove-Item -Recurse -Force .pytest_cache }; if (Test-Path .ruff_cache) { Remove-Item -Recurse -Force .ruff_cache }
-
-# Clean tool caches (Unix)
-[unix]
-clean-cache:
-    uv clean
-    rm -rf .pytest_cache .ruff_cache
 
 # Publish to TestPyPI (Unix)
 [unix]
@@ -118,6 +123,10 @@ pypi-test VERSION TOKEN:
     uv publish --publish-url https://test.pypi.org/legacy/ --token {{TOKEN}}
     git checkout -
     if ($hasChanges) { git stash pop }
+
+# NOTE: In the verify recipes, the pinning of `jmespath<99.99.99` is necessary
+# because one of mediafinder's direct dependencies depends on it and it has a
+# bogus version `99.99.99` on test.pypi.org which can't be installed.
 
 # Verify TestPyPI package (Unix)
 [unix]
