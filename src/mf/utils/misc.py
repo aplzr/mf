@@ -51,11 +51,10 @@ def open_imdb_entry(result: FileResult):
     from guessit import guessit
     from imdbinfo import search_title
 
-    filestem = result.file.stem
-    parsed = guessit(filestem)
+    parsed = guessit(result.file.stem)
 
     if "title" not in parsed:
-        print_and_raise(f"Could not parse a title from filename '{filestem}'.")
+        print_and_raise(f"Could not parse a title from filename '{result.file.name}'.")
 
     title = parsed["title"]
     results = search_title(title)
