@@ -86,6 +86,18 @@ pypi-verify VERSION:
     git checkout -
     if ($hasChanges) { git stash pop }
 
+[unix]
+pypi-verify VERSION:
+    #!/usr/bin/env bash
+    set -e
+    HAS_CHANGES=0
+    git diff-index --quiet HEAD || HAS_CHANGES=1
+    [ $HAS_CHANGES -eq 1 ] && git stash push -u -m "pypi-verify"
+    git checkout "v{{VERSION}}"
+    uvx --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --index-strategy unsafe-best-match --with "jmespath<99.99.99, mediafinder, pytest, pytest-cov" pytest --no-cov tests
+    git checkout -
+    [ $HAS_CHANGES -eq 1 ] && git stash pop
+
 # Publish to PyPI
 pypi-production TOKEN:
     just clean
