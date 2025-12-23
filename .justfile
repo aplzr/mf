@@ -67,35 +67,15 @@ clean-cache:
     uv clean
     rm -rf .pytest_cache .ruff_cache
 
+# Build distribution from the current repository state
+build:
+    just clean
+    uv build
+
 # NOTE: all recipes that take a VERSION parameter will stash all uncommitted changes,
 # check out the corresponding version tag, do what they're supposed to do with that
 # version (build, publish, etc.), then check out the previous revision and re-apply the
 # stashed changes (if there where any).
-
-# Build distribution (Unix)
-[unix]
-build VERSION:
-    #!/usr/bin/env bash
-    just clean
-    set -e
-    HAS_CHANGES=0
-    git diff-index --quiet HEAD || HAS_CHANGES=1
-    if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "build"; fi
-    git checkout "v{{VERSION}}"
-    uv build
-    git checkout -
-    if [ $HAS_CHANGES -eq 1 ]; then git stash pop; fi
-
-# Build distribution (Windows)
-[windows]
-build VERSION:
-    just clean
-    $hasChanges = (git status --porcelain).Length -gt 0
-    if ($hasChanges) { git stash push -u -m "build" }
-    git checkout "v{{VERSION}}"
-    uv build
-    git checkout -
-    if ($hasChanges) { git stash pop }
 
 # Publish to TestPyPI (Unix)
 [unix]
@@ -106,7 +86,6 @@ pypi-test VERSION TOKEN:
     git diff-index --quiet HEAD || HAS_CHANGES=1
     if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "pypi-test"; fi
     git checkout "v{{VERSION}}"
-    just clean
     just build
     uv publish --publish-url https://test.pypi.org/legacy/ --token {{TOKEN}}
     git checkout -
@@ -118,7 +97,6 @@ pypi-test VERSION TOKEN:
     $hasChanges = (git status --porcelain).Length -gt 0
     if ($hasChanges) { git stash push -u -m "pypi-test" }
     git checkout "v{{VERSION}}"
-    just clean
     just build
     uv publish --publish-url https://test.pypi.org/legacy/ --token {{TOKEN}}
     git checkout -
@@ -160,7 +138,6 @@ pypi-production VERSION TOKEN:
     git diff-index --quiet HEAD || HAS_CHANGES=1
     if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "pypi-production"; fi
     git checkout "v{{VERSION}}"
-    just clean
     just build
     uv publish --token {{TOKEN}}
     git checkout -
@@ -172,7 +149,6 @@ pypi-production VERSION TOKEN:
     $hasChanges = (git status --porcelain).Length -gt 0
     if ($hasChanges) { git stash push -u -m "pypi-production" }
     git checkout "v{{VERSION}}"
-    just clean
     just build
     uv publish --token {{TOKEN}}
     git checkout -
