@@ -50,12 +50,12 @@ install:
 [unix]
 build VERSION:
     #!/usr/bin/env bash
+    just clean
     set -e
     HAS_CHANGES=0
     git diff-index --quiet HEAD || HAS_CHANGES=1
     if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "build"; fi
     git checkout "v{{VERSION}}"
-    just clean
     uv build
     git checkout -
     if [ $HAS_CHANGES -eq 1 ]; then git stash pop; fi
@@ -63,10 +63,10 @@ build VERSION:
 # Build distribution (Windows)
 [windows]
 build VERSION:
+    just clean
     $hasChanges = (git status --porcelain).Length -gt 0
     if ($hasChanges) { git stash push -u -m "build" }
     git checkout "v{{VERSION}}"
-    just clean
     uv build
     git checkout -
     if ($hasChanges) { git stash pop }
