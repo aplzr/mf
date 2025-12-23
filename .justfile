@@ -69,3 +69,25 @@ clean-cache:
 clean-cache:
     uv clean
     rm -rf .pytest_cache .ruff_cache
+
+# Test-publish to test.pypi.org
+pypi-test TOKEN:
+    just clean
+    just build
+    uv publish --publish-url https://test.pypi.org/legacy/ --token {{TOKEN}}
+
+# Run tests against the test publish
+[windows]
+pypi-verify VERSION:
+    $hasChanges = (git status --porcelain).Length -gt 0
+    if ($hasChanges) { git stash push -u -m "pypi-verify" }
+    git checkout "v{{VERSION}}"
+    uvx --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --index-strategy unsafe-best-match --with "jmespath<99.99.99, mediafinder=={{VERSION}}, pytest, pytest-cov" pytest --no-cov tests
+    git checkout -
+    if ($hasChanges) { git stash pop }
+
+# Publish to PyPI
+pypi-production TOKEN:
+    just clean
+    just build
+    # uv publish --token {{TOKEN}}
