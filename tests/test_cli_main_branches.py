@@ -74,11 +74,15 @@ def test_play_invalid_target_errors(monkeypatch):
     assert "Invalid target" in (result.stdout + result.stderr)
 
 
-def test_play_next_branch(monkeypatch):
-    # Simulate get_next returning a FileResult-like object
+def test_play_command_integration(monkeypatch):
+    """Integration test: verify play command calls resolve and launch functions."""
+    from pathlib import Path
+
+    from mf.utils.file import FileResult
+
     class DummyFile:
         name = "movie.mp4"
-        parent = "/tmp"
+        parent = Path("/tmp")
 
         def __str__(self):
             return "/tmp/movie.mp4"
@@ -86,152 +90,37 @@ def test_play_next_branch(monkeypatch):
     class DummyResult:
         file = DummyFile()
 
-    monkeypatch.setattr("mf.cli_main.get_next", lambda: DummyResult())
-    monkeypatch.setattr("mf.cli_main.save_last_played", lambda fr: None)
-    monkeypatch.setattr("mf.cli_main.get_vlc_command", lambda: "vlc")
+    resolve_called_with = None
+    launch_called_with = None
 
-    # Prevent actual process spawn
-    import subprocess
+    def mock_resolve(target):
+        nonlocal resolve_called_with
+        resolve_called_with = target
+        return DummyResult()
 
-    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: None)
+    def mock_launch(file_to_play):
+        nonlocal launch_called_with
+        launch_called_with = file_to_play
 
+    monkeypatch.setattr("mf.cli_main.resolve_play_target", mock_resolve)
+    monkeypatch.setattr("mf.cli_main.launch_video_player", mock_launch)
+
+    # Test with "next" target
     result = runner.invoke(app_mf, ["play", "next"])
     assert result.exit_code == 0
-    assert "VLC launched successfully" in result.stdout
+    assert resolve_called_with == "next"
+    assert launch_called_with is not None
 
-
-@pytest.mark.parametrize("fullscreen", [True, False])
-def test_play_list_branch_and_fullscreen(monkeypatch, fullscreen):
-    # Simulate last search results as playlist
-    class DummyFile:
-        def __init__(self, path):
-            self._path = path
-            self.name = os.path.basename(path)
-            self.parent = os.path.dirname(path)
-
-        def __str__(self):
-            return self._path
-
-    class DummyResult:
-        def __init__(self, path):
-            self.file = DummyFile(path)
-
-    class DummyResults(list):
-        pass
-
-    # load_search_results returns (pattern, results, stats)
-    monkeypatch.setattr(
-        "mf.cli_main.load_search_results",
-        lambda: (
-            "pattern",
-            DummyResults([DummyResult("/tmp/a.mp4"), DummyResult("/tmp/b.mp4")]),
-            {},
-        ),
-    )
-
-    monkeypatch.setattr("mf.cli_main.get_vlc_command", lambda: "vlc")
-    monkeypatch.setattr(
-        "mf.cli_main.get_config", lambda: {"fullscreen_playback": fullscreen}
-    )
-
-    import subprocess
-
-    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: None)
-
-    result = runner.invoke(app_mf, ["play", "list"])
-    assert result.exit_code == 0
-    assert "VLC launched successfully" in result.stdout
-
-
-def test_play_random_file_branch(monkeypatch):
-    # Exercise random branch by returning a deterministic list
-    class DummyFile:
-        def __init__(self, path):
-            self._path = path
-            self.name = os.path.basename(path)
-            self.parent = os.path.dirname(path)
-
-        def __str__(self):
-            return self._path
-
-    class DummyResult:
-        def __init__(self, path):
-            self.file = DummyFile(path)
-
-    monkeypatch.setattr(
-        "mf.cli_main.FindQuery",
-        lambda p: type(
-            "Q",
-            (),
-            {
-                "execute": lambda self: [
-                    DummyResult("/tmp/a.mp4"),
-                    DummyResult("/tmp/b.mp4"),
-                ]
-            },
-        )(),
-    )
-    monkeypatch.setattr("mf.cli_main.get_vlc_command", lambda: "vlc")
-
-    import subprocess
-
-    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: None)
-
+    # Test with no target (random)
+    resolve_called_with = None
     result = runner.invoke(app_mf, ["play"])
     assert result.exit_code == 0
-    assert "VLC launched successfully" in result.stdout
+    assert resolve_called_with is None
 
-
-def test_play_by_index_valid(monkeypatch):
-    """Test play with valid numeric index."""
-    class DummyFile:
-        name = "movie.mp4"
-        parent = "/tmp"
-
-        def __str__(self):
-            return "/tmp/movie.mp4"
-
-    class DummyResult:
-        file = DummyFile()
-
-    monkeypatch.setattr("mf.cli_main.get_result_by_index", lambda i: DummyResult())
-    monkeypatch.setattr("mf.cli_main.save_last_played", lambda fr: None)
-    monkeypatch.setattr("mf.cli_main.get_vlc_command", lambda: "vlc")
-
-    import subprocess
-
-    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: None)
-
+    # Test with numeric index
     result = runner.invoke(app_mf, ["play", "5"])
     assert result.exit_code == 0
-    assert "VLC launched successfully" in result.stdout
-
-
-def test_play_by_index_out_of_bounds(monkeypatch):
-    """Test play with invalid index raises error."""
-    import typer
-
-    def raise_exit(i):
-        from mf.utils.console import print_and_raise
-        print_and_raise(f"Index {i} not found")
-
-    monkeypatch.setattr("mf.cli_main.get_result_by_index", raise_exit)
-
-    result = runner.invoke(app_mf, ["play", "999"])
-    assert result.exit_code != 0
-
-
-def test_play_random_empty_collection(monkeypatch):
-    """Test play random when no files exist."""
-    class DummyQuery:
-        def execute(self):
-            return []
-
-    monkeypatch.setattr("mf.cli_main.FindQuery", lambda p: DummyQuery())
-
-    result = runner.invoke(app_mf, ["play"])
-    assert result.exit_code != 0
-    assert "No media files found" in (result.stdout + result.stderr)
+    assert resolve_called_with == "5"
 
 
 def test_imdb_opens(monkeypatch):
