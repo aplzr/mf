@@ -53,8 +53,19 @@ build:
 # Clean build artifacts
 [windows]
 clean:
-    if (Test-Path dist) { Remove-Item -Recurse -Force dist }; if (Test-Path build) { Remove-Item -Recurse -Force build }; Get-ChildItem -Filter "*.egg-info" -Recurse | Remove-Item -Recurse -Force; if (Test-Path .pytest_cache) { Remove-Item -Recurse -Force .pytest_cache }; if (Test-Path .ruff_cache) { Remove-Item -Recurse -Force .ruff_cache }
+    if (Test-Path dist) { Remove-Item -Recurse -Force dist }; if (Test-Path build) { Remove-Item -Recurse -Force build }; Get-ChildItem -Filter "*.egg-info" -Recurse | Remove-Item -Recurse -Force
 
 [unix]
 clean:
-    rm -rf dist/ build/ *.egg-info .pytest_cache .ruff_cache
+    rm -rf dist/ build/ *.egg-info
+
+# Clean tool caches
+[windows]
+clean-cache:
+    uv clean
+    if (Test-Path .pytest_cache) { Remove-Item -Recurse -Force .pytest_cache }; if (Test-Path .ruff_cache) { Remove-Item -Recurse -Force .ruff_cache }
+
+[unix]
+clean-cache:
+    uv clean
+    rm -rf .pytest_cache .ruff_cache
