@@ -59,12 +59,13 @@ clean:
 clean:
     rm -rf dist/ build/ *.egg-info
 
-# Clean tool caches
+# Clean tool caches (Windows)
 [windows]
 clean-cache:
     uv clean
     if (Test-Path .pytest_cache) { Remove-Item -Recurse -Force .pytest_cache }; if (Test-Path .ruff_cache) { Remove-Item -Recurse -Force .ruff_cache }
 
+# Clean tool caches (Unix)
 [unix]
 clean-cache:
     uv clean
@@ -120,8 +121,29 @@ pypi-verify VERSION:
     git checkout -
     if ($hasChanges) { git stash pop }
 
-# Publish to PyPI
-pypi-production TOKEN:
+# Publish to PyPI (Unix)
+[unix]
+pypi-production VERSION TOKEN:
+    #!/usr/bin/env bash
+    set -e
+    HAS_CHANGES=0
+    git diff-index --quiet HEAD || HAS_CHANGES=1
+    if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "pypi-production"; fi
+    git checkout "v{{VERSION}}"
     just clean
     just build
     uv publish --token {{TOKEN}}
+    git checkout -
+    if [ $HAS_CHANGES -eq 1 ]; then git stash pop; fi
+
+# Publish to PyPI (Windows)
+[windows]
+pypi-production VERSION TOKEN:
+    $hasChanges = (git status --porcelain).Length -gt 0
+    if ($hasChanges) { git stash push -u -m "pypi-production" }
+    git checkout "v{{VERSION}}"
+    just clean
+    just build
+    uv publish --token {{TOKEN}}
+    git checkout -
+    if ($hasChanges) { git stash pop }
