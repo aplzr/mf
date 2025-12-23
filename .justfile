@@ -42,17 +42,13 @@ lint-fix:
 format:
     ruff format .
 
-# Run all pre-commit hooks
-hooks:
-    pre-commit run --all-files
-
 # Install dev dependencies
 install:
     uv pip install -e .[dev]
 
 # Build distribution
 build:
-    uv -m build
+    uv build
 
 # Clean build artifacts
 [windows]
