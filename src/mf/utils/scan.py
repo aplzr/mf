@@ -454,7 +454,6 @@ class Query(ABC):
         """Initialize query."""
         config = get_config()
         self.cache_library = config["cache_library"]
-        self.prefer_fd = config["prefer_fd"]
         self.media_extensions = config["media_extensions"]
         self.match_extensions = config["match_extensions"]
 
