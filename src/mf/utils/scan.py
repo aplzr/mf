@@ -519,11 +519,8 @@ class NewQuery(Query):
     mtime collection.
 
     Attributes:
-        pattern: Always "*" (searches all files).
         n: Maximum number of results to return.
     """
-
-    pattern = "*"
 
     def __init__(self, n: int = 20):
         """Initialize the new files query.
