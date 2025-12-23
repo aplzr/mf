@@ -70,11 +70,32 @@ clean-cache:
     uv clean
     rm -rf .pytest_cache .ruff_cache
 
-# Test-publish to test.pypi.org
-pypi-test TOKEN:
+# Publish to TestPyPI (Unix)
+[unix]
+pypi-test VERSION TOKEN:
+    #!/usr/bin/env bash
+    set -e
+    HAS_CHANGES=0
+    git diff-index --quiet HEAD || HAS_CHANGES=1
+    if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "pypi-test"; fi
+    git checkout "v{{VERSION}}"
     just clean
     just build
     uv publish --publish-url https://test.pypi.org/legacy/ --token {{TOKEN}}
+    git checkout -
+    if [ $HAS_CHANGES -eq 1 ]; then git stash pop; fi
+
+# Publish to TestPyPI (Windows)
+[windows]
+pypi-test VERSION TOKEN:
+    $hasChanges = (git status --porcelain).Length -gt 0
+    if ($hasChanges) { git stash push -u -m "pypi-test" }
+    git checkout "v{{VERSION}}"
+    just clean
+    just build
+    uv publish --publish-url https://test.pypi.org/legacy/ --token {{TOKEN}}
+    git checkout -
+    if ($hasChanges) { git stash pop }
 
 # Verify TestPyPI package (Unix)
 [unix]
