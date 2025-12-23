@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import subprocess
-from random import randrange
 
 import typer
 
@@ -12,14 +11,9 @@ from .utils.config import get_config
 from .utils.console import console, print_and_raise, print_warn
 from .utils.file import FileResult, FileResults
 from .utils.misc import get_vlc_command, open_imdb_entry
-from .utils.playlist import get_next, save_last_played
+from .utils.play import resolve_play_target
 from .utils.scan import FindQuery, NewQuery
-from .utils.search import (
-    get_result_by_index,
-    load_search_results,
-    print_search_results,
-    save_search_results,
-)
+from .utils.search import get_result_by_index, print_search_results, save_search_results
 from .version import __version__, check_version
 
 app_mf = typer.Typer(help="Media file finder and player")
@@ -84,34 +78,7 @@ def play(
     ),
 ):
     """Play a media file by its index."""
-    file_to_play: FileResult | FileResults  # Single file vs playlist
-
-    if target:
-        if target.lower() == "next":
-            file_to_play = get_next()
-            save_last_played(file_to_play)
-        elif target.lower() == "list":
-            file_to_play, _, _ = load_search_results()
-        else:
-            # Play requested file
-            try:
-                index = int(target)
-                file_to_play = get_result_by_index(index)
-                save_last_played(file_to_play)
-            except ValueError as e:
-                print_and_raise(
-                    "Invalid target: {target}. Use an index number, 'next', or 'list'.",
-                    raise_from=e,
-                )
-    else:
-        # Play random file without saving it as last played. This way a random file
-        # can be played without disrupting the 'next' logic.
-        all_files = FindQuery("*").execute()
-
-        if not all_files:
-            print_and_raise("No media files found (empty collection).")
-
-        file_to_play = all_files[randrange(len(all_files))]
+    file_to_play = resolve_play_target(target)
 
     # Launch VLC with the file(s)
     try:
