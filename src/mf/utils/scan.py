@@ -552,6 +552,5 @@ class NewQuery(Query):
         results.filter_by_extension(
             self.media_extensions if self.match_extensions else None
         )
-        results.filter_by_pattern(self.pattern)
 
         return results[: self.n]
