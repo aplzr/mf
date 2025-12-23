@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import subprocess
 from random import choice
 from typing import Literal
 
-from .console import print_and_raise
+from .config import get_config
+from .console import console, print_and_raise
 from .file import FileResult, FileResults
+from .misc import get_vlc_command
 from .playlist import get_next, save_last_played
 from .scan import FindQuery
 from .search import get_result_by_index, load_search_results
@@ -56,3 +59,45 @@ def resolve_play_target(
                 f"Invalid target: {target}. Use an index number, 'next', or 'list'.",
                 raise_from=e,
             )
+
+
+def launch_video_player(file_to_play: FileResult | FileResults):
+    """Launch video player with selected file(s).
+
+    Args:
+        file_to_play (FileResult | FileResults): File or files to play.
+    """
+    vlc_cmd = get_vlc_command()
+    vlc_args = [vlc_cmd]
+
+    if isinstance(file_to_play, FileResult):
+        # Single file
+        console.print(f"[green]Playing:[/green] {file_to_play.file.name}")
+        console.print(
+            f"[blue]Location:[/blue] [white]{file_to_play.file.parent}[/white]"
+        )
+        vlc_args.append(str(file_to_play.file))
+    elif isinstance(file_to_play, FileResults):
+        # Last search results as playlist
+        console.print("[green]Playing:[/green] Last search results as playlist")
+        vlc_args.extend(str(result.file) for result in file_to_play)
+
+    fullscreen_playback = get_config()["fullscreen_playback"]
+
+    if fullscreen_playback:
+        vlc_args.extend(["--fullscreen", "--no-video-title-show"])
+
+    try:
+        # Launch VLC in background
+        subprocess.Popen(
+            vlc_args,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        console.print("[green]✓[/green] VLC launched successfully")
+
+    except FileNotFoundError as e:
+        print_and_raise("VLC not found. Please install VLC media player.", raise_from=e)
+
+    except Exception as e:
+        print_and_raise(f"Error launching VLC: {e}", raise_from=e)

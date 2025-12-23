@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import subprocess
-
 import typer
 
 from .cli_cache import app_cache
@@ -9,9 +7,8 @@ from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import get_config
 from .utils.console import console, print_and_raise, print_warn
-from .utils.file import FileResult, FileResults
-from .utils.misc import get_vlc_command, open_imdb_entry
-from .utils.play import resolve_play_target
+from .utils.misc import open_imdb_entry
+from .utils.play import launch_video_player, resolve_play_target
 from .utils.scan import FindQuery, NewQuery
 from .utils.search import get_result_by_index, print_search_results, save_search_results
 from .version import __version__, check_version
@@ -79,42 +76,7 @@ def play(
 ):
     """Play a media file by its index."""
     file_to_play = resolve_play_target(target)
-
-    # Launch VLC with the file(s)
-    try:
-        vlc_cmd = get_vlc_command()
-        vlc_args = [vlc_cmd]
-
-        if isinstance(file_to_play, FileResult):
-            # Single file
-            console.print(f"[green]Playing:[/green] {file_to_play.file.name}")
-            console.print(
-                f"[blue]Location:[/blue] [white]{file_to_play.file.parent}[/white]"
-            )
-            vlc_args.append(str(file_to_play.file))
-        elif isinstance(file_to_play, FileResults):
-            # Last search results as playlist
-            console.print("[green]Playing:[/green] Last search results as playlist")
-            vlc_args.extend(str(result.file) for result in file_to_play)
-
-        fullscreen_playback = get_config()["fullscreen_playback"]
-
-        if fullscreen_playback:
-            vlc_args.extend(["--fullscreen", "--no-video-title-show"])
-
-        # Launch VLC in background
-        subprocess.Popen(
-            vlc_args,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        console.print("[green]✓[/green] VLC launched successfully")
-
-    except FileNotFoundError as e:
-        print_and_raise("VLC not found. Please install VLC media player.", raise_from=e)
-
-    except Exception as e:
-        print_and_raise(f"Error launching VLC: {e}", raise_from=e)
+    launch_video_player(file_to_play)
 
 
 @app_mf.command()
