@@ -92,11 +92,11 @@ pypi-verify VERSION:
     set -e
     HAS_CHANGES=0
     git diff-index --quiet HEAD || HAS_CHANGES=1
-    [ $HAS_CHANGES -eq 1 ] && git stash push -u -m "pypi-verify"
+    if [ $HAS_CHANGES -eq 1 ]; then git stash push -u -m "pypi-verify"; fi
     git checkout "v{{VERSION}}"
     uvx --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ --index-strategy unsafe-best-match --with "jmespath<99.99.99, mediafinder=={{VERSION}}, pytest, pytest-cov" pytest --no-cov tests
     git checkout -
-    [ $HAS_CHANGES -eq 1 ] && git stash pop
+    if [ $HAS_CHANGES -eq 1 ]; then git stash pop; fi
 
 # Publish to PyPI
 pypi-production TOKEN:
