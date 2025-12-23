@@ -138,7 +138,7 @@ REGISTRY: dict[str, SettingSpec] = {
         from_toml=lambda interval_s: timedelta(seconds=int(interval_s)),
         help=(
             "Time after which the library cache is automatically rebuilt if "
-            "cache_library is set to true, in seconds. Set to 0 to turn off automatic"
+            "cache_library is set to true, in seconds. Set to 0 to turn off automatic "
             "cache rebuilding. Default value of 86400 s is 1 day."
         ),
     ),
