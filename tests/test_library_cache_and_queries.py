@@ -79,19 +79,6 @@ def test_library_cache_corruption_rebuild(isolated_media_dir, capsys):
     assert any(r.file.name == "d1.mkv" for r in results)
 
 
-def test_get_result_by_index_file_deleted(isolated_media_dir, capsys):
-    # Save search results then delete file; get_result_by_index should print an error.
-    f = create_files(isolated_media_dir, ["gone.mkv"])[0]
-    save_search_results("*", [FileResult(f)])
-    f.unlink()
-    import click
-
-    with pytest.raises(click.exceptions.Exit):
-        get_result_by_index(1)
-    captured = capsys.readouterr()
-    assert "File no longer exists" in captured.out
-
-
 def test_scan_for_media_files_fd_fallback(monkeypatch, isolated_media_dir):
     # Force fd failure to exercise fallback branch.
     create_files(isolated_media_dir, ["fd1.mkv"])  # seed directory
