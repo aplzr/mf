@@ -245,6 +245,18 @@ class FileResults(UserList[FileResult]):
             if fnmatch(result.file.name.lower(), pattern.lower())
         ]
 
+    def filter_by_existence(self):
+        """Remove files that don't exist from the collection (in-place)."""
+        self.data = [result for result in self.data if result.file.exists()]
+
+    def get_missing(self) -> FileResults:
+        """Return new FileResults containing only files that don't exist.
+
+        Returns:
+            FileResults: Missing files.
+        """
+        return FileResults([result for result in self.data if not result.file.exists()])
+
     def sort(self, *, by_mtime: bool = False, reverse: bool = False):  # type: ignore[override]
         """Sort collection in-place by file path or modification time.
 
