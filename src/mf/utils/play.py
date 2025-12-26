@@ -5,7 +5,7 @@ from random import choice
 from typing import Literal
 
 from .config import get_config
-from .console import console, print_and_raise
+from .console import console, print_and_raise, print_warn
 from .file import FileResult, FileResults
 from .misc import get_vlc_command
 from .playlist import get_next, save_last_played
@@ -72,6 +72,9 @@ def launch_video_player(file_to_play: FileResult | FileResults):
 
     if isinstance(file_to_play, FileResult):
         # Single file
+        if not file_to_play.file.exists():
+            print_and_raise(f"File no longer exists: {file_to_play.file}.")
+
         console.print(f"[green]Playing:[/green] {file_to_play.file.name}")
         console.print(
             f"[blue]Location:[/blue] [white]{file_to_play.file.parent}[/white]"
@@ -79,6 +82,17 @@ def launch_video_player(file_to_play: FileResult | FileResults):
         vlc_args.append(str(file_to_play.file))
     elif isinstance(file_to_play, FileResults):
         # Last search results as playlist
+        if missing_files := file_to_play.get_missing():
+            warn_msg = (
+                "The following files don't exist anymore and will be skipped:\n"
+                + "\n".join(str(missing_file.file) for missing_file in missing_files)
+            )
+            print_warn(warn_msg)
+            file_to_play.filter_by_existence()
+
+        if not file_to_play:
+            print_and_raise("All files in playlist don't exist anymore, aborting.")
+
         console.print("[green]Playing:[/green] Last search results as playlist")
         vlc_args.extend(str(result.file) for result in file_to_play)
 

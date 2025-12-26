@@ -126,7 +126,4 @@ def get_result_by_index(index: int) -> FileResult:
             raise_from=e,
         )
 
-    if not result.file.exists():
-        print_and_raise(f"File no longer exists: {result.file}.")
-
     return result
