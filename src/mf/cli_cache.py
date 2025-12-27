@@ -49,7 +49,7 @@ def stats():
         "File extensions (all files)",
         sort=True,
         # Sort by frequency descending, then name ascending
-        sort_key=lambda bar: (-bar[1], bar[0]),
+        sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
         top_n=20,
     )
 
@@ -66,7 +66,7 @@ def stats():
         get_string_counts(parse_resolutions(cache)),
         "Media file resolution",
         sort=True,
-        sort_key=lambda bar: int("".join(filter(str.isdigit, bar[0]))),
+        sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
     )
 
     # File size distribution
@@ -79,7 +79,7 @@ def stats():
         # Convert to string with appropriate size prefix.
         bin_labels = [format_size(bin_center) for bin_center in bin_centers]
 
-        bin_data: list[BinData] = [
+        bins: list[BinData] = [
             (label, count) for label, count in zip(bin_labels, bin_counts)
         ]
-        show_histogram(bin_data, "Media file size")
+        show_histogram(bins, "Media file size")
