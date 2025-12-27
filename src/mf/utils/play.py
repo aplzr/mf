@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import os
 import subprocess
+from pathlib import Path
 from random import choice
 from typing import Literal
 
 from .config import get_config
 from .console import console, print_and_raise, print_warn
 from .file import FileResult, FileResults
-from .misc import get_vlc_command
 from .playlist import get_next, save_last_played
 from .scan import FindQuery
 from .search import get_result_by_index, load_search_results
@@ -59,6 +60,33 @@ def resolve_play_target(
                 f"Invalid target: {target}. Use an index number, 'next', or 'list'.",
                 raise_from=e,
             )
+
+
+def get_vlc_command() -> str:
+    """Get the platform-specific VLC command.
+
+    Returns:
+        str: VLC command.
+    """
+    if os.name == "nt":
+        # Try common VLC installation paths
+        vlc_paths = [
+            r"C:\Program Files\VideoLAN\VLC\vlc.exe",
+            r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
+        ]
+        vlc_cmd = None
+        for path in vlc_paths:
+            if Path(path).exists():
+                vlc_cmd = path
+                break
+
+        if vlc_cmd is None:
+            # Try to find in PATH
+            vlc_cmd = "vlc"
+    else:  # Unix-like (Linux, macOS)
+        vlc_cmd = "vlc"
+
+    return vlc_cmd
 
 
 def launch_video_player(file_to_play: FileResult | FileResults):

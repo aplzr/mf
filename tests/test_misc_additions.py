@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from mf.utils.misc import get_vlc_command
+from mf.utils.play import get_vlc_command
 
 
 @pytest.mark.skipif(
