@@ -7,7 +7,7 @@ from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import get_config
 from .utils.console import console, print_and_raise, print_warn
-from .utils.misc import open_imdb_entry
+from .utils.misc import cleanup, open_imdb_entry
 from .utils.play import launch_video_player, resolve_play_target
 from .utils.scan import FindQuery, NewQuery
 from .utils.search import get_result_by_index, print_search_results, save_search_results
@@ -112,6 +112,16 @@ def version(
         check_version()
     else:
         console.print(__version__)
+
+
+@app_mf.command(name="cleanup")
+def cleanup_mf():
+    """Reset mediafinder by deleting configuration and cache files.
+
+    Lists files and prompts for confirmation before files are deleted. Use for cleanup
+    before uninstalling or for a factory reset.
+    """
+    cleanup()
 
 
 @app_mf.callback(invoke_without_command=True)

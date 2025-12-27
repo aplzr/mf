@@ -8,8 +8,9 @@ from pathlib import Path
 import typer
 
 from ..constants import FALLBACK_EDITORS_POSIX
-from .console import console, print_and_raise
-from .file import FileResult
+from .config import get_config_file
+from .console import console, print_and_raise, print_info, print_ok, print_warn
+from .file import FileResult, get_library_cache_file, get_search_cache_file
 
 
 def start_editor(file: Path):
@@ -117,3 +118,38 @@ def get_vlc_command() -> str:
         vlc_cmd = "vlc"
 
     return vlc_cmd
+
+
+def cleanup():
+    """Reset mediafinder by deleting configuration and cache files.
+
+    Lists files and prompts for confirmation before files are deleted. Use for cleanup
+    before uninstalling or for a factory reset.
+    """
+    files_to_remove = [
+        file
+        for file in [
+            get_config_file(),
+            get_library_cache_file(),
+            get_search_cache_file(),
+        ]
+        if file.exists()
+    ]
+
+    if not files_to_remove:
+        print_info("No configuration or cache files exist, nothing to clean up.")
+        raise typer.Exit(0)
+
+    print_warn(
+        "This will reset mediafinder "
+        "by deleting all configuration and cache files:\n\n"
+        + "\n".join(f"  - {file}" for file in files_to_remove)
+        + "\n"
+    )
+
+    if typer.confirm("Delete files?"):
+        for file in files_to_remove:
+            file.unlink()
+        print_ok("Configuration and cache files deleted.")
+    else:
+        print_info("Cleanup aborted.")
