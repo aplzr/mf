@@ -85,11 +85,10 @@ def launch_video_player(file_to_play: FileResult | FileResults):
     elif isinstance(file_to_play, FileResults):
         # Last search results as playlist
         if missing_files := file_to_play.get_missing():
-            warn_msg = (
+            print_warn(
                 "The following files don't exist anymore and will be skipped:\n"
                 + "\n".join(str(missing_file.file) for missing_file in missing_files)
             )
-            print_warn(warn_msg)
             file_to_play.filter_by_existence()
 
         if not file_to_play:
