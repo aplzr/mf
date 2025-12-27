@@ -110,10 +110,13 @@ def test_cleanup_shows_files_to_delete(runner):
 
     result = runner.invoke(app_mf, ["cleanup"], input="n\n")
 
+    # Normalize output to handle Rich line wrapping (especially on macOS with long temp paths)
+    normalized_stdout = result.stdout.replace("\n", "")
+
     # Check that all files are listed
-    assert str(config_file) in result.stdout
-    assert str(library_cache) in result.stdout
-    assert str(search_cache) in result.stdout
+    assert str(config_file) in normalized_stdout
+    assert str(library_cache) in normalized_stdout
+    assert str(search_cache) in normalized_stdout
 
 
 def test_cleanup_only_deletes_existing_files(runner):
