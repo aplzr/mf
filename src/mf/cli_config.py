@@ -6,8 +6,9 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Column, Table
 
-from .utils.config import get_config, get_config_file, write_config
+from .utils.config import get_config, write_config
 from .utils.console import console, print_and_raise
+from .utils.file import get_config_file
 from .utils.misc import start_editor
 from .utils.settings import REGISTRY, apply_action
 

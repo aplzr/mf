@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import os
 from contextlib import suppress
-from pathlib import Path
 from textwrap import wrap
 from typing import Any
 
@@ -11,41 +9,11 @@ from tomlkit import TOMLDocument, comment, document, nl
 from tomlkit.exceptions import ParseError, TOMLKitError
 
 from .console import print_ok, print_warn
-from .file import open_utf8
-from .normalizers import normalize_media_extension
+from .file import get_config_file, open_utf8
 from .parsers import parse_timedelta_str
 from .settings import REGISTRY, SettingSpec
 
-__all__ = [
-    "get_config_file",
-    "get_default_cfg",
-    "normalize_media_extension",
-    "get_config",
-    "write_config",
-    "write_default_config",
-]
-
 _config = None
-
-
-def get_config_file() -> Path:
-    """Return path to config file.
-
-    Returns:
-        Path: Location of the configuration file (platform aware, falls back to
-            ~/.config/mf).
-    """
-    config_dir = (
-        Path(
-            os.environ.get(
-                "LOCALAPPDATA" if os.name == "nt" else "XDG_CONFIG_HOME",
-                Path.home() / ".config",
-            )
-        )
-        / "mf"
-    )
-    config_dir.mkdir(parents=True, exist_ok=True)
-    return config_dir / "config.toml"
 
 
 def _read_config() -> TOMLDocument:
@@ -164,10 +132,10 @@ class Configuration:
         items = [f"{key}={value!r}" for key, value in configured_settings.items()]
         return f"Configuration({', '.join(items)})"
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key: str) -> Any:  # noqa: D105
         return getattr(self, key)
 
-    def __setitem__(self, key: str, value: Any):
+    def __setitem__(self, key: str, value: Any):  # noqa: D105
         setattr(self, key, value)
 
 

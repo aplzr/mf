@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from mf.utils.config import get_config_file, get_config, write_config
+from mf.utils.config import get_config, write_config
+from mf.utils.file import get_config_file
 
 # --- Fixtures for test isolation ---
 

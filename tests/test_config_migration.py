@@ -11,10 +11,10 @@ from mf.utils.config import (
     add_default_setting,
     build_config,
     get_config,
-    get_config_file,
     migrate_config,
     write_config,
 )
+from mf.utils.file import get_config_file
 from mf.utils.settings import REGISTRY
 
 

@@ -12,7 +12,10 @@ from operator import attrgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
+import typer
+
 from ..constants import FD_BINARIES
+from .console import print_info, print_ok, print_warn
 
 if TYPE_CHECKING:
     from .cache import CacheData
@@ -309,3 +312,58 @@ class FileResults(UserList[FileResult]):
             list[Path]: Paths of all FileResults
         """
         return [result.get_path() for result in self.data]
+
+
+def get_config_file() -> Path:
+    """Return path to config file.
+
+    Returns:
+        Path: Location of the configuration file (platform aware, falls back to
+            ~/.config/mf).
+    """
+    config_dir = (
+        Path(
+            os.environ.get(
+                "LOCALAPPDATA" if os.name == "nt" else "XDG_CONFIG_HOME",
+                Path.home() / ".config",
+            )
+        )
+        / "mf"
+    )
+    config_dir.mkdir(parents=True, exist_ok=True)
+    return config_dir / "config.toml"
+
+
+def cleanup():
+    """Reset mediafinder by deleting configuration and cache files.
+
+    Lists files and prompts for confirmation before files are deleted. Use for cleanup
+    before uninstalling or for a factory reset.
+    """
+    files_to_remove = [
+        file
+        for file in [
+            get_config_file(),
+            get_library_cache_file(),
+            get_search_cache_file(),
+        ]
+        if file.exists()
+    ]
+
+    if not files_to_remove:
+        print_info("No configuration or cache files exist, nothing to clean up.")
+        raise typer.Exit(0)
+
+    print_warn(
+        "This will reset mediafinder "
+        "by deleting all configuration and cache files:\n\n"
+        + "\n".join(f"  - {file}" for file in files_to_remove)
+        + "\n"
+    )
+
+    if typer.confirm("Delete files?"):
+        for file in files_to_remove:
+            file.unlink()
+        print_ok("Configuration and cache files deleted.")
+    else:
+        print_info("Cleanup aborted.")

@@ -6,7 +6,7 @@ import pytest
 from typer.testing import CliRunner
 
 from mf.cli_main import app_mf
-from mf.utils.config import get_config_file
+from mf.utils.file import get_config_file
 from mf.utils.file import get_library_cache_file, get_search_cache_file
 
 
