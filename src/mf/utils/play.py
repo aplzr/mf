@@ -75,7 +75,9 @@ def launch_video_player(file_to_play: FileResult | FileResults):
         if not file_to_play.file.exists():
             print_and_raise(f"File no longer exists: {file_to_play.file}.")
 
-        console.print(f"[green]Playing:[/green] {file_to_play.file.name}")
+        console.print(
+            f"[green]Playing:[/green] [white]{file_to_play.file.name}[/white]"
+        )
         console.print(
             f"[blue]Location:[/blue] [white]{file_to_play.file.parent}[/white]"
         )
@@ -93,7 +95,9 @@ def launch_video_player(file_to_play: FileResult | FileResults):
         if not file_to_play:
             print_and_raise("All files in playlist don't exist anymore, aborting.")
 
-        console.print("[green]Playing:[/green] Last search results as playlist")
+        console.print(
+            "[green]Playing:[/green] [white]Last search results as playlist[/white]"
+        )
         vlc_args.extend(str(result.file) for result in file_to_play)
 
     fullscreen_playback = get_config()["fullscreen_playback"]
