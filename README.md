@@ -83,8 +83,11 @@ mf new 50 # Show 50 newest files
 - `mf play [index]` - Play a file by index, or random file if no index given
 - `mf imdb <index>` - Open IMDB page for a media file
 - `mf filepath <index>` - Print full path of a search result
+- `mf version` - Print version information or run version check
+- `mf cleanup` - Reset `mediafinder` by deleting all configuration and cache files
+- `mf last` - Show last search result index with the last played file highlighted
 - `mf config` - Configure `mf`
-- `mf version` - Print version information
+- `mf cache` - Manage library cache (rebuild, show location, clear, show statistics)
 - `mf` or `mf --help` - Print help
 
 
@@ -108,6 +111,7 @@ Cached indices remain valid until you run another `find` or `new` command that o
 - `mf cache rebuild` - Trigger a library cache rebuild
 - `mf cache file` - Print cache location
 - `mf cache clear` - Clear the cache
+- `mf cache stats` - Show cache statistics
 
 
 ### Configuration Management
