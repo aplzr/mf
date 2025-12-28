@@ -109,7 +109,7 @@ def get_vlc_command() -> str:
 
 
 def get_vlc_from_registry() -> Path | None:
-    """Try to get the VLC path from Window's registry.
+    """Try to get the VLC path from Windows' registry.
 
     Returns:
         Path | None: Path to vlc.exe if it exists in the registry, None if not.
