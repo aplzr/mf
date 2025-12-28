@@ -66,6 +66,78 @@ def resolve_play_target(
             )
 
 
+def _get_player_from_registry(
+    registry_keys: list[tuple[int, str]], executable_name: str
+) -> Path | None:
+    """Try to get a player path from Windows' registry.
+
+    Args:
+        registry_keys: List of (hkey, subkey) tuples to check.
+        executable_name: Name of the executable to look for (e.g., "vlc.exe").
+
+    Returns:
+        Path | None: Path to the executable if found in registry, None otherwise.
+    """
+    if os.name != "nt":
+        return None
+
+    for hkey, subkey in registry_keys:
+        try:
+            key = winreg.OpenKey(hkey, subkey)
+
+            # Try to read the InstallDir value, fall back to default value
+            try:
+                install_dir, _ = winreg.QueryValueEx(key, "InstallDir")
+            except FileNotFoundError:
+                install_dir, _ = winreg.QueryValueEx(key, "")
+
+            winreg.CloseKey(key)
+
+            if install_dir:
+                player_path = Path(install_dir) / executable_name
+                if player_path.exists():
+                    return player_path
+
+        except (OSError, FileNotFoundError):
+            # Registry key doesn't exist or access denied
+            continue
+
+    return None  # Not found in registry
+
+
+def get_vlc_from_registry() -> Path | None:
+    """Try to get the VLC path from Windows' registry.
+
+    Returns:
+        Path | None: Path to vlc.exe if it exists in the registry, None if not.
+    """
+    registry_keys = [
+        # Native installations (VLC bitness matches Windows bitness)
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\VideoLAN\VLC"),
+        # 32 bit VLC on 64 bit system
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\VideoLAN\VLC"),
+    ]
+    return _get_player_from_registry(registry_keys, "vlc.exe")
+
+
+def get_mpv_from_registry() -> Path | None:
+    """Try to get the MPV path from Windows' registry.
+
+    Note: MPV doesn't always register itself, especially portable versions.
+
+    Returns:
+        Path | None: Path to mpv.exe if it exists in the registry, None if not.
+    """
+    registry_keys = [
+        # System-wide installation
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\mpv"),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\mpv"),
+        # User-specific installation
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\mpv"),
+    ]
+    return _get_player_from_registry(registry_keys, "mpv.exe")
+
+
 def get_vlc_command() -> str:
     """Get the platform-specific VLC command.
 
@@ -109,46 +181,6 @@ def get_vlc_command() -> str:
     return vlc_cmd
 
 
-def get_vlc_from_registry() -> Path | None:
-    """Try to get the VLC path from Windows' registry.
-
-    Returns:
-        Path | None: Path to vlc.exe if it exists in the registry, None if not.
-    """
-    if os.name != "nt":
-        return None
-
-    registry_keys = [
-        # Native installations (VLC bitness matches Windows bitness)
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\VideoLAN\VLC"),
-        # 32 bit VLC on 64 bit system
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\VideoLAN\VLC"),
-    ]
-
-    for hkey, subkey in registry_keys:
-        try:
-            key = winreg.OpenKey(hkey, subkey)
-
-            # Try to read the InstallDir value, fall back to default value
-            try:
-                install_dir, _ = winreg.QueryValueEx(key, "InstallDir")
-            except FileNotFoundError:
-                install_dir, _ = winreg.QueryValueEx(key, "")
-
-            winreg.CloseKey(key)
-
-            if install_dir:
-                vlc_path = Path(install_dir) / "vlc.exe"
-                if vlc_path.exists():
-                    return vlc_path
-
-        except (OSError, FileNotFoundError):
-            # Registry key doesn't exist or access denied
-            continue
-
-    return None  # Not found in registry
-
-
 def get_mpv_command() -> str:
     """Get the platform-specific MPV command.
 
@@ -179,49 +211,6 @@ def get_mpv_command() -> str:
     else:
         # Unix-like (Linux, macOS)
         return shutil.which("mpv") or "mpv"
-
-
-def get_mpv_from_registry() -> Path | None:
-    """Try to get the MPV path from Windows' registry.
-
-    Note: MPV doesn't always register itself, especially portable versions.
-
-    Returns:
-        Path | None: Path to mpv.exe if it exists in the registry, None if not.
-    """
-    if os.name != "nt":
-        return None
-
-    registry_keys = [
-        # System-wide installation
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\mpv"),
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\mpv"),
-        # User-specific installation
-        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\mpv"),
-    ]
-
-    for hkey, subkey in registry_keys:
-        try:
-            key = winreg.OpenKey(hkey, subkey)
-
-            # Try to read the InstallDir value, fall back to default value
-            try:
-                install_dir, _ = winreg.QueryValueEx(key, "InstallDir")
-            except FileNotFoundError:
-                install_dir, _ = winreg.QueryValueEx(key, "")
-
-            winreg.CloseKey(key)
-
-            if install_dir:
-                mpv_path = Path(install_dir) / "mpv.exe"
-                if mpv_path.exists():
-                    return mpv_path
-
-        except (OSError, FileNotFoundError):
-            # Registry key doesn't exist or access denied
-            continue
-
-    return None  # Not found in registry
 
 
 def launch_video_player(file_to_play: FileResult | FileResults):
