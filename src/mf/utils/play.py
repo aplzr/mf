@@ -7,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from random import choice
-from typing import Literal
+from typing import Literal, TypedDict
 
 from .config import get_config
 from .console import console, print_and_raise, print_warn
@@ -269,30 +269,40 @@ def launch_video_player(media: FileResult | FileResults):
         print_and_raise(f"Error launching VLC: {e}", raise_from=e)
 
 
+class PlayerOptions(TypedDict):
+    """Mapping from generic player settings in the settings registry to player-specific
+    command-line arguments.
+    """
+
+    fullscreen_playback: list[str]
+
+
 @dataclass
 class PlayerSpec:
     """Specification for a supported video player.
 
     Attributes:
         commmand_getter: Function that returns the command to run the player.
-        args_builder: Function that returns the arguments to pass to the player.
         display_name: Display name of the player.
+        options: Player options.
     """
 
     command_getter: Callable[[], str]
-    args_builder: Callable[[Path | str, list[Path], str], list[str]]  # TODO: check
     display_name: str
+    options: PlayerOptions
 
 
 PLAYERS: dict[str, PlayerSpec] = {
     "vlc": PlayerSpec(
         command_getter=get_vlc_command,
-        args_builder=...,  # type: ignore
         display_name="vlc",
+        options=PlayerOptions(
+            fullscreen_playback=["--fullscreen", "--no-video-title-show"]
+        ),
     ),
     "mpv": PlayerSpec(
         command_getter=get_mpv_command,
-        args_builder=...,  # type: ignore
         display_name="mpv",
+        options=PlayerOptions(fullscreen_playback=["--fullscreen"]),
     ),
 }
