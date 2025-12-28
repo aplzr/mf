@@ -178,6 +178,18 @@ REGISTRY: dict[str, SettingSpec] = {
         display=normalize_bool_to_toml,
         help="Display file paths in search results.",
     ),
+    "video_player": SettingSpec(
+        key="video_player",
+        kind="scalar",
+        value_type=str,
+        actions={"set"},
+        normalize=lambda s: s.lower().strip(),
+        default="auto",
+        help=(
+            "Video player to use. 'vlc', 'mpv', or 'auto'. If 'auto', uses VLC with "
+            "fallback to mpv. Note that video player(s) must be installed separately."
+        ),
+    ),
 }
 
 
