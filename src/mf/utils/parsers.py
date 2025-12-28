@@ -36,9 +36,7 @@ def parse_resolutions(results: FileResults) -> list[str]:
     }
 
     def _parse_resolution(filename: str):
-        match = pattern.search(filename)
-
-        if match:
+        if match := pattern.search(filename):
             resolution = match.group(1) or match.group(2)
 
             if "x" in resolution.lower():

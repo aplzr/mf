@@ -23,8 +23,7 @@ def start_editor(file: Path):
     Args:
         file (Path): File to open.
     """
-    editor = os.environ.get("VISUAL") or os.environ.get("EDITOR")
-    if editor:
+    if editor := os.environ.get("VISUAL") or os.environ.get("EDITOR"):
         subprocess.run([editor, str(file)])
         return
     if os.name == "nt":  # Windows
