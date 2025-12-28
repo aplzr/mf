@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from random import choice
@@ -101,9 +102,9 @@ def get_vlc_command() -> str:
 
         if vlc_cmd is None:
             # Try to find in PATH
-            vlc_cmd = "vlc"
+            vlc_cmd = shutil.which("vlc") or "vlc"
     else:  # Unix-like (Linux, macOS)
-        vlc_cmd = "vlc"
+        vlc_cmd = shutil.which("vlc") or "vlc"
 
     return vlc_cmd
 
