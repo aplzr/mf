@@ -148,43 +148,39 @@ def get_vlc_from_registry() -> Path | None:
     return None  # Not found in registry
 
 
-def launch_video_player(file_to_play: FileResult | FileResults):
+def launch_video_player(media: FileResult | FileResults):
     """Launch video player with selected file(s).
 
     Args:
-        file_to_play (FileResult | FileResults): File or files to play.
+        media (FileResult | FileResults): File or files to play.
     """
     vlc_cmd = get_vlc_command()
     vlc_args = [vlc_cmd]
 
-    if isinstance(file_to_play, FileResult):
+    if isinstance(media, FileResult):
         # Single file
-        if not file_to_play.file.exists():
-            print_and_raise(f"File no longer exists: {file_to_play.file}.")
+        if not media.file.exists():
+            print_and_raise(f"File no longer exists: {media.file}.")
 
-        console.print(
-            f"[green]Playing:[/green] [white]{file_to_play.file.name}[/white]"
-        )
-        console.print(
-            f"[blue]Location:[/blue] [white]{file_to_play.file.parent}[/white]"
-        )
-        vlc_args.append(str(file_to_play.file))
-    elif isinstance(file_to_play, FileResults):
+        console.print(f"[green]Playing:[/green] [white]{media.file.name}[/white]")
+        console.print(f"[blue]Location:[/blue] [white]{media.file.parent}[/white]")
+        vlc_args.append(str(media.file))
+    elif isinstance(media, FileResults):
         # Last search results as playlist
-        if missing_files := file_to_play.get_missing():
+        if missing_files := media.get_missing():
             print_warn(
                 "The following files don't exist anymore and will be skipped:\n"
                 + "\n".join(str(missing_file.file) for missing_file in missing_files)
             )
-            file_to_play.filter_by_existence()
+            media.filter_by_existence()
 
-        if not file_to_play:
+        if not media:
             print_and_raise("All files in playlist don't exist anymore, aborting.")
 
         console.print(
             "[green]Playing:[/green] [white]Last search results as playlist[/white]"
         )
-        vlc_args.extend(str(result.file) for result in file_to_play)
+        vlc_args.extend(str(result.file) for result in media)
 
     fullscreen_playback = get_config()["fullscreen_playback"]
 
