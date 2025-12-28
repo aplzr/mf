@@ -272,9 +272,7 @@ class FileResults(UserList[FileResult]):
             ValueError: If by_mtime is True and any files lack modification time.
         """
         if by_mtime:
-            mtime_missing = [result for result in self.data if result.stat is None]
-
-            if mtime_missing:
+            if mtime_missing := [result for result in self.data if result.stat is None]:
                 raise ValueError(
                     "Can't sort by mtime, "
                     f"{len(mtime_missing)} files lack modification time."

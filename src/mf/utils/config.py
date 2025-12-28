@@ -226,9 +226,7 @@ def migrate_config(cfg: TOMLDocument) -> bool:
                 modified = True
 
     # Add missing settings with default values.
-    missing_settings = set(REGISTRY.keys()) - set(cfg.keys())
-
-    if missing_settings:
+    if missing_settings := set(REGISTRY.keys()) - set(cfg.keys()):
         for missing_setting in missing_settings:
             add_default_setting(cfg, missing_setting)
 
