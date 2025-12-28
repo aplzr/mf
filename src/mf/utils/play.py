@@ -149,6 +149,81 @@ def get_vlc_from_registry() -> Path | None:
     return None  # Not found in registry
 
 
+def get_mpv_command() -> str:
+    """Get the platform-specific MPV command.
+
+    Returns:
+        str: Existing path to the mpv binary or command name for path lookup.
+    """
+    if os.name == "nt":
+        if registry_mpv := get_mpv_from_registry():
+            return str(registry_mpv)
+
+        # Try common MPV installation paths
+        mpv_paths = [
+            Path(os.environ.get("PROGRAMFILES", "C:\\Program Files"))
+            / "mpv"
+            / "mpv.exe",
+            Path(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"))
+            / "mpv"
+            / "mpv.exe",
+            Path("C:\\mpv\\mpv.exe"),  # Common portable location
+            Path.home() / "AppData" / "Local" / "mpv" / "mpv.exe",  # User-local install
+        ]
+        for path in mpv_paths:
+            if path.exists():
+                return str(path)
+
+        # Try to find in PATH
+        return shutil.which("mpv") or "mpv"
+    else:
+        # Unix-like (Linux, macOS)
+        return shutil.which("mpv") or "mpv"
+
+
+def get_mpv_from_registry() -> Path | None:
+    """Try to get the MPV path from Windows' registry.
+
+    Note: MPV doesn't always register itself, especially portable versions.
+
+    Returns:
+        Path | None: Path to mpv.exe if it exists in the registry, None if not.
+    """
+    if os.name != "nt":
+        return None
+
+    registry_keys = [
+        # System-wide installation
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\mpv"),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\mpv"),
+        # User-specific installation
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\mpv"),
+    ]
+
+    for hkey, subkey in registry_keys:
+        try:
+            key = winreg.OpenKey(hkey, subkey)
+
+            # Try to read the InstallDir value, fall back to default value
+            try:
+                install_dir, _ = winreg.QueryValueEx(key, "InstallDir")
+            except FileNotFoundError:
+                install_dir, _ = winreg.QueryValueEx(key, "")
+
+            winreg.CloseKey(key)
+
+            if install_dir:
+                mpv_path = Path(install_dir) / "mpv.exe"
+                if mpv_path.exists():
+                    return mpv_path
+
+        except (OSError, FileNotFoundError):
+            # Registry key doesn't exist or access denied
+            continue
+
+    return None  # Not found in registry
+
+
 def launch_video_player(file_to_play: FileResult | FileResults):
     """Launch video player with selected file(s).
 
