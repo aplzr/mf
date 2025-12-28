@@ -13,6 +13,9 @@ from .playlist import get_next, save_last_played
 from .scan import FindQuery
 from .search import get_result_by_index, load_search_results
 
+if os.name == "nt":
+    import winreg
+
 
 def resolve_play_target(
     target: Literal["next", "list"] | str | None,
@@ -66,18 +69,34 @@ def get_vlc_command() -> str:
     """Get the platform-specific VLC command.
 
     Returns:
-        str: VLC command.
+        str: Existing path to the vlc binary or command name for path lookup.
     """
     if os.name == "nt":
+        if registry_vlc := get_vlc_from_registry():
+            return str(registry_vlc)
+
         # Try common VLC installation paths
         vlc_paths = [
-            r"C:\Program Files\VideoLAN\VLC\vlc.exe",
-            r"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
+            Path(os.environ.get("PROGRAMFILES", "C:\\Program Files"))
+            / "VideoLAN"
+            / "VLC"
+            / "vlc.exe",
+            Path(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"))
+            / "VideoLAN"
+            / "VLC"
+            / "vlc.exe",
+            Path.home()
+            / "AppData"
+            / "Local"
+            / "Microsoft"
+            / "WindowsApps"
+            / "vlc.exe",  # App store
         ]
-        vlc_cmd = None
+        vlc_cmd: str | None = None
+
         for path in vlc_paths:
-            if Path(path).exists():
-                vlc_cmd = path
+            if path.exists():
+                vlc_cmd = str(path)
                 break
 
         if vlc_cmd is None:
@@ -87,6 +106,46 @@ def get_vlc_command() -> str:
         vlc_cmd = "vlc"
 
     return vlc_cmd
+
+
+def get_vlc_from_registry() -> Path | None:
+    """Try to get the VLC path from Window's registry.
+
+    Returns:
+        Path | None: Path to vlc.exe if it exists in the registry, None if not.
+    """
+    if os.name != "nt":
+        return None
+
+    registry_keys = [
+        # Native installations (VLC bitness matches Windows bitness)
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\VideoLAN\VLC"),
+        # 32 bit VLC on 64 bit system
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\VideoLAN\VLC"),
+    ]
+
+    for hkey, subkey in registry_keys:
+        try:
+            key = winreg.OpenKey(hkey, subkey)
+
+            # Try to read the InstallDir value, fall back to default value
+            try:
+                install_dir, _ = winreg.QueryValueEx(key, "InstallDir")
+            except FileNotFoundError:
+                install_dir, _ = winreg.QueryValueEx(key, "")
+
+            winreg.CloseKey(key)
+
+            if install_dir:
+                vlc_path = Path(install_dir) / "vlc.exe"
+                if vlc_path.exists():
+                    return vlc_path
+
+        except (OSError, FileNotFoundError):
+            # Registry key doesn't exist or access denied
+            continue
+
+    return None  # Not found in registry
 
 
 def launch_video_player(file_to_play: FileResult | FileResults):
