@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from random import choice
 from typing import Literal
@@ -270,3 +271,32 @@ def launch_video_player(file_to_play: FileResult | FileResults):
 
     except Exception as e:
         print_and_raise(f"Error launching VLC: {e}", raise_from=e)
+
+
+@dataclass
+class PlayerSpec:
+    """Specification for a supported video player.
+
+    Attributes:
+        commmand_getter: Function that returns the command to run the player.
+        args_builder: Function that returns the arguments to pass to the player.
+        display_name: Display name of the player.
+    """
+
+    command_getter: Callable[[], str]
+    args_builder: Callable[[Path | str, list[Path], str], list[str]]  # TODO: check
+    display_name: str
+
+
+PLAYERS: dict[str, PlayerSpec] = {
+    "vlc": PlayerSpec(
+        command_getter=get_vlc_command,
+        args_builder=...,  # type: ignore
+        display_name="vlc",
+    ),
+    "mpv": PlayerSpec(
+        command_getter=get_mpv_command,
+        args_builder=...,  # type: ignore
+        display_name="mpv",
+    ),
+}
