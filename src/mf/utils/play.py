@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 from random import choice
 from typing import Literal
@@ -138,47 +139,61 @@ def get_mpv_from_registry() -> Path | None:
     return _get_player_from_registry(registry_keys, "mpv.exe")
 
 
+def _get_player_command(
+    registry_getter: Callable[[], Path | None],
+    common_paths: list[Path],
+    command_name: str,
+) -> str:
+    """Get the platform-specific player command.
+
+    Args:
+        registry_getter: Function that returns player path from registry.
+        common_paths: List of common installation paths to check (Windows only).
+        command_name: Command name to use as fallback (e.g., "vlc", "mpv").
+
+    Returns:
+        str: Existing path to the player binary or command name for path lookup.
+    """
+    if os.name == "nt":
+        # Try registry first
+        if registry_path := registry_getter():
+            return str(registry_path)
+
+        # Try common installation paths
+        for path in common_paths:
+            if path.exists():
+                return str(path)
+
+        # Try to find in PATH
+        return shutil.which(command_name) or command_name
+    else:
+        # Unix-like (Linux, macOS)
+        return shutil.which(command_name) or command_name
+
+
 def get_vlc_command() -> str:
     """Get the platform-specific VLC command.
 
     Returns:
         str: Existing path to the vlc binary or command name for path lookup.
     """
-    if os.name == "nt":
-        if registry_vlc := get_vlc_from_registry():
-            return str(registry_vlc)
-
-        # Try common VLC installation paths
-        vlc_paths = [
-            Path(os.environ.get("PROGRAMFILES", "C:\\Program Files"))
-            / "VideoLAN"
-            / "VLC"
-            / "vlc.exe",
-            Path(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"))
-            / "VideoLAN"
-            / "VLC"
-            / "vlc.exe",
-            Path.home()
-            / "AppData"
-            / "Local"
-            / "Microsoft"
-            / "WindowsApps"
-            / "vlc.exe",  # App store
-        ]
-        vlc_cmd: str | None = None
-
-        for path in vlc_paths:
-            if path.exists():
-                vlc_cmd = str(path)
-                break
-
-        if vlc_cmd is None:
-            # Try to find in PATH
-            vlc_cmd = shutil.which("vlc") or "vlc"
-    else:  # Unix-like (Linux, macOS)
-        vlc_cmd = shutil.which("vlc") or "vlc"
-
-    return vlc_cmd
+    vlc_paths = [
+        Path(os.environ.get("PROGRAMFILES", "C:\\Program Files"))
+        / "VideoLAN"
+        / "VLC"
+        / "vlc.exe",
+        Path(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"))
+        / "VideoLAN"
+        / "VLC"
+        / "vlc.exe",
+        Path.home()
+        / "AppData"
+        / "Local"
+        / "Microsoft"
+        / "WindowsApps"
+        / "vlc.exe",  # App store
+    ]
+    return _get_player_command(get_vlc_from_registry, vlc_paths, "vlc")
 
 
 def get_mpv_command() -> str:
@@ -187,30 +202,15 @@ def get_mpv_command() -> str:
     Returns:
         str: Existing path to the mpv binary or command name for path lookup.
     """
-    if os.name == "nt":
-        if registry_mpv := get_mpv_from_registry():
-            return str(registry_mpv)
-
-        # Try common MPV installation paths
-        mpv_paths = [
-            Path(os.environ.get("PROGRAMFILES", "C:\\Program Files"))
-            / "mpv"
-            / "mpv.exe",
-            Path(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"))
-            / "mpv"
-            / "mpv.exe",
-            Path("C:\\mpv\\mpv.exe"),  # Common portable location
-            Path.home() / "AppData" / "Local" / "mpv" / "mpv.exe",  # User-local install
-        ]
-        for path in mpv_paths:
-            if path.exists():
-                return str(path)
-
-        # Try to find in PATH
-        return shutil.which("mpv") or "mpv"
-    else:
-        # Unix-like (Linux, macOS)
-        return shutil.which("mpv") or "mpv"
+    mpv_paths = [
+        Path(os.environ.get("PROGRAMFILES", "C:\\Program Files")) / "mpv" / "mpv.exe",
+        Path(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"))
+        / "mpv"
+        / "mpv.exe",
+        Path("C:\\mpv\\mpv.exe"),  # Common portable location
+        Path.home() / "AppData" / "Local" / "mpv" / "mpv.exe",  # User-local install
+    ]
+    return _get_player_command(get_mpv_from_registry, mpv_paths, "mpv")
 
 
 def launch_video_player(file_to_play: FileResult | FileResults):
