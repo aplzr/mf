@@ -11,7 +11,7 @@ from tomlkit.exceptions import ParseError, TOMLKitError
 from .console import print_ok, print_warn
 from .file import get_config_file, open_utf8
 from .parsers import parse_timedelta_str
-from .settings import REGISTRY, SettingSpec
+from .settings import SETTINGS, SettingSpec
 
 _config = None
 
@@ -90,7 +90,7 @@ def build_config() -> Configuration:
     Returns:
         Configuration: Configuration object with settings as attributes.
     """
-    return Configuration(get_config(), REGISTRY)
+    return Configuration(get_config(), SETTINGS)
 
 
 class Configuration:
@@ -146,7 +146,7 @@ def add_default_setting(cfg: TOMLDocument, key: str):
         cfg (TOMLDocument): mediafinder configuration.
         key (str): Setting name as defined in the registry.
     """
-    spec = REGISTRY[key]
+    spec = SETTINGS[key]
 
     for line in wrap(spec.help, width=80):
         cfg.add(comment(line))
@@ -165,7 +165,7 @@ def get_default_cfg() -> TOMLDocument:
     """
     default_cfg = document()
 
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         add_default_setting(default_cfg, setting)
 
     return default_cfg
@@ -226,7 +226,7 @@ def migrate_config(cfg: TOMLDocument) -> bool:
                 modified = True
 
     # Add missing settings with default values.
-    missing_settings = set(REGISTRY.keys()) - set(cfg.keys())
+    missing_settings = set(SETTINGS.keys()) - set(cfg.keys())
 
     if missing_settings:
         for missing_setting in missing_settings:

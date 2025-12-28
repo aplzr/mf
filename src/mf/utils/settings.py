@@ -19,7 +19,7 @@ from .normalizers import (
 
 __all__ = [
     "apply_action",
-    "REGISTRY",
+    "SETTINGS",
     "SettingSpec",
 ]
 
@@ -67,7 +67,7 @@ class SettingSpec:
     help: str = ""
 
 
-REGISTRY: dict[str, SettingSpec] = {
+SETTINGS: dict[str, SettingSpec] = {
     "search_paths": SettingSpec(
         key="search_paths",
         kind="list",
@@ -207,12 +207,12 @@ def apply_action(
     Returns:
         TOMLDocument: Updated configuration.
     """
-    if key not in REGISTRY:
+    if key not in SETTINGS:
         print_and_raise(
-            f"Unknown configuration key: {key}. Available keys: {list(REGISTRY)}"
+            f"Unknown configuration key: {key}. Available keys: {list(SETTINGS)}"
         )
 
-    spec = REGISTRY[key]
+    spec = SETTINGS[key]
 
     if action not in spec.actions:
         print_and_raise(f"Action {action} not supported for {key}.")
