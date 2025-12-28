@@ -92,20 +92,15 @@ def get_vlc_command() -> str:
             / "WindowsApps"
             / "vlc.exe",  # App store
         ]
-        vlc_cmd: str | None = None
-
         for path in vlc_paths:
             if path.exists():
-                vlc_cmd = str(path)
-                break
+                return str(path)
 
-        if vlc_cmd is None:
-            # Try to find in PATH
-            vlc_cmd = "vlc"
-    else:  # Unix-like (Linux, macOS)
-        vlc_cmd = "vlc"
-
-    return vlc_cmd
+        # Try to find in PATH
+        return "vlc"
+    else:
+        # Unix-like (Linux, macOS)
+        return "vlc"
 
 
 def get_vlc_from_registry() -> Path | None:

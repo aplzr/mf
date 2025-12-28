@@ -108,13 +108,11 @@ def _load_library_cache(allow_rebuild=True) -> FileResults:
         with open(get_library_cache_file(), "rb") as f:
             cache_data: CacheData = pickle.load(f)
 
-        results = FileResults.from_cache(cache_data)
+        return FileResults.from_cache(cache_data)
     except (UnpicklingError, EOFError, OSError):
         print_warn("Cache corrupted.")
 
-        results = rebuild_library_cache() if allow_rebuild else FileResults()
-
-    return results
+        return rebuild_library_cache() if allow_rebuild else FileResults()
 
 
 def load_library_cache() -> FileResults:
