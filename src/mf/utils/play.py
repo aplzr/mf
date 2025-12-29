@@ -279,10 +279,14 @@ def launch_video_player(media: FileResult | FileResults):
         console.print(f"[green]✓[/green] {resolved_player.label} launched successfully")
 
     except FileNotFoundError as e:
-        print_and_raise("VLC not found. Please install VLC media player.", raise_from=e)
+        print_and_raise(
+            f"{resolved_player.label} not found. "
+            f"Please install {resolved_player.label} media player.",
+            raise_from=e,
+        )
 
     except Exception as e:
-        print_and_raise(f"Error launching VLC: {e}", raise_from=e)
+        print_and_raise(f"Error launching {resolved_player.label}: {e}", raise_from=e)
 
 
 class PlayerOptions(TypedDict):

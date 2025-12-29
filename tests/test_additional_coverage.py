@@ -30,6 +30,8 @@ def test_find_no_results(monkeypatch, tmp_path):
 def test_play_random(monkeypatch, tmp_path):
     # Monkeypatch find_media_files used in cli_main to return deterministic files
     from mf.utils import scan as app_module
+    from mf.utils.play import ResolvedPlayer
+    from pathlib import Path
 
     fake_path = tmp_path / "movie.mkv"
     fake_path.write_text("x")
@@ -38,6 +40,10 @@ def test_play_random(monkeypatch, tmp_path):
         "execute",
         lambda self: [FileResult(fake_path)],
     )
+    # Mock player resolution to work in CI without VLC/mpv installed
+    mock_player = ResolvedPlayer("vlc", Path("vlc"))
+    monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
+
     # Monkeypatch subprocess.Popen to prevent launching real VLC
     import subprocess
 
@@ -56,11 +62,18 @@ def test_play_random(monkeypatch, tmp_path):
 
 def test_play_vlc_not_found(monkeypatch, tmp_path):
     # Seed cache with one file so get_file_by_index succeeds
+    from mf.utils.play import ResolvedPlayer
+    from pathlib import Path
+
     media_dir = tmp_path / "media"
     media_dir.mkdir()
     target_file = media_dir / "video.mkv"
     target_file.write_text("x")
     save_search_results("*", [FileResult(target_file)])
+    # Mock player resolution to work in CI without VLC/mpv installed
+    mock_player = ResolvedPlayer("vlc", Path("vlc"))
+    monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
+
     # Monkeypatch subprocess.Popen to raise FileNotFoundError simulating missing VLC
     import subprocess
 
@@ -70,15 +83,22 @@ def test_play_vlc_not_found(monkeypatch, tmp_path):
     monkeypatch.setattr(subprocess, "Popen", raise_fn)
     result = runner.invoke(app_mf, ["play", "1"])  # play index 1
     assert result.exit_code != 0
-    assert "VLC not found" in result.stdout
+    assert "vlc not found" in result.stdout
 
 
 def test_play_generic_exception(monkeypatch, tmp_path):
+    from mf.utils.play import ResolvedPlayer
+    from pathlib import Path
+
     media_dir = tmp_path / "media2"
     media_dir.mkdir()
     target_file = media_dir / "video2.mkv"
     target_file.write_text("x")
     save_search_results("*", [FileResult(target_file)])
+    # Mock player resolution to work in CI without VLC/mpv installed
+    mock_player = ResolvedPlayer("vlc", Path("vlc"))
+    monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
+
     import subprocess
 
     def raise_gen(*args, **kwargs):
@@ -87,7 +107,7 @@ def test_play_generic_exception(monkeypatch, tmp_path):
     monkeypatch.setattr(subprocess, "Popen", raise_gen)
     result = runner.invoke(app_mf, ["play", "1"])  # play index 1
     assert result.exit_code != 0
-    assert "Error launching VLC" in result.stdout
+    assert "Error launching vlc" in result.stdout
 
 
 def test_match_extensions_add_not_supported(monkeypatch):
