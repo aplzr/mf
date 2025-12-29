@@ -20,7 +20,7 @@ A cross-platform command-line tool for finding and playing video files in large 
 - **💾 Caching of library metadata** - Cache library metadata for fast file lookups in network storage
 - **📁 Multi-path scanning** - Search across multiple configured directories simultaneously
 - **🕒 Latest additions** - Find newest files by modification time
-- **🎬 Media player integration** - Launch files directly in VLC
+- **🎬 Media player integration** - Launch files directly in VLC or mpv
 - **🌐 IMDB lookup** - Automatically open IMDB pages for media files
 - **⚙️ Flexible configuration** - TOML-based config with extension filtering and path management
 - **🖥️ Cross-platform** - Works on Windows, Linux, and macOS
@@ -64,7 +64,7 @@ mf find "2023" # Finds files from 2023
 ```bash
 mf play 1 # Play first result
 mf play next # Search results as playlist: play next result
-mf play list # Send current search results to VLC as a playlist
+mf play list # Send current search results to video player as a playlist
 mf play # Play random file
 ```
 
@@ -176,7 +176,8 @@ mf config set parallel_search false
 
 #### Other Settings
 
-- `fullscreen_playback` (bool): If true, `mf play` launches VLC with `--fullscreen --no-video-title-show`.
+- `video_player` (str): Video player to use (`vlc`, `mpv`, or `auto`). Default is `auto`, which prefers VLC with automatic fallback to mpv.
+- `fullscreen_playback` (bool): If true, `mf play` launches the video player in fullscreen mode.
 - `prefer_fd` (bool): Use the bundled `fd` scanner when possible. Automatically ignored for mtime-sorted searches (`mf new`) which always use the Python scanner.
 - `display_paths` (bool): Turn filepath display in search results on or off.
 
@@ -208,7 +209,7 @@ If no editor is found, it prints the path so you can edit manually.
 
 ## Integration Features
 
-- **VLC Integration**: Automatically launches VLC media player
+- **Video Player Integration**: Automatically launches VLC or mpv media player with configurable preference
 - **IMDB Lookup**: Uses filename parsing to find matching IMDB entries
 - **Smart Caching**: Search results are cached for quick index-based access
 - **Cross-platform paths**: Handles Windows and Unix path conventions
@@ -238,7 +239,7 @@ If no editor is found, it prints the path so you can edit manually.
 ## Requirements
 
 - Python 3.10+
-- VLC media player (for `play` command)
+- VLC or mpv media player (for `play` command)
 - Internet connection (for IMDB lookup)
 
 

@@ -10,7 +10,7 @@ from .utils.config import get_config, write_config
 from .utils.console import console, print_and_raise
 from .utils.file import get_config_file
 from .utils.misc import start_editor
-from .utils.settings import REGISTRY, apply_action
+from .utils.settings import SETTINGS, apply_action
 
 app_config = typer.Typer(help="Manage mf configuration.")
 
@@ -48,11 +48,11 @@ def get(key: str):
     except tomlkit.exceptions.NonExistentKey as e:
         print_and_raise(
             f"Invalid key: '{key}'. Available keys: "
-            f"{', '.join(repr(key) for key in REGISTRY)}",
+            f"{', '.join(repr(key) for key in SETTINGS)}",
             raise_from=e,
         )
 
-    console.print(f"{key} = {REGISTRY[key].display(setting)}")
+    console.print(f"{key} = {SETTINGS[key].display(setting)}")
 
 
 @app_config.command()
@@ -100,7 +100,7 @@ def settings():
         padding=(0, 1),
     )
 
-    for key, spec in REGISTRY.items():
+    for key, spec in SETTINGS.items():
         actions = ", ".join(spec.actions)
         table.add_row(
             key, f"{spec.kind}, {spec.value_type.__name__}", actions, spec.help

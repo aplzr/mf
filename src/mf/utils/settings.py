@@ -19,7 +19,7 @@ from .normalizers import (
 
 __all__ = [
     "apply_action",
-    "REGISTRY",
+    "SETTINGS",
     "SettingSpec",
 ]
 
@@ -67,7 +67,7 @@ class SettingSpec:
     help: str = ""
 
 
-REGISTRY: dict[str, SettingSpec] = {
+SETTINGS: dict[str, SettingSpec] = {
     "search_paths": SettingSpec(
         key="search_paths",
         kind="list",
@@ -178,6 +178,18 @@ REGISTRY: dict[str, SettingSpec] = {
         display=normalize_bool_to_toml,
         help="Display file paths in search results.",
     ),
+    "video_player": SettingSpec(
+        key="video_player",
+        kind="scalar",
+        value_type=str,
+        actions={"set"},
+        normalize=lambda s: s.lower().strip(),
+        default="auto",
+        help=(
+            "Video player to use. 'vlc', 'mpv', or 'auto'. If 'auto', uses VLC with "
+            "fallback to mpv. Note that video player(s) must be installed separately."
+        ),
+    ),
 }
 
 
@@ -195,12 +207,12 @@ def apply_action(
     Returns:
         TOMLDocument: Updated configuration.
     """
-    if key not in REGISTRY:
+    if key not in SETTINGS:
         print_and_raise(
-            f"Unknown configuration key: {key}. Available keys: {list(REGISTRY)}"
+            f"Unknown configuration key: {key}. Available keys: {list(SETTINGS)}"
         )
 
-    spec = REGISTRY[key]
+    spec = SETTINGS[key]
 
     if action not in spec.actions:
         print_and_raise(f"Action {action} not supported for {key}.")

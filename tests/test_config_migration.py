@@ -15,7 +15,7 @@ from mf.utils.config import (
     write_config,
 )
 from mf.utils.file import get_config_file
-from mf.utils.settings import REGISTRY
+from mf.utils.settings import SETTINGS
 
 
 # --- Unit tests for migrate_config() ---
@@ -32,7 +32,7 @@ def test_migrate_config_adds_missing_settings(isolated_config):
 
     # Assert all REGISTRY settings present
     assert modified
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         assert setting in cfg
 
 
@@ -57,7 +57,7 @@ def test_migrate_config_no_changes_when_complete(isolated_config):
     """Returns modified=False if config is complete."""
     # Create complete config with all REGISTRY settings
     cfg = document()
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         add_default_setting(cfg, setting)
 
     # Migrate
@@ -77,7 +77,7 @@ def test_migrate_config_empty_config(isolated_config):
 
     # Assert all REGISTRY settings added
     assert modified
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         assert setting in cfg
 
 
@@ -85,8 +85,8 @@ def test_migrate_config_adds_comments(isolated_config):
     """Help text appears as comments for new settings."""
     # Create config missing one setting
     cfg = document()
-    for setting in list(REGISTRY.keys())[:-1]:  # Add all but last
-        cfg[setting] = REGISTRY[setting].default
+    for setting in list(SETTINGS.keys())[:-1]:  # Add all but last
+        cfg[setting] = SETTINGS[setting].default
 
     # Migrate
     modified = migrate_config(cfg)
@@ -96,8 +96,8 @@ def test_migrate_config_adds_comments(isolated_config):
 
     # Convert to string and check for help text
     cfg_str = tomlkit.dumps(cfg)
-    last_setting = list(REGISTRY.keys())[-1]
-    help_text = REGISTRY[last_setting].help
+    last_setting = list(SETTINGS.keys())[-1]
+    help_text = SETTINGS[last_setting].help
 
     # Help text should appear in comments
     assert help_text[:20] in cfg_str  # Check first 20 chars of help
@@ -146,7 +146,7 @@ def test_migrate_config_library_cache_interval_old_format(isolated_config):
     """Migrate library_cache_interval from old string format to new int format."""
     # Create config with old format
     cfg = document()
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         if setting != "library_cache_interval":
             add_default_setting(cfg, setting)
 
@@ -165,7 +165,7 @@ def test_migrate_config_library_cache_interval_new_format(isolated_config):
     """Don't migrate library_cache_interval if already in new format."""
     # Create config with new format
     cfg = document()
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         add_default_setting(cfg, setting)
 
     cfg["library_cache_interval"] = 3600  # Already in new format (int)
@@ -182,7 +182,7 @@ def test_migrate_config_library_cache_interval_invalid_format(isolated_config):
     """Invalid library_cache_interval format is ignored (suppressed)."""
     # Create config with invalid format
     cfg = document()
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         if setting != "library_cache_interval":
             add_default_setting(cfg, setting)
 
@@ -214,7 +214,7 @@ def test_read_config_migrates_and_persists(isolated_config):
     loaded_cfg = get_config()
 
     # Assert all settings present in memory
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         assert setting in loaded_cfg
 
     # Clear cache and read from disk again
@@ -222,7 +222,7 @@ def test_read_config_migrates_and_persists(isolated_config):
     disk_cfg = get_config()
 
     # Assert all settings persisted to disk
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         assert setting in disk_cfg
 
 
@@ -247,7 +247,7 @@ def test_read_config_handles_corrupted_toml(isolated_config, capsys):
     assert backup_path.exists()
 
     # Assert fresh default config created
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         assert setting in cfg
 
     # Assert warning message shown
@@ -305,7 +305,7 @@ def test_cli_works_with_migrated_config(isolated_config):
     assert result.exit_code == 0
 
     # Assert all settings visible
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         assert setting in result.stdout
 
 
@@ -325,7 +325,7 @@ def test_build_config_after_migration(isolated_config):
     config_obj = build_config()
 
     # Assert no errors and all attributes present
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         assert hasattr(config_obj, setting)
         assert config_obj[setting] is not None
 
@@ -341,8 +341,8 @@ def test_upgrade_scenario(isolated_config):
 
     cfg = document()
     for setting in old_settings:
-        if setting in REGISTRY:
-            cfg[setting] = REGISTRY[setting].default
+        if setting in SETTINGS:
+            cfg[setting] = SETTINGS[setting].default
 
     write_config(cfg)
 
@@ -355,17 +355,17 @@ def test_upgrade_scenario(isolated_config):
     loaded_cfg = get_config()
 
     # Assert all REGISTRY settings present (old + new)
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         assert setting in loaded_cfg
 
     # Verify file was updated
     mf.utils.config._config = None
     disk_cfg = get_config()
 
-    for setting in REGISTRY:
+    for setting in SETTINGS:
         assert setting in disk_cfg
 
     # Verify old settings preserved
     for setting in old_settings:
-        if setting in REGISTRY:
-            assert disk_cfg[setting] == REGISTRY[setting].default
+        if setting in SETTINGS:
+            assert disk_cfg[setting] == SETTINGS[setting].default

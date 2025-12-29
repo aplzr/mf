@@ -11,12 +11,20 @@ runner = CliRunner()
 
 
 def test_play_no_fullscreen(monkeypatch, tmp_path):
+    from mf.utils.play import ResolvedPlayer
+    from pathlib import Path
+
     media = tmp_path / "video.mp4"
     media.write_text("x")
     save_search_results("*", [FileResult(media)])
     cfg = get_config()
     cfg["fullscreen_playback"] = False
+    cfg["video_player"] = "auto"
     write_config(cfg)
+
+    # Mock player resolution to work in CI without VLC/mpv installed
+    mock_player = ResolvedPlayer("vlc", Path("vlc"))
+    monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
 
     captured = {}
 
@@ -31,5 +39,5 @@ def test_play_no_fullscreen(monkeypatch, tmp_path):
     monkeypatch.setattr(subprocess, "Popen", fake_popen)
     r = runner.invoke(app_mf, ["play", "1"])
     assert r.exit_code == 0
-    assert "VLC launched successfully" in r.stdout
+    assert "launched successfully" in r.stdout
     assert not any(a.startswith("--fullscreen") for a in captured["args"])

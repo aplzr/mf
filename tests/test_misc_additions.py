@@ -11,9 +11,11 @@ from mf.utils.play import get_vlc_command
 )
 def test_get_vlc_command_windows_prefers_known_paths():
     # Test Windows VLC path resolution
-    cmd = get_vlc_command()
-    # Depending on environment, it may fall back to 'vlc'
-    assert cmd == "vlc" or cmd.endswith("vlc.exe")
+    resolved = get_vlc_command()
+    # Should return a ResolvedPlayer if VLC is found
+    if resolved:
+        assert resolved.label == "vlc"
+        assert str(resolved.path).endswith("vlc.exe") or str(resolved.path) == "vlc"
 
 
 @pytest.mark.skipif(
@@ -22,5 +24,8 @@ def test_get_vlc_command_windows_prefers_known_paths():
 )
 def test_get_vlc_command_windows_falls_back_to_path():
     # Test Windows VLC fallback behavior
-    cmd = get_vlc_command()
-    assert cmd == "vlc" or cmd.endswith("vlc.exe")
+    resolved = get_vlc_command()
+    # Should return a ResolvedPlayer if VLC is found
+    if resolved:
+        assert resolved.label == "vlc"
+        assert str(resolved.path).endswith("vlc.exe") or str(resolved.path) == "vlc"
