@@ -59,13 +59,13 @@ clean:
 [windows]
 clean-cache:
     uv clean
-    if (Test-Path .pytest_cache) { Remove-Item -Recurse -Force .pytest_cache }; if (Test-Path .ruff_cache) { Remove-Item -Recurse -Force .ruff_cache }
+    if (Test-Path .pytest_cache) { Remove-Item -Recurse -Force .pytest_cache }; if (Test-Path .ruff_cache) { Remove-Item -Recurse -Force .ruff_cache }; if (Test-Path .mypy_cache) { Remove-Item -Recurse -Force .mypy_cache };
 
 # Clean tool caches (Unix)
 [unix]
 clean-cache:
     uv clean
-    rm -rf .pytest_cache .ruff_cache
+    rm -rf .pytest_cache .ruff_cache .mypy_cache
 
 # Build distribution from the current repository state
 build:
