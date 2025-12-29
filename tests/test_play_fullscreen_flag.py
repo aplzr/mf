@@ -16,6 +16,7 @@ def test_play_no_fullscreen(monkeypatch, tmp_path):
     save_search_results("*", [FileResult(media)])
     cfg = get_config()
     cfg["fullscreen_playback"] = False
+    cfg["video_player"] = "auto"
     write_config(cfg)
 
     captured = {}
@@ -31,5 +32,5 @@ def test_play_no_fullscreen(monkeypatch, tmp_path):
     monkeypatch.setattr(subprocess, "Popen", fake_popen)
     r = runner.invoke(app_mf, ["play", "1"])
     assert r.exit_code == 0
-    assert "VLC launched successfully" in r.stdout
+    assert "launched successfully" in r.stdout
     assert not any(a.startswith("--fullscreen") for a in captured["args"])

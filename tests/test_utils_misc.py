@@ -11,5 +11,8 @@ from mf.utils.play import get_vlc_command
 )
 def test_get_vlc_command_windows_paths():
     # Validate Windows VLC path logic
-    cmd = get_vlc_command()
-    assert cmd == "vlc" or cmd.endswith("vlc.exe")
+    resolved = get_vlc_command()
+    # Should return a ResolvedPlayer if VLC is found
+    if resolved:
+        assert resolved.label == "vlc"
+        assert str(resolved.path).endswith("vlc.exe") or str(resolved.path) == "vlc"

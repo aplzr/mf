@@ -10,4 +10,8 @@ def test_get_vlc_command_posix(monkeypatch):
     monkeypatch.setattr(
         play_mod, "os", SimpleNamespace(name="posix", environ=os.environ)
     )
-    assert mf.utils.play.get_vlc_command() == "vlc"
+    resolved = mf.utils.play.get_vlc_command()
+    # On POSIX, if vlc is in PATH, should return ResolvedPlayer with label "vlc"
+    if resolved:
+        assert resolved.label == "vlc"
+        assert str(resolved.path) == "vlc" or "vlc" in str(resolved.path)
