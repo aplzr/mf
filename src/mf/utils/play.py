@@ -7,7 +7,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from random import choice
-from typing import Literal, TypedDict
+from typing import Literal, NamedTuple, TypedDict, cast
+
+from tomlkit import TOMLDocument
 
 from .config import get_config
 from .console import console, print_and_raise, print_warn
@@ -144,39 +146,39 @@ def _get_player_command(
     registry_getter: Callable[[], Path | None],
     common_paths: list[Path],
     command_name: str,
-) -> str:
+) -> Path | None:
     """Get the platform-specific player command.
 
     Args:
-        registry_getter: Function that returns player path from registry.
+        registry_getter: Function that returns player path from registry (Windows only).
         common_paths: List of common installation paths to check (Windows only).
-        command_name: Command name to use as fallback (e.g., "vlc", "mpv").
+        command_name: Command name to search in PATH (all platforms).
 
     Returns:
-        str: Existing path to the player binary or command name for path lookup.
+        Path | None: Path to video player executable or None if it can't be found.
     """
     if os.name == "nt":
         # Try registry first
         if registry_path := registry_getter():
-            return str(registry_path)
+            return registry_path
 
         # Try common installation paths
-        for path in common_paths:
-            if path.exists():
-                return str(path)
+        for common_path in common_paths:
+            if common_path.exists():
+                return common_path
 
-        # Try to find in PATH
-        return shutil.which(command_name) or command_name
-    else:
-        # Unix-like (Linux, macOS)
-        return shutil.which(command_name) or command_name
+    # Path lookup for unix-like and nt
+    if env_path := shutil.which(command_name):
+        return Path(env_path)
+
+    return None
 
 
-def get_vlc_command() -> str:
+def get_vlc_command() -> ResolvedPlayer | None:
     """Get the platform-specific VLC command.
 
     Returns:
-        str: Existing path to the vlc binary or command name for path lookup.
+        Path | None: Path to the vlc executable or None if it can't be found.
     """
     vlc_paths = [
         Path(os.environ.get("PROGRAMFILES", "C:\\Program Files"))
@@ -194,14 +196,20 @@ def get_vlc_command() -> str:
         / "WindowsApps"
         / "vlc.exe",  # App store
     ]
-    return _get_player_command(get_vlc_from_registry, vlc_paths, "vlc")
+    vlc_label = "vlc"
+
+    return (
+        ResolvedPlayer(vlc_label, player)
+        if (player := _get_player_command(get_vlc_from_registry, vlc_paths, vlc_label))
+        else None
+    )
 
 
-def get_mpv_command() -> str:
+def get_mpv_command() -> ResolvedPlayer | None:
     """Get the platform-specific MPV command.
 
     Returns:
-        str: Existing path to the mpv binary or command name for path lookup.
+        Path | None: Path to the mpv executable or None if it can't be found.
     """
     mpv_paths = [
         Path(os.environ.get("PROGRAMFILES", "C:\\Program Files")) / "mpv" / "mpv.exe",
@@ -211,7 +219,13 @@ def get_mpv_command() -> str:
         Path("C:\\mpv\\mpv.exe"),  # Common portable location
         Path.home() / "AppData" / "Local" / "mpv" / "mpv.exe",  # User-local install
     ]
-    return _get_player_command(get_mpv_from_registry, mpv_paths, "mpv")
+    mpv_label = "mpv"
+
+    return (
+        ResolvedPlayer(mpv_label, player)
+        if (player := _get_player_command(get_mpv_from_registry, mpv_paths, mpv_label))
+        else None
+    )
 
 
 def launch_video_player(media: FileResult | FileResults):
@@ -220,8 +234,12 @@ def launch_video_player(media: FileResult | FileResults):
     Args:
         media (FileResult | FileResults): File or files to play.
     """
-    vlc_cmd = get_vlc_command()
-    vlc_args = [vlc_cmd]
+    resolved_player = resolve_configured_player(get_config())
+
+    if not resolved_player:
+        print_and_raise("No video player could be found. Please install VLC or mpv.")
+
+    player_args: list[str] = [str(resolved_player.path)]
 
     if isinstance(media, FileResult):
         # Single file
@@ -230,7 +248,7 @@ def launch_video_player(media: FileResult | FileResults):
 
         console.print(f"[green]Playing:[/green] [white]{media.file.name}[/white]")
         console.print(f"[blue]Location:[/blue] [white]{media.file.parent}[/white]")
-        vlc_args.append(str(media.file))
+        player_args.append(str(media.file))
     elif isinstance(media, FileResults):
         # Last search results as playlist
         if missing_files := media.get_missing():
@@ -246,21 +264,19 @@ def launch_video_player(media: FileResult | FileResults):
         console.print(
             "[green]Playing:[/green] [white]Last search results as playlist[/white]"
         )
-        vlc_args.extend(str(result.file) for result in media)
+        player_args.extend(str(result.file) for result in media)
 
-    fullscreen_playback = get_config()["fullscreen_playback"]
-
-    if fullscreen_playback:
-        vlc_args.extend(["--fullscreen", "--no-video-title-show"])
+    if extra_args := build_player_args(PLAYERS[resolved_player.label], get_config()):
+        player_args.extend(extra_args)
 
     try:
-        # Launch VLC in background
+        # Launch player in background
         subprocess.Popen(
-            vlc_args,
+            player_args,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        console.print("[green]✓[/green] VLC launched successfully")
+        console.print(f"[green]✓[/green] {resolved_player.label} launched successfully")
 
     except FileNotFoundError as e:
         print_and_raise("VLC not found. Please install VLC media player.", raise_from=e)
@@ -282,27 +298,85 @@ class PlayerSpec:
     """Specification for a supported video player.
 
     Attributes:
-        commmand_getter: Function that returns the command to run the player.
-        display_name: Display name of the player.
+        get_command: Function that returns the command to run the player.
+        label: Display name of the player.
         options: Player options.
     """
 
-    command_getter: Callable[[], str]
-    display_name: str
+    get_command: Callable[[], ResolvedPlayer | None]
+    label: str
     options: PlayerOptions
 
 
 PLAYERS: dict[str, PlayerSpec] = {
     "vlc": PlayerSpec(
-        command_getter=get_vlc_command,
-        display_name="vlc",
+        get_command=get_vlc_command,
+        label="vlc",
         options=PlayerOptions(
             fullscreen_playback=["--fullscreen", "--no-video-title-show"]
         ),
     ),
     "mpv": PlayerSpec(
-        command_getter=get_mpv_command,
-        display_name="mpv",
+        get_command=get_mpv_command,
+        label="mpv",
         options=PlayerOptions(fullscreen_playback=["--fullscreen"]),
     ),
 }
+
+
+class ResolvedPlayer(NamedTuple):
+    """Result of player resolution.
+
+    Attributes:
+        label: Player label.
+        path: Path to player executable.
+    """
+
+    label: str
+    path: Path
+
+
+def resolve_configured_player(cfg: TOMLDocument) -> ResolvedPlayer | None:
+    """Resolve the configured video player.
+
+    If the 'video_player' setting is set to 'auto' (the default), will try to use VLC
+    with automatic fallback to mpv, otherwise use the configured player.
+
+    Args:
+        cfg (TOMLDocument): mediafinder configuration.
+
+    Returns:
+        ResolvedPlayer | None: Resolved video player if present or None if no player can
+            be found.
+    """
+    player = str(cfg["video_player"])
+
+    if player == "auto":
+        return get_vlc_command() or get_mpv_command()
+
+    if player not in PLAYERS:
+        print_and_raise(
+            f"Invalid video player selected: {player}. Use 'vlc', 'mpv', or 'auto'."
+        )
+
+    return PLAYERS[player].get_command()
+
+
+def build_player_args(player_spec: PlayerSpec, cfg: TOMLDocument) -> list[str]:
+    """Build the argument list for a selected video player for the options that are
+    configured in mediafinder's configuration.
+
+    Args:
+        player_spec (PlayerSpec): Selected video player.
+        cfg (TOMLDocument): mediafinder configuration.
+
+    Returns:
+        list[str]: Command line arguments for the player call.
+    """
+    args_list: list[str] = []
+
+    for option, args in player_spec.options.items():
+        if cfg[option]:
+            args_list.extend(cast(list[str], args))
+
+    return args_list
