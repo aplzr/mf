@@ -178,7 +178,7 @@ def get_vlc_command() -> ResolvedPlayer | None:
     """Get the platform-specific VLC command.
 
     Returns:
-        Path | None: Path to the vlc executable or None if it can't be found.
+        ResolvedPlayer | None: Path to the vlc executable or None if it can't be found.
     """
     vlc_paths = [
         Path(os.environ.get("PROGRAMFILES", "C:\\Program Files"))
@@ -209,7 +209,7 @@ def get_mpv_command() -> ResolvedPlayer | None:
     """Get the platform-specific MPV command.
 
     Returns:
-        Path | None: Path to the mpv executable or None if it can't be found.
+        ResolvedPlayer | None: Path to the mpv executable or None if it can't be found.
     """
     mpv_paths = [
         Path(os.environ.get("PROGRAMFILES", "C:\\Program Files")) / "mpv" / "mpv.exe",
