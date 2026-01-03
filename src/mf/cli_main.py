@@ -178,7 +178,11 @@ def cleanup_mf():
 
 @app_mf.command()
 def stats():
-    """Show library statistics."""
+    """Show library statistics.
+
+    Loads library metadata from cache if caching is activated, otherwise performs a
+    fresh filesystem scan to compute library statistics.
+    """
     cfg = get_config()
     cache_library = bool(cfg["cache_library"])
     configured_extensions = cast(list[str], cfg["media_extensions"])
