@@ -85,9 +85,10 @@ mf new 50 # Show 50 newest files
 - `mf filepath <index>` - Print full path of a search result
 - `mf version` - Print version information or run version check
 - `mf cleanup` - Reset `mediafinder` by deleting all configuration and cache files
+- `mf stats` - Show library statistics
 - `mf last` - Show last search result index with the last played file highlighted
 - `mf config` - Configure `mf`
-- `mf cache` - Manage library cache (rebuild, show location, clear, show statistics)
+- `mf cache` - Manage library cache (rebuild, show location, clear)
 - `mf` or `mf --help` - Print help
 
 
@@ -111,7 +112,7 @@ Cached indices remain valid until you run another `find` or `new` command that o
 - `mf cache rebuild` - Trigger a library cache rebuild
 - `mf cache file` - Print cache location
 - `mf cache clear` - Clear the cache
-- `mf cache stats` - Show cache statistics
+- `mf stats` - Show library statistics
 
 
 ### Configuration Management
