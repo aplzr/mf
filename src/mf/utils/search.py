@@ -49,6 +49,7 @@ from datetime import datetime
 from rich.panel import Panel
 from rich.table import Table
 
+from .cache import _load_search_cache
 from .console import console, print_and_raise
 from .file import FileResult, FileResults, get_search_cache_file, open_utf8
 from .playlist import get_last_played_index
@@ -124,28 +125,16 @@ def save_search_results(pattern: str, results: FileResults) -> None:
 def load_search_results() -> tuple[FileResults, str, datetime]:
     """Load cached search results.
 
-    Raises:
-        typer.Exit: If cache is missing or invalid.
-
     Returns:
         tuple[FileResults, str, datetime]: Results, pattern, timestamp.
     """
-    cache_file = get_search_cache_file()
-    try:
-        with open_utf8(cache_file) as f:
-            cache_data = json.load(f)
+    cache_data = _load_search_cache()
 
-        pattern = cache_data["pattern"]
-        results = FileResults.from_paths(cache_data["results"])
-        timestamp = datetime.fromisoformat(cache_data["timestamp"])
+    pattern = cache_data["pattern"]
+    results = FileResults.from_paths(cache_data["results"])
+    timestamp = datetime.fromisoformat(cache_data["timestamp"])
 
-        return results, pattern, timestamp
-    except (json.JSONDecodeError, KeyError, FileNotFoundError) as e:
-        print_and_raise(
-            "Cache is empty or doesn't exist. "
-            "Please run 'mf find <pattern>' or 'mf new' first.",
-            raise_from=e,
-        )
+    return results, pattern, timestamp
 
 
 def get_result_by_index(index: int) -> FileResult:

@@ -49,6 +49,7 @@ from __future__ import annotations
 
 import json
 
+from .cache import _load_search_cache
 from .console import print_and_raise
 from .file import FileResult, get_search_cache_file, open_utf8
 
@@ -59,9 +60,7 @@ def save_last_played(result: FileResult):
     Args:
         result (FileResult): File last played.
     """
-    with open_utf8(get_search_cache_file()) as f:
-        cached = json.load(f)
-
+    cached = _load_search_cache()
     last_search_results: list[str] = cached["results"]
     last_played_index = last_search_results.index(str(result))
     cached["last_played_index"] = last_played_index
@@ -76,8 +75,7 @@ def get_last_played_index() -> int | None:
     Returns:
         int | None: Index or None if no file was played.
     """
-    with open_utf8(get_search_cache_file()) as f:
-        cached = json.load(f)
+    cached = _load_search_cache()
 
     try:
         return int(cached["last_played_index"])
@@ -91,9 +89,7 @@ def get_next() -> FileResult:
     Returns:
         FileResult: Next file to play.
     """
-    with open_utf8(get_search_cache_file()) as f:
-        cached = json.load(f)
-
+    cached = _load_search_cache()
     results: list[str] = cached["results"]
 
     try:
