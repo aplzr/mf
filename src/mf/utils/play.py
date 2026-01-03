@@ -71,7 +71,7 @@ def resolve_play_target(
     """
     if target is None:
         # Play random file
-        all_files = FindQuery("*").execute()
+        all_files = FindQuery.from_config("*").execute()
 
         if not all_files:
             print_and_raise("No media files found (empty collection).")

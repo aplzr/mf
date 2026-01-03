@@ -42,10 +42,14 @@ def test_find_no_results_warns(monkeypatch):
     class Dummy:
         pattern = "*"
 
+        @classmethod
+        def from_config(cls, pattern, **kwargs):
+            return cls()
+
         def execute(self):
             return []
 
-    monkeypatch.setattr("mf.cli_main.FindQuery", lambda p: Dummy())
+    monkeypatch.setattr("mf.cli_main.FindQuery", Dummy)
     result = runner.invoke(app_mf, ["find", "*.nonexistentext"])
     assert result.exit_code == 0
     assert "No media files found" in result.stdout
@@ -54,13 +58,14 @@ def test_find_no_results_warns(monkeypatch):
 def test_new_empty_collection_raises(monkeypatch):
     # Force NewQuery to return empty and hit print_and_raise path
     class Dummy:
-        def __init__(self, n):
-            pass
+        @classmethod
+        def from_config(cls, n, **kwargs):
+            return cls()
 
         def execute(self):
             return []
 
-    monkeypatch.setattr("mf.cli_main.NewQuery", lambda n: Dummy(n))
+    monkeypatch.setattr("mf.cli_main.NewQuery", Dummy)
     result = runner.invoke(app_mf, ["new", "5"])
     # Typer will convert raised exception to non-zero exit
     assert result.exit_code != 0

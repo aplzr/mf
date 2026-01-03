@@ -33,6 +33,10 @@ class TestResolvePlayTarget:
             def __init__(self, pattern):
                 self.pattern = pattern
 
+            @classmethod
+            def from_config(cls, pattern, **kwargs):
+                return cls(pattern)
+
             def execute(self):
                 return [
                     DummyResult("/tmp/movie1.mp4"),
@@ -54,6 +58,10 @@ class TestResolvePlayTarget:
         class MockQuery:
             def __init__(self, pattern):
                 pass
+
+            @classmethod
+            def from_config(cls, pattern, **kwargs):
+                return cls(pattern)
 
             def execute(self):
                 return []

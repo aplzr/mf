@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from typer.testing import CliRunner
 
-import mf.cli_cache as cli_cache
+import mf.cli_main as cli_main
 
 
 class FakeResults:
@@ -34,9 +34,14 @@ def test_cli_cache_stats_invokes_histograms(monkeypatch, tmp_path):
     cache_paths = [tmp_path / "a.mp4", tmp_path / "b.mkv", tmp_path / "c.txt"]
     fake_cache = FakeResults(cache_paths)
 
-    monkeypatch.setattr(cli_cache, "load_library_cache", lambda: fake_cache)
+    monkeypatch.setattr(cli_main, "load_library_cache", lambda: fake_cache)
     monkeypatch.setattr(
-        cli_cache, "get_config", lambda: {"media_extensions": [".mp4", ".mkv"]}
+        cli_main,
+        "get_config",
+        lambda: {
+            "cache_library": True,
+            "media_extensions": [".mp4", ".mkv"],
+        },
     )
 
     # Stub dependent functions to no-op while tracking calls
@@ -51,11 +56,11 @@ def test_cli_cache_stats_invokes_histograms(monkeypatch, tmp_path):
     def fake_parse_resolutions(results):
         return ["1080p", "720p"]
 
-    monkeypatch.setattr(cli_cache, "console", SimpleNamespace(print=fake_console_print))
-    monkeypatch.setattr(cli_cache, "show_histogram", fake_show_histogram)
-    monkeypatch.setattr(cli_cache, "parse_resolutions", fake_parse_resolutions)
+    monkeypatch.setattr(cli_main, "console", SimpleNamespace(print=fake_console_print))
+    monkeypatch.setattr(cli_main, "show_histogram", fake_show_histogram)
+    monkeypatch.setattr(cli_main, "parse_resolutions", fake_parse_resolutions)
 
-    result = runner.invoke(cli_cache.app_cache, ["stats"])
+    result = runner.invoke(cli_main.app_mf, ["stats"])
 
     assert result.exit_code == 0
     # At least one console print and multiple histograms called

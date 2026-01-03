@@ -13,8 +13,8 @@ def test_find_no_results(monkeypatch):
     from mf.utils.scan import FindQuery as _FindQuery
 
     class FakeFind(_FindQuery):  # type: ignore
-        def __init__(self, pattern: str):  # pragma: no cover - simple init override
-            super().__init__(pattern)
+        def __init__(self, pattern: str, **kwargs):  # pragma: no cover - simple init override
+            super().__init__(pattern, **kwargs)
 
         def execute(self):  # noqa: D401
             return []

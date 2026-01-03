@@ -42,7 +42,7 @@ Examples:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import typer
 
@@ -86,14 +86,14 @@ def find(
     Finds matching files and prints an indexed list.
     """
     # Find, cache, and print media file paths
-    query = FindQuery(pattern)
+    query = FindQuery.from_config(pattern)
     results = query.execute()
-    display_paths: bool = get_config()["display_paths"]  # type: ignore [assignment]
 
     if not results:
         print_warn(f"No media files found matching '{query.pattern}'")
         raise typer.Exit(0)
 
+    display_paths: bool = get_config()["display_paths"]  # type: ignore [assignment]
     save_search_results(query.pattern, results)
     print_search_results(f"Search pattern: {query.pattern}", results, display_paths)
 
@@ -103,7 +103,7 @@ def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
 ):
     """Find the latest additions to the media database."""
-    newest_files = NewQuery(n).execute()
+    newest_files = NewQuery.from_config(n).execute()
     pattern = f"{n} latest additions"
     display_paths: bool = get_config()["display_paths"]  # type: ignore [assignment]
 
@@ -178,17 +178,32 @@ def cleanup_mf():
 @app_mf.command()
 def stats():
     """Show library statistics."""
-    cache = load_library_cache()
-    media_extensions = get_config()["media_extensions"]
+    cfg = get_config()
+    cache_library = bool(cfg["cache_library"])
+    configured_extensions = cast(list[str], cfg["media_extensions"])
 
-    if media_extensions:
-        media_cache = cache.copy()
-        media_cache.filter_by_extension(media_extensions)
+    results = (
+        load_library_cache()
+        if cache_library
+        else FindQuery(
+            "*",
+            auto_wildcards=False,
+            cache_stat=True,
+            show_progress=True,
+            cache_library=cache_library,
+            media_extensions=[],
+            match_extensions=False,
+        ).execute()
+    )
+
+    if configured_extensions:
+        results_filtered = results.copy()
+        results_filtered.filter_by_extension(configured_extensions)
 
     # Extension histogram (all files)
     console.print("")
     show_histogram(
-        get_string_counts(file.suffix for file in cache.get_paths()),
+        get_string_counts(file.suffix for file in results.get_paths()),
         "File extensions (all files)",
         sort=True,
         # Sort by frequency descending, then name ascending
@@ -197,25 +212,25 @@ def stats():
     )
 
     # Extension histogram (media file extensions only)
-    if media_extensions:
+    if configured_extensions:
         show_histogram(
-            get_string_counts(file.suffix for file in media_cache.get_paths()),
+            get_string_counts(file.suffix for file in results_filtered.get_paths()),
             "File extensions (media files)",
             sort=True,
         )
 
     # Resolution distribution
     show_histogram(
-        get_string_counts(parse_resolutions(cache)),
+        get_string_counts(parse_resolutions(results)),
         "Media file resolution",
         sort=True,
         sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
     )
 
     # File size distribution
-    if media_extensions:
+    if configured_extensions:
         bin_centers, bin_counts = get_log_histogram(
-            [result.stat.st_size for result in media_cache]
+            [result.stat.st_size for result in results_filtered]
         )
 
         # Centers are file sizes in bytes.
