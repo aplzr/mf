@@ -197,6 +197,11 @@ If no editor is found, it prints the path so you can edit manually.
 - Media extensions are normalized to lowercase with a leading dot (`mkv` → `.mkv`).
 - Paths are stored as absolute POSIX-style strings.
 
+### Library Statistics
+Use the `mf stats` command to print various statistics that describe your collection:
+
+![](static/stats_example.png)
+
 ## Search Patterns
 
 - Use quotes around patterns with wildcards to prevent shell expansion
