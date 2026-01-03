@@ -62,7 +62,7 @@ Example:
     >>> results = scan_search_paths(cache_stat=True, show_progress=True)
 
     >>> # Use query interface
-    >>> query = FindQuery("*2024*")
+    >>> query = FindQuery.from_config(pattern="2024")
     >>> results = query.execute()
 """
 
