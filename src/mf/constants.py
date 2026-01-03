@@ -1,3 +1,21 @@
+"""Application-wide constants and default values.
+
+Defines all constant values used across the mediafinder application including
+default configuration values, platform-specific settings, and UI symbols.
+
+Constants:
+    DEFAULT_MEDIA_EXTENSIONS: Default video file extensions for new configs
+    BOOLEAN_TRUE_VALUES: Accepted strings for boolean true normalization
+    BOOLEAN_FALSE_VALUES: Accepted strings for boolean false normalization
+    FALLBACK_EDITORS_POSIX: Editor search order on Unix-like systems
+    FD_BINARIES: Platform-to-binary mapping for vendored fd tool
+    STATUS_SYMBOLS: Unicode symbols for console status messages
+
+Platform Support:
+    FD_BINARIES maps (system, machine) tuples to fd binary filenames for
+    Linux x86_64, macOS arm64/x86_64, and Windows x86_64.
+"""
+
 from __future__ import annotations
 
 # Default media file extensions included in a fresh config.

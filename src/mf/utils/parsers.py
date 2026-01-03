@@ -1,3 +1,21 @@
+"""Parsing utilities for extracting structured data from strings.
+
+Provides functions to parse video resolutions from filenames and time interval
+strings into Python objects for use in statistics and configuration.
+
+Functions:
+    parse_resolutions: Extract video resolution from filenames
+    parse_timedelta_str: Convert time interval strings to timedelta objects
+
+Resolution Parsing:
+    Supports both "p-format" (720p, 1080p) and dimension format (1920x1080).
+    Normalizes common dimension formats to standard p-format equivalents.
+
+Timedelta Parsing:
+    Legacy function used for config migration. Accepts format: <number><unit>
+    Units: s (seconds), m (minutes), h (hours), d (days), w (weeks)
+"""
+
 from __future__ import annotations
 
 import re

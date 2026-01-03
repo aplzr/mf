@@ -1,3 +1,22 @@
+"""Last search results management commands.
+
+Provides a Typer sub-application for viewing and managing cached search results
+from the most recent query. The last search cache enables quick re-access to
+previous results without re-scanning the filesystem.
+
+Command Structure:
+    mf last         # Show last search results (default command)
+    mf last show    # Show last search results with metadata
+    mf last file    # Print search cache file location
+    mf last clear   # Delete the search cache
+
+Features:
+    - Default command behavior: 'mf last' runs 'mf last show'
+    - Displays search pattern and timestamp with results
+    - Highlights last played item in results table
+    - Path display controlled by 'display_paths' config setting
+"""
+
 from __future__ import annotations
 
 import typer

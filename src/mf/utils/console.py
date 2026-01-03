@@ -1,3 +1,47 @@
+"""Console output utilities for user-facing messages.
+
+Provides consistent, styled output for the CLI using Rich formatting.
+All messages use status symbols (✓, ⚠, ❌, ℹ) and semantic colors.
+
+Functions:
+    print_ok: Success/confirmation messages (green)
+    print_warn: Warning messages (yellow)
+    print_info: Informational messages (cyan)
+    print_and_raise: Error messages with exit (red, never returns)
+
+Console Instance:
+    Shared Rich console instance to avoid re-initialization overhead.
+    Used throughout the application for consistent styling.
+
+Error Handling Strategy:
+    Utilities should catch exceptions and use print_and_raise() to convert
+    them to user-friendly messages. This ensures users see helpful error
+    messages instead of Python tracebacks.
+
+    Pattern:
+        try:
+            # operation that might fail
+        except SpecificError as e:
+            print_and_raise("User-friendly message", raise_from=e)
+
+    This:
+    1. Shows friendly message to user (no traceback)
+    2. Preserves exception chain for debugging
+    3. Exits cleanly with code 1
+    4. Provides consistent error formatting
+
+Examples:
+    >>> print_ok("Configuration saved successfully")
+    ✓ Configuration saved successfully
+
+    >>> print_warn("Cache is outdated, rebuilding...")
+    ⚠ Cache is outdated, rebuilding...
+
+    >>> print_and_raise("File not found", raise_from=FileNotFoundError())
+    ❌ File not found
+    # Exits with code 1
+"""
+
 from __future__ import annotations
 
 from typing import NoReturn

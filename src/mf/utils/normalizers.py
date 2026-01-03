@@ -1,3 +1,23 @@
+"""Input normalization utilities for user-provided values.
+
+Provides functions to normalize and validate user input before storing in
+configuration or using in operations. All normalization is non-destructive and
+follows consistent conventions.
+
+Normalization Functions:
+    normalize_bool_str: Convert string literals to boolean values
+    normalize_path: Convert relative paths to absolute POSIX-style
+    normalize_media_extension: Ensure extensions have leading dot and lowercase
+    normalize_pattern: Auto-wrap patterns without wildcards with *pattern*
+    normalize_bool_to_toml: Convert boolean to TOML representation
+
+Conventions:
+    - Booleans: Accept true/false, yes/no, y/n, on/off, 1/0, enable/disable
+    - Paths: Always absolute and POSIX-style (forward slashes)
+    - Extensions: Always lowercase with leading dot (.mkv not mkv)
+    - Patterns: Auto-wrapped if no glob characters [*?[]] present
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

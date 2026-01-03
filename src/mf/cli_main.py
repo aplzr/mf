@@ -1,3 +1,45 @@
+"""Top-level command-line interface.
+
+Main CLI entry point that defines all top-level commands and command groups. Uses Typer
+for argument parsing and command routing. All business logic is delegated to utility
+modules - this file only handles CLI concerns.
+
+Command Structure:
+    mf                    # Show help and version
+    mf find <pattern>     # Search for files
+    mf new [n]            # Show newest files
+    mf play [target]      # Play a file
+    mf imdb <index>       # Open IMDB page
+    mf filepath <index>   # Print file path
+    mf version [check]    # Version info/check
+    mf cleanup            # Delete config and cache
+
+    mf last ...           # Last played commands (sub-app)
+    mf config ...         # Configuration commands (sub-app)
+    mf cache ...          # Cache commands (sub-app)
+
+Design Philosophy:
+    Commands are thin wrappers around utility functions. This keeps the CLI
+    layer focused on user interaction while keeping business logic testable
+    and reusable. Each command typically:
+    1. Parses arguments with Typer
+    2. Calls utility function(s)
+    3. Displays results or exits
+
+Error Handling:
+    Most error handling is delegated to utility functions which use
+    print_and_raise() for user-friendly error messages. Typer automatically
+    converts typer.Exit(1) to proper exit codes.
+
+Examples:
+    $ mf find "*.mkv"           # Find MKV files
+    $ mf new 10                 # Show 10 newest files
+    $ mf play next              # Play next in playlist
+    $ mf play 5                 # Play file at index 5
+    $ mf config set video_player mpv
+    $ mf cache rebuild
+"""
+
 from __future__ import annotations
 
 import typer

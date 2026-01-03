@@ -1,3 +1,23 @@
+"""Miscellaneous utility functions for external tool integration.
+
+Provides helper functions for editor launching, IMDB lookups, and formatting
+utilities that don't fit into other modules.
+
+Functions:
+    start_editor: Open a file in the user's preferred editor
+    open_imdb_entry: Search IMDB and open entry in browser
+    format_size: Convert bytes to human-readable size strings
+
+Editor Resolution:
+    1. $VISUAL or $EDITOR environment variables
+    2. Windows: Notepad++ if available, else notepad
+    3. POSIX: First available from nano/vim/vi
+
+IMDB Integration:
+    Uses guessit for filename parsing and imdbinfo for searching.
+    Opens first matching title in the default browser.
+"""
+
 from __future__ import annotations
 
 import os

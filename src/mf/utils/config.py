@@ -1,3 +1,57 @@
+"""Configuration management.
+
+Provides TOML-based configuration with automatic creation, migration, and type
+conversion.
+
+Architecture:
+    Two-tier access pattern:
+    1. get_config() → Raw TOMLDocument for low-level access
+       - Returns the TOML document as-is (strings, lists, ints)
+       - Use when you need to modify and write config back to disk
+       - Use when you need the exact TOML representation
+
+    2. build_config() → Typed Configuration for application use
+       - Converts TOML values to proper Python types (Path, timedelta, etc.)
+       - Use for reading configuration values
+       - Provides attribute and dict access to settings
+
+    Flow: TOML file → cached TOMLDocument → Configuration (with type conversion)
+
+Caching:
+    Configuration is loaded once per process and cached in memory. Since this is
+    a CLI tool that exits after each command, the cache naturally clears on exit.
+    No thread safety needed.
+
+Error Handling:
+    - Missing config: Creates default configuration automatically
+    - Corrupted config: Backs up to .toml.backup, creates new default
+    - Missing settings: Silently migrates by adding defaults from registry
+    - Old formats: Automatically converts to current format
+
+Migration:
+    Configurations are automatically migrated when loaded. Changes include:
+    - Format conversions (e.g., duration strings → integer seconds)
+    - New settings added by an application update since config was last written
+
+Configuration Object:
+    Provides dual access patterns:
+    - Attribute access: config.video_player
+    - Dictionary access: config["video_player"]
+    Settings are dynamically added from SETTINGS registry, providing runtime
+    type safety via from_toml() conversion functions.
+
+Example:
+    >>> # Typed access (recommended for reading values)
+    >>> config = build_config()
+    >>> player = config.video_player
+    >>> paths = config.search_paths  # Already converted to Path objects
+
+    >>> # Raw access (for modifying and writing)
+    >>> cfg = get_config()
+    >>> cfg["video_player"] = "mpv"
+    >>> write_config(cfg)
+"""
+
 from __future__ import annotations
 
 from contextlib import suppress
