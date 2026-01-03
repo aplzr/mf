@@ -42,19 +42,27 @@ Examples:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import typer
 
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
+from .utils.cache import load_library_cache
 from .utils.config import get_config
 from .utils.console import console, print_and_raise, print_warn
 from .utils.file import cleanup
-from .utils.misc import open_imdb_entry
+from .utils.misc import format_size, open_imdb_entry
+from .utils.parsers import parse_resolutions
 from .utils.play import launch_video_player, resolve_play_target
 from .utils.scan import FindQuery, NewQuery
 from .utils.search import get_result_by_index, print_search_results, save_search_results
+from .utils.stats import get_log_histogram, get_string_counts, show_histogram
 from .version import __version__, check_version
+
+if TYPE_CHECKING:
+    from .utils.stats import BinData
 
 app_mf = typer.Typer(help="Media file finder and player")
 app_mf.add_typer(app_last, name="last")
@@ -165,6 +173,59 @@ def cleanup_mf():
     before uninstalling or for a factory reset.
     """
     cleanup()
+
+
+@app_mf.command()
+def stats():
+    """Show library statistics."""
+    cache = load_library_cache()
+    media_extensions = get_config()["media_extensions"]
+
+    if media_extensions:
+        media_cache = cache.copy()
+        media_cache.filter_by_extension(media_extensions)
+
+    # Extension histogram (all files)
+    console.print("")
+    show_histogram(
+        get_string_counts(file.suffix for file in cache.get_paths()),
+        "File extensions (all files)",
+        sort=True,
+        # Sort by frequency descending, then name ascending
+        sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
+        top_n=20,
+    )
+
+    # Extension histogram (media file extensions only)
+    if media_extensions:
+        show_histogram(
+            get_string_counts(file.suffix for file in media_cache.get_paths()),
+            "File extensions (media files)",
+            sort=True,
+        )
+
+    # Resolution distribution
+    show_histogram(
+        get_string_counts(parse_resolutions(cache)),
+        "Media file resolution",
+        sort=True,
+        sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
+    )
+
+    # File size distribution
+    if media_extensions:
+        bin_centers, bin_counts = get_log_histogram(
+            [result.stat.st_size for result in media_cache]
+        )
+
+        # Centers are file sizes in bytes.
+        # Convert to string with appropriate size prefix.
+        bin_labels = [format_size(bin_center) for bin_center in bin_centers]
+
+        bins: list[BinData] = [
+            (label, count) for label, count in zip(bin_labels, bin_counts)
+        ]
+        show_histogram(bins, "Media file size")
 
 
 @app_mf.callback(invoke_without_command=True)
