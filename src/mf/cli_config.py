@@ -1,3 +1,27 @@
+"""Configuration management commands.
+
+Provides a Typer sub-application for managing user configuration settings through
+the CLI. All configuration is stored in a TOML file with commands to view, modify,
+and validate settings.
+
+Command Structure:
+    mf config file              # Print config file location
+    mf config edit              # Open config in editor
+    mf config list              # Display full configuration
+    mf config get <key>         # Get specific setting value
+    mf config set <key> <val>   # Set a setting (replaces)
+    mf config add <key> <val>   # Add to list setting
+    mf config remove <key> <val> # Remove from list setting
+    mf config clear <key>       # Clear a setting to default
+    mf config settings          # List all available settings
+
+Features:
+    - TOML syntax highlighting for config display
+    - Rich table formatting for settings overview
+    - Integrated editor launching for manual editing
+    - Action-based setting modifications delegated to settings registry
+"""
+
 from __future__ import annotations
 
 import tomlkit

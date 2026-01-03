@@ -1,3 +1,17 @@
+"""Configuration validation utilities.
+
+Provides functions to validate configuration values and ensure they meet
+runtime requirements before use in operations.
+
+Functions:
+    validate_search_paths: Validate and filter configured search paths
+
+Validation Strategy:
+    - Warns about non-existent paths but continues with valid ones
+    - Exits with error if no valid paths remain after filtering
+    - Returns only existing, accessible paths for use in scanning
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

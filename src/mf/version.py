@@ -1,3 +1,21 @@
+"""Version information and update checking.
+
+Provides the current package version and utilities to check for newer releases
+on PyPI. Used by the 'mf version --check' command.
+
+Functions:
+    get_pypi_version: Query PyPI API for latest published version
+    check_version: Compare local version against PyPI and notify user
+
+Version Comparison:
+    Uses packaging.version.Version for semantic versioning comparison.
+    Suggests 'uv tool upgrade' command when updates are available.
+
+Error Handling:
+    Network errors, JSON parsing errors, and API format changes are caught
+    and converted to user-friendly error messages.
+"""
+
 from __future__ import annotations
 
 import json

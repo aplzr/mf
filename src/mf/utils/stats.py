@@ -1,3 +1,44 @@
+"""Statistics and histogram visualization utilities.
+
+Provides functions for creating and displaying histograms with support for both
+categorical data and numeric data spanning multiple orders of magnitude.
+
+Features:
+    - Logarithmic binning for data spanning orders of magnitude (file sizes, etc.)
+    - Rich terminal-based histogram rendering with bars and percentages
+    - Flexible sorting and filtering of histogram bins
+    - Geometric mean bin centers for log-spaced histograms
+
+Histogram Types:
+    Categorical: Use get_string_counts() to create bins from categories
+    Numeric (log-scale): Use get_log_histogram() for data like file sizes
+
+Display:
+    Histograms are rendered as Rich panels with:
+    - Unicode bar characters (▆) showing relative frequency
+    - Percentage of total for each bin
+    - Absolute counts
+    - Customizable sorting and top-N filtering
+
+Mathematical Notes:
+    Logarithmic binning uses base-10 logarithms and geometric means for bin
+    centers, which are appropriate for data that varies over orders of magnitude.
+    For example, file sizes from 1KB to 1GB benefit from log-scale binning rather
+    than linear binning.
+
+Examples:
+    >>> # Categorical histogram (file extensions)
+    >>> extensions = ['.mp4', '.mkv', '.mp4', '.avi', '.mp4']
+    >>> bins = get_string_counts(extensions)
+    >>> show_histogram(bins, "File Extensions by Count", sort=True)
+
+    >>> # Numeric histogram (file sizes in bytes)
+    >>> sizes = [1_000_000, 5_000_000, 10_000_000, 50_000_000]
+    >>> bin_centers, counts = get_log_histogram(sizes)
+    >>> bins = [(f"{c/1e6:.1f}MB", count) for c, count in zip(bin_centers, counts)]
+    >>> show_histogram(bins, "File Sizes")
+"""
+
 from __future__ import annotations
 
 import math

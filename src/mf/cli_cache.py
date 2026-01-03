@@ -1,3 +1,23 @@
+"""Library cache management commands.
+
+Provides a Typer sub-application for managing the media library cache. The cache
+stores metadata about all media files in configured search paths to speed up
+queries and enable statistics without filesystem scanning.
+
+Command Structure:
+    mf cache rebuild    # Force rebuild of library cache
+    mf cache file       # Print cache file location
+    mf cache clear      # Delete the cache file
+    mf cache stats      # Display cache statistics with histograms
+
+Features:
+    - Statistics visualization with Rich histograms
+    - File extension distribution (all files and media files)
+    - Resolution distribution parsing from filenames
+    - File size distribution with logarithmic binning
+    - Automatic filtering by configured media extensions
+"""
+
 from __future__ import annotations
 
 import typer
