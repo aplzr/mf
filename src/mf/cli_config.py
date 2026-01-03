@@ -5,15 +5,15 @@ the CLI. All configuration is stored in a TOML file with commands to view, modif
 and validate settings.
 
 Command Structure:
-    mf config file              # Print config file location
-    mf config edit              # Open config in editor
-    mf config list              # Display full configuration
-    mf config get <key>         # Get specific setting value
-    mf config set <key> <val>   # Set a setting (replaces)
-    mf config add <key> <val>   # Add to list setting
+    mf config file               # Print config file location
+    mf config edit               # Open config in editor
+    mf config list               # Display full configuration
+    mf config get <key>          # Get specific setting value
+    mf config set <key> <val>    # Set a setting (replaces)
+    mf config add <key> <val>    # Add to list setting
     mf config remove <key> <val> # Remove from list setting
-    mf config clear <key>       # Clear a setting to default
-    mf config settings          # List all available settings
+    mf config clear <key>        # Clear a setting to default
+    mf config settings           # List all available settings
 
 Features:
     - TOML syntax highlighting for config display
@@ -26,11 +26,9 @@ from __future__ import annotations
 
 import tomlkit
 import typer
-from rich.panel import Panel
 from rich.syntax import Syntax
-from rich.table import Column, Table
 
-from .utils.config import get_config, write_config
+from .utils.config import get_config, list_settings, write_config
 from .utils.console import console, print_and_raise
 from .utils.file import get_config_file
 from .utils.misc import start_editor
@@ -113,29 +111,4 @@ def clear(key: str):
 
 @app_config.command()
 def settings():
-    "List all available settings."
-    table = Table(
-        Column("Setting", style="cyan", no_wrap=True),
-        Column("Type", style="magenta", no_wrap=True),
-        Column("Actions", style="green"),
-        Column("Description", style="white"),
-        show_header=True,
-        box=None,
-        padding=(0, 1),
-    )
-
-    for key, spec in SETTINGS.items():
-        actions = ", ".join(spec.actions)
-        table.add_row(
-            key, f"{spec.kind}, {spec.value_type.__name__}", actions, spec.help
-        )
-
-    panel = Panel(
-        table,
-        title="[bold]Available settings[/bold]",
-        title_align="left",
-        padding=(1, 1),
-    )
-
-    console.print()
-    console.print(panel)
+    list_settings()
