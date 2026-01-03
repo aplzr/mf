@@ -191,7 +191,7 @@ def stats():
             auto_wildcards=False,
             cache_stat=True,
             show_progress=True,
-            cache_library=cache_library,
+            cache_library=False,
             media_extensions=[],
             match_extensions=False,
         ).execute()
