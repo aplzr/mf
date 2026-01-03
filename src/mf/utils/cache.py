@@ -39,16 +39,24 @@ Example:
 
 from __future__ import annotations
 
+import json
 import pickle
 from contextlib import suppress
 from datetime import datetime, timedelta
 from pickle import UnpicklingError
 from pprint import pprint
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from .config import build_config
-from .console import print_info, print_ok, print_warn
-from .file import FileResults, get_cache_dir, get_library_cache_file
+from .console import print_and_raise, print_info, print_ok, print_warn
+from .file import (
+    FileResults,
+    get_cache_dir,
+    get_library_cache_file,
+    get_search_cache_file,
+    open_utf8,
+)
+from .validation import validate_search_cache
 
 PICKLE_PROTOCOL = 5
 
@@ -218,3 +226,20 @@ def print_cache():
     """Print library cache contents for debugging purposes."""
     with open(get_library_cache_file(), "rb") as f:
         pprint(pickle.load(f), compact=True)
+
+
+def _load_search_cache() -> dict[str, Any]:
+    """Load the search cache from disk.
+
+    Returns:
+        dict[str, Any]: Cached search results.
+    """
+    try:
+        with open_utf8(get_search_cache_file()) as f:
+            return validate_search_cache(json.load(f))
+    except (json.JSONDecodeError, FileNotFoundError, KeyError) as e:
+        print_and_raise(
+            "No cached search results. "
+            "Please run 'mf find <pattern>' or 'mf new' first.",
+            raise_from=e,
+        )

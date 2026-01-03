@@ -1,20 +1,17 @@
-"""Configuration validation utilities.
+"""Validation utilities.
 
-Provides functions to validate configuration values and ensure they meet
-runtime requirements before use in operations.
-
-Functions:
-    validate_search_paths: Validate and filter configured search paths
+Provides validation functions to ensure runtime requirements are met.
 
 Validation Strategy:
-    - Warns about non-existent paths but continues with valid ones
-    - Exits with error if no valid paths remain after filtering
-    - Returns only existing, accessible paths for use in scanning
+    - Validates data structure and required fields
+    - Exits with error if validation fails
+    - Returns validated, typed data for use in operations
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from .config import get_config
 from .console import print_and_raise, print_warn
@@ -47,3 +44,23 @@ def validate_search_paths() -> list[Path]:
         )
 
     return validated
+
+
+def validate_search_cache(cache_data: dict[str, Any]) -> dict[str, Any]:
+    """Validate search cache structure has required keys.
+
+    Args:
+        cache_data: Raw cache data from JSON.
+
+    Raises:
+        KeyError: If required keys are missing.
+
+    Returns:
+        dict[str, Any]: The validated cache data.
+    """
+    required_keys = {"pattern", "results", "timestamp"}
+
+    if missing := required_keys - cache_data.keys():
+        raise KeyError(f"Cache missing required keys: {missing}")
+
+    return cache_data
