@@ -516,14 +516,50 @@ class ProgressCounter:
 
 
 class Query(ABC):
-    """Base class for file search queries."""
+    """Base class for file search queries.
 
-    def __init__(self):
-        """Initialize query."""
-        config = get_config()
-        self.cache_library = config["cache_library"]
-        self.media_extensions = config["media_extensions"]
-        self.match_extensions = config["match_extensions"]
+    Attributes:
+        cache_library (bool): Loads library metadata from cache if True, performs
+            a fresh filescan otherwise.
+        media_extensions (list[str]): Media extensions to match if matching is
+            turned on.
+        match_extensions (bool): Whether to match media extensions.
+    """
+
+    def __init__(
+        self, cache_library: bool, media_extensions: list[str], match_extensions: bool
+    ):
+        """Initialize query.
+
+        Args:
+            cache_library (bool): Loads library metadata from cache if True, performs
+                a fresh filescan otherwise.
+            media_extensions (list[str]): Media extensions to match if matching is
+                turned on.
+            match_extensions (bool): Whether to match media extensions.
+        """
+        self.cache_library = cache_library
+        self.media_extensions = media_extensions
+        self.match_extensions = match_extensions
+
+    @classmethod
+    def _get_config_params(cls) -> dict:
+        """Get configuration parameters for query initialization.
+
+        Returns the following parameters from the current configuration:
+        {
+            "cache_library": <bool>,
+            "media_extensions": <list[str]>,
+            "match_extensions": <bool>,
+        }
+        """
+        cfg = get_config()
+
+        return {
+            "cache_library": cfg["cache_library"],
+            "media_extensions": cfg["media_extensions"],
+            "match_extensions": cfg["match_extensions"],
+        }
 
     @abstractmethod
     def execute(self) -> FileResults:
@@ -543,21 +579,87 @@ class FindQuery(Query):
     for better performance, otherwise performs a fresh filesystem scan.
 
     Attributes:
-        pattern: Normalized glob pattern to search for.
+        pattern (str): (Normalized) glob pattern to search for.
+        auto_wildcards (bool): Whether to wrap search patterns that don't already
+            contain wildcards with asterisks ("batman" -> "*batman*").
+        cache_stat (bool): Cache each file's stat info at the cost of an
+                additional syscall per file. Defaults to False.
+        show_progress (bool): Show progress bar during scanning. Defaults to False.
+        cache_library (bool): Loads library metadata from cache if True, performs
+            a fresh filescan otherwise.
+        media_extensions (list[str]): Media extensions to match if matching is
+            turned on.
+        match_extensions (bool): Whether to match media extensions.
     """
 
-    def __init__(self, pattern: str):
+    def __init__(
+        self,
+        pattern: str,
+        auto_wildcards: bool,
+        cache_stat: bool = False,
+        show_progress: bool = False,
+        *,
+        cache_library: bool,
+        media_extensions: list[str],
+        match_extensions: bool,
+    ):
         """Initialize the find query.
 
         Args:
             pattern (str): Glob pattern to search for (e.g., "*.mp4", "*2023*").
+            auto_wildcards: Whether to wrap search patterns that don't already contain
+                wildcards with asterisks ("batman" -> "*batman*").
+            cache_stat (bool, optional): Cache each file's stat info at the cost of an
+                additional syscall per file. Defaults to False.
+            show_progress (bool, optional): Show progress bar during scanning. Defaults
+                to False.
+            cache_library (bool): Loads library metadata from cache if True, performs
+                a fresh filescan otherwise.
+            media_extensions (list[str]): Media extensions to match if matching is
+                turned on.
+            match_extensions (bool): Whether to match media extensions.
+
         """
-        if get_config()["auto_wildcards"]:
+        if auto_wildcards:
             self.pattern = normalize_pattern(pattern)
         else:
             self.pattern = pattern
 
-        super().__init__()
+        self.cache_stat = cache_stat
+        self.show_progress = show_progress
+
+        super().__init__(
+            cache_library=cache_library,
+            media_extensions=media_extensions,
+            match_extensions=match_extensions,
+        )
+
+    @classmethod
+    def from_config(
+        cls, pattern: str, cache_stat: bool = False, show_progress: bool = False
+    ) -> FindQuery:
+        """Create FindQuery from current configuration.
+
+        Args:
+            pattern (str): Glob pattern to search for (e.g., "*.mp4", "*2023*").
+            cache_stat (bool, optional): Cache each file's stat info at the cost of an
+                additional syscall per file. Defaults to False.
+            show_progress (bool, optional): Show progress bar during scanning. Defaults
+                to False.
+
+        Returns:
+            FindQuery: FindQuery initialized with pattern and parameters from current
+                configuration.
+        """
+        auto_wildcards = bool(get_config()["auto_wildcards"])
+
+        return cls(
+            pattern=pattern,
+            auto_wildcards=auto_wildcards,
+            cache_stat=cache_stat,
+            show_progress=show_progress,
+            **cls._get_config_params(),
+        )
 
     def execute(self) -> FileResults:
         """Execute the query.
@@ -565,7 +667,14 @@ class FindQuery(Query):
         Returns:
             FileResults: Search results sorted alphabetically by filename.
         """
-        results = load_library_cache() if self.cache_library else scan_search_paths()
+        results = (
+            load_library_cache()
+            if self.cache_library
+            else scan_search_paths(
+                cache_stat=self.cache_stat,
+                show_progress=self.show_progress,
+            )
+        )
 
         results.filter_by_extension(
             self.media_extensions if self.match_extensions else None
@@ -586,17 +695,60 @@ class NewQuery(Query):
     mtime collection.
 
     Attributes:
-        n: Maximum number of results to return.
+        n (int): Maximum number of results to return.
+        show_progress (bool): Show progress bar during scanning. Defaults to False.
+        cache_library (bool): Loads library metadata from cache if True, performs
+            a fresh filescan otherwise.
+        media_extensions (list[str]): Media extensions to match if matching is
+            turned on.
+        match_extensions (bool): Whether to match media extensions.
     """
 
-    def __init__(self, n: int = 20):
+    def __init__(
+        self,
+        n: int = 20,
+        show_progress: bool = False,
+        *,
+        cache_library: bool,
+        media_extensions: list[str],
+        match_extensions: bool,
+    ):
         """Initialize the new files query.
 
         Args:
             n: Maximum number of newest files to return. Defaults to 20.
+            show_progress (bool, optional): Show progress bar during scanning. Defaults
+                to False.
+            cache_library (bool): Loads library metadata from cache if True, performs
+                a fresh filescan otherwise.
+            media_extensions (list[str]): Media extensions to match if matching is
+                turned on.
+            match_extensions (bool): Whether to match media extensions.
         """
         self.n = n
-        super().__init__()
+        self.show_progress = show_progress
+
+        super().__init__(
+            cache_library=cache_library,
+            media_extensions=media_extensions,
+            match_extensions=match_extensions,
+        )
+
+    @classmethod
+    def from_config(cls, n: int = 20, show_progress: bool = False) -> NewQuery:
+        """Create NewQuery from current configuration.
+
+        Args:
+            n (int, optional): Maximum number of newest files to return. Defaults to 20.
+            show_progress (bool, optional): Show progress bar during scanning. Defaults
+                to False.
+
+
+        Returns:
+            NewQuery: NewQuery initialized with n and parameters from current
+                configuration.
+        """
+        return cls(n=n, show_progress=show_progress, **cls._get_config_params())
 
     def execute(self) -> FileResults:
         """Execute the query.
@@ -610,7 +762,10 @@ class NewQuery(Query):
             results = load_library_cache()
         else:
             # Contains mtime but not sorted yet
-            results = scan_search_paths(cache_stat=True)
+            results = scan_search_paths(
+                cache_stat=True,
+                show_progress=self.show_progress,
+            )
             results.sort(by_mtime=True)
 
         results.filter_by_extension(

@@ -13,6 +13,7 @@ Command Structure:
     mf filepath <index>   # Print file path
     mf version [check]    # Version info/check
     mf cleanup            # Delete config and cache
+    mf stats              # Show library statistics
 
     mf last ...           # Last played commands (sub-app)
     mf config ...         # Configuration commands (sub-app)
@@ -42,19 +43,27 @@ Examples:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 import typer
 
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
+from .utils.cache import load_library_cache
 from .utils.config import get_config
 from .utils.console import console, print_and_raise, print_warn
 from .utils.file import cleanup
-from .utils.misc import open_imdb_entry
+from .utils.misc import format_size, open_imdb_entry
+from .utils.parsers import parse_resolutions
 from .utils.play import launch_video_player, resolve_play_target
 from .utils.scan import FindQuery, NewQuery
 from .utils.search import get_result_by_index, print_search_results, save_search_results
+from .utils.stats import get_log_histogram, get_string_counts, show_histogram
 from .version import __version__, check_version
+
+if TYPE_CHECKING:
+    from .utils.stats import BinData
 
 app_mf = typer.Typer(help="Media file finder and player")
 app_mf.add_typer(app_last, name="last")
@@ -78,14 +87,14 @@ def find(
     Finds matching files and prints an indexed list.
     """
     # Find, cache, and print media file paths
-    query = FindQuery(pattern)
+    query = FindQuery.from_config(pattern)
     results = query.execute()
-    display_paths: bool = get_config()["display_paths"]  # type: ignore [assignment]
 
     if not results:
         print_warn(f"No media files found matching '{query.pattern}'")
         raise typer.Exit(0)
 
+    display_paths: bool = get_config()["display_paths"]  # type: ignore [assignment]
     save_search_results(query.pattern, results)
     print_search_results(f"Search pattern: {query.pattern}", results, display_paths)
 
@@ -95,7 +104,7 @@ def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
 ):
     """Find the latest additions to the media database."""
-    newest_files = NewQuery(n).execute()
+    newest_files = NewQuery.from_config(n).execute()
     pattern = f"{n} latest additions"
     display_paths: bool = get_config()["display_paths"]  # type: ignore [assignment]
 
@@ -165,6 +174,78 @@ def cleanup_mf():
     before uninstalling or for a factory reset.
     """
     cleanup()
+
+
+@app_mf.command()
+def stats():
+    """Show library statistics.
+
+    Loads library metadata from cache if caching is activated, otherwise performs a
+    fresh filesystem scan to compute library statistics.
+    """
+    cfg = get_config()
+    cache_library = bool(cfg["cache_library"])
+    configured_extensions = cast(list[str], cfg["media_extensions"])
+
+    results = (
+        load_library_cache()
+        if cache_library
+        else FindQuery(
+            "*",
+            auto_wildcards=False,
+            cache_stat=True,
+            show_progress=True,
+            cache_library=False,
+            media_extensions=[],
+            match_extensions=False,
+        ).execute()
+    )
+
+    if configured_extensions:
+        results_filtered = results.copy()
+        results_filtered.filter_by_extension(configured_extensions)
+
+    # Extension histogram (all files)
+    console.print("")
+    show_histogram(
+        get_string_counts(file.suffix for file in results.get_paths()),
+        "File extensions (all files)",
+        sort=True,
+        # Sort by frequency descending, then name ascending
+        sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
+        top_n=20,
+    )
+
+    # Extension histogram (media file extensions only)
+    if configured_extensions:
+        show_histogram(
+            get_string_counts(file.suffix for file in results_filtered.get_paths()),
+            "File extensions (media files)",
+            sort=True,
+        )
+
+    # Resolution distribution
+    show_histogram(
+        get_string_counts(parse_resolutions(results)),
+        "Media file resolution",
+        sort=True,
+        sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
+    )
+
+    # File size distribution
+    if configured_extensions:
+        bin_centers, bin_counts = get_log_histogram(
+            [result.stat.st_size for result in results_filtered]
+        )
+
+        # Centers are file sizes in bytes.
+        # Convert to string with appropriate size prefix.
+        bin_labels = [format_size(bin_center) for bin_center in bin_centers]
+
+        bins: list[BinData] = [
+            (label, count) for label, count in zip(bin_labels, bin_counts)
+        ]
+        show_histogram(bins, "Media file size")
 
 
 @app_mf.callback(invoke_without_command=True)

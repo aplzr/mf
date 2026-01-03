@@ -76,7 +76,7 @@ def test__scan_with_progress_bar_no_estimate(tmp_path: Path):
 
     lock = threading.Lock()
     res = _scan_with_progress_bar(
-        futures,
+        futures,  # type: ignore[arg-type]
         estimated_total=None,
         progress_counter=ProgressCounter(),
     )
@@ -105,7 +105,14 @@ def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
 
     # Avoid validate_search_paths side effects by returning our tmp_path
     monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda: [tmp_path])
-    q = FindQuery("*")
+    # Use direct instantiation with explicit parameters (no need to mock get_config!)
+    q = FindQuery(
+        "*",
+        auto_wildcards=False,
+        cache_library=False,
+        media_extensions=[".mp4", ".mkv"],
+        match_extensions=True,
+    )
     results = q.execute()
     names = [r.file.name for r in results]
     assert names == ["a.mp4", "b.mkv"]
@@ -113,18 +120,6 @@ def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
 
 def test_new_query_latest(monkeypatch, tmp_path: Path):
     # No cache; collect mtimes and sort by newest first
-    monkeypatch.setattr(
-        "mf.utils.scan.get_config",
-        lambda: {
-            "cache_library": False,
-            "prefer_fd": False,
-            "media_extensions": [".mp4"],
-            "match_extensions": True,
-            "search_paths": [tmp_path.as_posix()],
-            "parallel_search": True,
-        },
-    )
-
     # Create files with different mtimes
     f1 = tmp_path / "a.mp4"
     f2 = tmp_path / "b.mp4"
@@ -135,38 +130,38 @@ def test_new_query_latest(monkeypatch, tmp_path: Path):
     os.utime(f1, (os.path.getatime(f1), os.path.getmtime(f1) - 10))
 
     monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda: [tmp_path])
-    q = NewQuery(2)
+    # Use direct instantiation with explicit parameters (no need to mock get_config!)
+    q = NewQuery(2, cache_library=False, media_extensions=[".mp4"], match_extensions=True)
     results = q.execute()
     names = [r.file.name for r in results]
     assert names == ["b.mp4", "a.mp4"]
 
-def test_find_query_auto_wildcards_setting(monkeypatch):
-    """Test FindQuery pattern setting respects auto_wildcards config."""
+def test_find_query_auto_wildcards_setting():
+    """Test FindQuery pattern setting respects auto_wildcards parameter."""
     # With auto_wildcards=True, pattern should be wrapped
-    monkeypatch.setattr("mf.utils.scan.get_config", lambda: {
-        "auto_wildcards": True,
-        "cache_library": False,
-        "prefer_fd": False,
-        "media_extensions": [".mp4"],
-        "match_extensions": True,
-    })
-    query = FindQuery("batman")
+    # Use direct instantiation with explicit parameters (no need to mock get_config!)
+    query = FindQuery(
+        "batman",
+        auto_wildcards=True,
+        cache_library=False,
+        media_extensions=[".mp4"],
+        match_extensions=True,
+    )
     assert query.pattern == "*batman*"
 
     # With auto_wildcards=False, pattern should stay as-is
-    monkeypatch.setattr("mf.utils.scan.get_config", lambda: {
-        "auto_wildcards": False,
-        "cache_library": False,
-        "prefer_fd": False,
-        "media_extensions": [".mp4"],
-        "match_extensions": True,
-    })
-    query = FindQuery("batman")
+    query = FindQuery(
+        "batman",
+        auto_wildcards=False,
+        cache_library=False,
+        media_extensions=[".mp4"],
+        match_extensions=True,
+    )
     assert query.pattern == "batman"
 
 def test_get_max_workers(monkeypatch, tmp_path: Path):
-    assert get_max_workers(["path_1", "path_2"], parallel_search=True) == 2
-    assert get_max_workers(["path_1", "path_2"], parallel_search=False) == 1
+    assert get_max_workers([Path("path_1"), Path("path_2")], parallel_search=True) == 2
+    assert get_max_workers([Path("path_1"), Path("path_2")], parallel_search=False) == 1
 
 def test_process_completed_futures():
     completed_future_1 = Future()
