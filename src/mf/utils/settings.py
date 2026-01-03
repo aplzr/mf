@@ -109,6 +109,7 @@ class SettingSpec:
         value_type: Python type of values loaded from TOML via from_toml.
         actions: Allowed actions for this setting.
         default: Default value(s), used in the default configuration.
+        allowed_values: Allowed values to choose from.
         normalize: Function converting a raw string into what is written to TOML.
         from_toml: Function converting value from TOML to the typed value.
         display: Function producing a human readable representation.
@@ -122,6 +123,7 @@ class SettingSpec:
     value_type: type
     actions: set[Action]
     default: Any
+    allowed_values: list[Any] | None = None
     normalize: Callable[[str], Any] = lambda value: value
     from_toml: Callable[[Any], Any] = lambda value: value
     display: Callable[[Any], str] = lambda value: str(value)
@@ -248,12 +250,31 @@ SETTINGS: dict[str, SettingSpec] = {
         actions={"set"},
         normalize=lambda s: s.lower().strip(),
         default="auto",
+        allowed_values=["auto", "vlc", "mpv"],
         help=(
             "Video player to use. 'vlc', 'mpv', or 'auto'. If 'auto', uses VLC with "
             "fallback to mpv. Note that video player(s) must be installed separately."
         ),
     ),
 }
+
+
+def validate_allowed_value(value: Any, spec: SettingSpec) -> None:
+    """Validate a single value against allowed_values list.
+
+    Raises:
+        typer.Exit: If value is not in allowed_values.
+    """
+    if spec.allowed_values is None:
+        return
+
+    if value not in spec.allowed_values:
+        allowed_str = ", ".join(
+            repr(allowed_value) for allowed_value in spec.allowed_values
+        )
+        print_and_raise(
+            f"Invalid value {value!r} for {spec.key}. Allowed values: {allowed_str}."
+        )
 
 
 def apply_action(
@@ -287,6 +308,7 @@ def apply_action(
             )
 
         new_value = spec.normalize(raw_values[0])
+        validate_allowed_value(new_value, spec)
         spec.validate_all(new_value)
         cfg[key] = new_value
         spec.after_update(cfg[key])
@@ -303,6 +325,10 @@ def apply_action(
         print_and_raise(f"Action '{action}' requires values for '{key}'.")
 
     normalized_values = [spec.normalize(value) for value in raw_values]
+
+    if action in ["set", "add"]:
+        for value in normalized_values:
+            validate_allowed_value(value, spec)
 
     if action == "set":
         cfg[key].clear()  # type: ignore [union-attr]

@@ -59,10 +59,12 @@ from textwrap import wrap
 from typing import Any
 
 import tomlkit
+from rich.panel import Panel
+from rich.table import Column, Table
 from tomlkit import TOMLDocument, comment, document, nl
 from tomlkit.exceptions import ParseError, TOMLKitError
 
-from .console import print_ok, print_warn
+from .console import console, print_ok, print_warn
 from .file import get_config_file, open_utf8
 from .parsers import parse_timedelta_str
 from .settings import SETTINGS, SettingSpec
@@ -287,3 +289,44 @@ def migrate_config(cfg: TOMLDocument) -> bool:
         modified = True
 
     return modified
+
+
+def list_settings():
+    "List all available settings as defined by the settings registry."
+    table = Table(
+        Column("Setting", style="cyan", no_wrap=True),
+        Column("Type", style="magenta", no_wrap=True),
+        Column("Allowed", style="yellow"),
+        Column("Actions", style="green"),
+        Column("Description", style="white"),
+        show_header=True,
+        box=None,
+        padding=(0, 1),
+    )
+
+    for key, spec in SETTINGS.items():
+        actions = ", ".join(spec.actions)
+        allowed_display = ""
+
+        if spec.allowed_values is not None:
+            allowed_display = ", ".join(
+                str(allowed_value) for allowed_value in spec.allowed_values
+            )
+
+        table.add_row(
+            key,
+            f"{spec.kind}, {spec.value_type.__name__}",
+            allowed_display,
+            actions,
+            spec.help,
+        )
+
+    panel = Panel(
+        table,
+        title="[bold]Available settings[/bold]",
+        title_align="left",
+        padding=(1, 1),
+    )
+
+    console.print()
+    console.print(panel)
