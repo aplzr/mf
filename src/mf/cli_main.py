@@ -13,6 +13,7 @@ Command Structure:
     mf filepath <index>   # Print file path
     mf version [check]    # Version info/check
     mf cleanup            # Delete config and cache
+    mf stats              # Show library statistics
 
     mf last ...           # Last played commands (sub-app)
     mf config ...         # Configuration commands (sub-app)
