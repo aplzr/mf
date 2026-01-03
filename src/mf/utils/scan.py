@@ -1,3 +1,71 @@
+"""File system scanning with multiple strategies and progress tracking.
+
+Provides flexible file scanning capabilities with automatic strategy selection:
+- Fast scanning using vendored fd binary (default) with Python fallback
+- Python scanning with optional progress display
+- Library caching for improved performance on repeated scans
+
+Architecture:
+    Strategy Pattern:
+        - ScanStrategy (ABC): Base for all scanning strategies
+        - FdScanStrategy: Fast external tool (fd binary)
+        - PythonSilentScanStrategy: Pure Python without progress
+        - PythonProgressScanStrategy: Pure Python with live progress bar
+
+    Query Pattern:
+        - Query (ABC): Base for search operations
+        - FindQuery: Search by glob pattern
+        - NewQuery: Find recently modified files
+
+Features:
+    - Automatic fallback from fd to Python on failure
+    - Optional parallel scanning of multiple search paths
+    - Thread-safe progress tracking across concurrent scans
+    - Smart progress display (spinner → progress bar)
+    - Optional stat caching for mtime-based operations
+
+Progress Display:
+    1. Initial spinner while waiting for first file
+    2. Progress bar with estimated total from cache
+    3. Dynamic total adjustment if estimate exceeded
+
+Performance:
+    fd binary provides 30-70% performance improvement over pure Python scanning. Used
+    automatically when:
+    - Scanning without stat collection (mtime not needed)
+    - Command is 'mf find' or cache rebuilding without mtime
+
+    Python scanner used when:
+    - Stat information needed (modification times)
+    - Command is 'mf new' (sorts by mtime)
+    - Cache rebuilding with mtime collection
+
+    The prefer_fd setting is automatically ignored when mtime is required.
+
+    Parallel scanning:
+    - Enabled by default (parallel_search=true)
+    - Scans each search path in a separate thread
+    - Beneficial when paths are on different physical drives
+    - Total time limited by slowest path, not sum of all paths
+
+    Disk Thrashing Prevention:
+    - Disable parallel_search if multiple paths are on the same _mechanical_ drive
+    - Safe and potentially beneficial to leave enabled for SSDs/NVMe (no thrashing
+      concerns)
+    - Beneficial when paths are on different physical drives (any type)
+
+Example:
+    >>> # Simple scan without stat caching
+    >>> results = scan_search_paths()
+
+    >>> # Scan with progress and stat caching
+    >>> results = scan_search_paths(cache_stat=True, show_progress=True)
+
+    >>> # Use query interface
+    >>> query = FindQuery("*2024*")
+    >>> results = query.execute()
+"""
+
 from __future__ import annotations
 
 import os

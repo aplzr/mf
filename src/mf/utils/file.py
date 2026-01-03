@@ -1,3 +1,51 @@
+"""File and path utilities.
+
+Provides file system operations, path resolution, and platform-aware directory
+discovery.
+
+Core abstractions:
+- FileResult: Represents a single file with optional stat metadata
+- FileResults: Collection of FileResult objects with filtering and sorting operations
+
+Platform Support:
+    - Windows: Uses LOCALAPPDATA for cache/config
+    - Unix-like: Follows XDG Base Directory specification
+    - Fallback: ~/.cache and ~/.config
+
+Directory Layout:
+    Config: $XDG_CONFIG_HOME/mf/config.toml (or ~/.config/mf/config.toml)
+    Cache:  $XDG_CACHE_HOME/mf/ (or ~/.cache/mf/)
+        - library.pkl: Pickle cache of media files (path and stat metadata)
+        - last_search.json: Most recent search results
+
+The FileResults collection supports:
+    - Extension filtering
+    - Pattern matching (glob-style)
+    - Existence checking
+    - Sorting by name or modification time
+    - In-place and non-mutating operations
+
+Mutation Pattern:
+    Filter methods modify the collection in-place and return None. To preserve the
+    original, copy first.
+
+Example:
+    >>> # Create from paths
+    >>> results = FileResults.from_paths(["/movies/a.mkv", "/movies/b.avi"])
+
+    >>> # Filter and sort
+    >>> results.filter_by_extension([".mkv"])
+    >>> results.sort()  # Alphabetical by name
+
+    >>> # Get sorted by modification time
+    >>> sorted_results = results.sorted(by_mtime=True)
+
+    >>> # Check for missing files
+    >>> missing = results.get_missing()
+    >>> if missing:
+    ...     print(f"Missing {len(missing)} files")
+"""
+
 from __future__ import annotations
 
 import os

@@ -1,3 +1,66 @@
+"""Settings registry and configuration action system.
+
+Provides a centralized registry of all configurable settings with their metadata,
+validation rules, and transformation functions. Settings are defined once in the
+SETTINGS registry and used throughout the application.
+
+Architecture:
+    Registry Pattern:
+        - SETTINGS: Central registry mapping setting names to specifications
+        - SettingSpec: Complete metadata for a single setting
+        - apply_action: Unified action handler for all setting modifications
+
+    Setting Lifecycle:
+        User Input → normalize() → TOML → from_toml() → Typed Value
+
+        1. User provides raw string value
+        2. normalize() converts to TOML-compatible format
+        3. Written to TOML configuration file
+        4. from_toml() converts to final Python type
+        5. validate_all() ensures value is valid
+        6. after_update() triggers any side effects
+
+    Action System:
+        Scalar settings: Only support 'set' action
+        List settings: Support 'set', 'add', 'remove', 'clear' actions
+        Each setting declares which actions it supports in its spec
+
+Design Trade-off:
+    Configuration class uses dynamic attributes (setattr) to maintain single
+    source of truth in SETTINGS registry. This sacrifices static type checking
+    for DRY principle - adding a new setting only requires updating the registry,
+    not parallel class definitions.
+
+Features:
+    - Type conversion pipeline (string → TOML → Python type)
+    - Custom validation per setting
+    - Reactive updates via after_update hooks
+    - Normalized display for user feedback
+    - Extensible: new settings require only registry entry
+
+Available Settings: see SETTINGS registry.
+
+Examples:
+    >>> # Add a new setting to the registry
+    >>> SETTINGS["new_setting"] = SettingSpec(
+    ...     key="new_setting",
+    ...     kind="scalar",
+    ...     value_type=str,
+    ...     actions={"set"},
+    ...     default="default_value",
+    ...     help="Description of the setting"
+    ... )
+
+    >>> # Apply an action
+    >>> cfg = get_config()
+    >>> cfg = apply_action(cfg, "video_player", "set", ["mpv"])
+    Set video_player to 'mpv'.
+
+    >>> # Add to list setting
+    >>> cfg = apply_action(cfg, "search_paths", "add", ["/media/movies"])
+    Added '/media/movies' to search_paths.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable

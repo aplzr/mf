@@ -1,3 +1,37 @@
+"""Video player integration with automatic platform detection and fallback.
+
+Provides cross-platform support for launching VLC and mpv media players with automatic
+player detection and fallback logic. Handles player discovery via Windows registry,
+common paths, and PATH, with command-line argument building based on user configuration.
+
+Features:
+    - Automatic player detection (VLC preferred, mpv fallback)
+    - Platform-specific discovery (Windows registry, common installation paths, PATH)
+    - Configurable playback options (fullscreen, etc.)
+    - Single file and playlist support
+    - Command-line argument generation from config
+
+Architecture:
+    Uses Strategy pattern via PlayerSpec to encapsulate player-specific details.
+    Each supported player has a get_command function and options mapping.
+
+Supported Players:
+    - VLC and mpv (separate installs)
+
+Platform Support:
+    - Windows: Registry lookup → common paths → PATH
+    - Unix-like: PATH lookup
+
+Example:
+    >>> # Launch a single file
+    >>> file = FileResult(Path("movie.mkv"))
+    >>> launch_video_player(file)
+
+    >>> # Launch playlist
+    >>> files = FileResults([...])
+    >>> launch_video_player(files)
+"""
+
 from __future__ import annotations
 
 import os

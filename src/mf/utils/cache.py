@@ -1,3 +1,42 @@
+"""Media library caching system with pickle serialization.
+
+Provides persistent caching of media file metadata to speed up searches and queries.
+Uses pickle (protocol 5) instead of JSON for significantly faster deserialization on
+large media libraries.
+
+Performance Rationale:
+    Pickle chosen over JSON for 5-10x faster loading on large libraries. This is safe
+    because the cache is entirely self-generated from local filesystem scans and never
+    contains external/untrusted data.
+
+Cache Location:
+    - Stored in user's cache directory as 'library.pkl'
+    - Platform-aware: $XDG_CACHE_HOME/mf or ~/.cache/mf
+
+Cache Expiration:
+    Controlled by 'library_cache_interval' config setting (seconds). Set to 0 for no
+    expiration (cache persists indefinitely).
+
+Data Format:
+    Pickle protocol 5 (Python 3.8+) containing:
+    - timestamp: ISO format string of cache creation time
+    - files: List of (POSIX filepath_string, stat_tuple) pairs
+    - Sorted by mtime (newest first) for efficient newest-file queries
+
+Migration:
+    - Migrated from JSON to pickle for performance
+    - Old JSON caches automatically detected and removed on first run
+
+Example:
+    >>> # Rebuild cache
+    >>> results = rebuild_library_cache()
+    >>> print(f"Cached {len(results)} files")
+
+    >>> # Load existing cache
+    >>> results = load_library_cache()
+    >>> # Returns FileResults sorted by mtime (newest first)
+"""
+
 from __future__ import annotations
 
 import pickle
