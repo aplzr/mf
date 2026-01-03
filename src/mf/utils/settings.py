@@ -258,17 +258,16 @@ SETTINGS: dict[str, SettingSpec] = {
 
 def apply_action(
     cfg: TOMLDocument, key: str, action: Action, raw_values: list[str] | None
-) -> TOMLDocument:
+) -> None:
     """Apply action to setting.
 
+    Modifies the configuration in-place.
+
     Args:
-        cfg (TOMLDocument): Current configuration.
+        cfg (TOMLDocument): Current configuration to modify.
         key (str): Setting to apply action to.
         action (Action): Action to perform.
         raw_values (list[str] | None): Values to act with.
-
-    Returns:
-        TOMLDocument: Updated configuration.
     """
     if key not in SETTINGS:
         print_and_raise(
@@ -292,14 +291,13 @@ def apply_action(
         cfg[key] = new_value
         spec.after_update(cfg[key])
         print_ok(f"Set {key} to '{spec.display(new_value)}'.")
-
-        return cfg
+        return
 
     # List setting
     if action == "clear":
         cfg[key].clear()  # type: ignore [union-attr]
         print_ok(f"Cleared {key}.")
-        return cfg
+        return
 
     if raw_values is None:
         print_and_raise(f"Action '{action}' requires values for '{key}'.")
@@ -329,5 +327,3 @@ def apply_action(
 
     spec.validate_all(cfg[key])
     spec.after_update(cfg[key])
-
-    return cfg

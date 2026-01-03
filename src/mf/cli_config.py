@@ -83,7 +83,7 @@ def get(key: str):
 def set(key: str, values: list[str]):
     """Set a setting."""
     cfg = get_config()
-    cfg = apply_action(cfg, key, "set", values)
+    apply_action(cfg, key, "set", values)
     write_config(cfg)
 
 
@@ -91,7 +91,7 @@ def set(key: str, values: list[str]):
 def add(key: str, values: list[str]):
     """Add value(s) to a list setting."""
     cfg = get_config()
-    cfg = apply_action(cfg, key, "add", values)
+    apply_action(cfg, key, "add", values)
     write_config(cfg)
 
 
@@ -99,7 +99,7 @@ def add(key: str, values: list[str]):
 def remove(key: str, values: list[str]):
     """Remove value(s) from a list setting."""
     cfg = get_config()
-    cfg = apply_action(cfg, key, "remove", values)
+    apply_action(cfg, key, "remove", values)
     write_config(cfg)
 
 
@@ -107,7 +107,7 @@ def remove(key: str, values: list[str]):
 def clear(key: str):
     """Clear a setting."""
     cfg = get_config()
-    cfg = apply_action(cfg, key, "clear", None)
+    apply_action(cfg, key, "clear", None)
     write_config(cfg)
 
 
