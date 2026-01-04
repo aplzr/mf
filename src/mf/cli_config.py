@@ -28,7 +28,7 @@ import tomlkit
 import typer
 from rich.syntax import Syntax
 
-from .utils.config import get_config, list_settings, write_config
+from .utils.config import get_config, list_settings
 from .utils.console import console, print_and_raise
 from .utils.file import get_config_file
 from .utils.misc import start_editor
@@ -80,33 +80,25 @@ def get(key: str):
 @app_config.command()
 def set(key: str, values: list[str]):
     """Set a setting."""
-    cfg = get_config()
-    apply_action(cfg, key, "set", values)
-    write_config(cfg)
+    apply_action(key, "set", values)
 
 
 @app_config.command()
 def add(key: str, values: list[str]):
     """Add value(s) to a list setting."""
-    cfg = get_config()
-    apply_action(cfg, key, "add", values)
-    write_config(cfg)
+    apply_action(key, "add", values)
 
 
 @app_config.command()
 def remove(key: str, values: list[str]):
     """Remove value(s) from a list setting."""
-    cfg = get_config()
-    apply_action(cfg, key, "remove", values)
-    write_config(cfg)
+    apply_action(key, "remove", values)
 
 
 @app_config.command()
 def clear(key: str):
     """Clear a setting."""
-    cfg = get_config()
-    apply_action(cfg, key, "clear", None)
-    write_config(cfg)
+    apply_action(key, "clear", None)
 
 
 @app_config.command()

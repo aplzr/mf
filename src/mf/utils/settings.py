@@ -80,12 +80,6 @@ from .normalizers import (
     normalize_path,
 )
 
-__all__ = [
-    "apply_action",
-    "SETTINGS",
-    "SettingSpec",
-]
-
 
 def _rebuild_cache_if_enabled():
     # Helper function with lazy imports to avoid circular import
@@ -277,8 +271,8 @@ def validate_allowed_value(value: Any, spec: SettingSpec) -> None:
         )
 
 
-def apply_action(
-    cfg: TOMLDocument, key: str, action: Action, raw_values: list[str] | None
+def _apply_action(
+    cfg: TOMLDocument, key: str, action: Action, values: list[str] | None
 ) -> None:
     """Apply action to setting.
 
@@ -288,7 +282,7 @@ def apply_action(
         cfg (TOMLDocument): Current configuration to modify.
         key (str): Setting to apply action to.
         action (Action): Action to perform.
-        raw_values (list[str] | None): Values to act with.
+        values (list[str] | None): Values to act with.
     """
     if key not in SETTINGS:
         print_and_raise(
@@ -301,13 +295,12 @@ def apply_action(
         print_and_raise(f"Action {action} not supported for {key}.")
 
     if spec.kind == "scalar" and action == "set":
-        if raw_values is None or len(raw_values) > 1:
+        if values is None or len(values) > 1:
             print_and_raise(
-                f"Scalar setting {key} requires "
-                f"a single value for set, got: {raw_values}."
+                f"Scalar setting {key} requires a single value for set, got: {values}."
             )
 
-        new_value = spec.normalize(raw_values[0])
+        new_value = spec.normalize(values[0])
         validate_allowed_value(new_value, spec)
         spec.validate_all(new_value)
         cfg[key] = new_value
@@ -321,10 +314,10 @@ def apply_action(
         print_ok(f"Cleared {key}.")
         return
 
-    if raw_values is None:
+    if values is None:
         print_and_raise(f"Action '{action}' requires values for '{key}'.")
 
-    normalized_values = [spec.normalize(value) for value in raw_values]
+    normalized_values = [spec.normalize(value) for value in values]
 
     if action in ["set", "add"]:
         for value in normalized_values:
@@ -353,3 +346,18 @@ def apply_action(
 
     spec.validate_all(cfg[key])
     spec.after_update(cfg[key])
+
+
+def apply_action(key: str, action: Action, values: list[str] | None):
+    """Apply action to setting and write the updated configuration to disk.
+
+    Args:
+        key (str): Setting to apply action to.
+        action (Action): Action to perform.
+        values (list[str] | None): Values to act with. None if action is "clear".
+    """
+    from .config import get_config, write_config
+
+    cfg = get_config()
+    _apply_action(cfg, key, action, values)
+    write_config(cfg)
