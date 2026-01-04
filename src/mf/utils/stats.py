@@ -137,12 +137,17 @@ def create_log_bins(
     """Create logarithmic histogram bins.
 
     Args:
-        min_size (float): Lower histogram edge. Must be >= 1.
-        max_size (float): Upper histogram edge.
+        min_size (float): Lower histogram edge. Values < 1 are automatically clamped to
+            1.
+        max_size (float): Upper histogram edge (must be > min_size after clamping).
         bins_per_decade (int): How many bins per 10x range. Defaults to 4.
 
     Returns:
         list[float]: Bin edges.
+
+    Note:
+        min_size is clamped to a minimum of 1 to avoid log(0) or log(negative). This
+        means the histogram will show all values < 1 in the first bin.
     """
     if min_size <= 1:
         min_size = 1
@@ -173,16 +178,23 @@ def get_log_bin_centers(bin_edges: list[float]) -> list[float]:
 def group_values_by_bins(
     values: list[float], bin_edges: list[float]
 ) -> list[list[float]]:
-    """Assign values to bins and return bins with their values.
+    """Assign values to histogram bins based on bin edges.
 
-    Clamps values outside the bin edges to the lowest or highest bin.
+    Uses left-closed, right-open intervals: [edge_i, edge_{i+1}).
+    Values exactly equal to an edge are assigned to the bin starting at that edge.
+    Values outside the range are clamped to the nearest bin.
 
     Args:
         values: List of numbers to bin
         bin_edges: List of bin edge values (must be sorted ascending)
 
+    Binning Strategy:
+        Value < bin_edges[0]: Assigned to first bin (clamped)
+        bin_edges[i] <= value < bin_edges[i+1]: Assigned to bin i
+        Value >= bin_edges[-1]: Assigned to last bin (clamped)
+
     Returns:
-        list[list[float]]: (len(bin_edges) - 1,) list of bins with their values.
+        list[list[float]]: Length len(bin_edges)-1 list of bins with their values.
     """
     bins: list[list[float]] = [[] for _ in range(len(bin_edges) - 1)]
 
@@ -234,6 +246,7 @@ def get_log_histogram(
 
     Args:
         values (list[float]): List of numeric values to bin. Must be non-empty.
+            Values < 1 are silently clamped to 1.
         bins_per_decade (int, optional): Number of bins per 10x range. Defaults to 4.
             Higher values create finer granularity.
 
@@ -249,6 +262,9 @@ def get_log_histogram(
               3381216689.0312037],
              [1, 0, 1, 1, 1])
     """
+    if not values:
+        raise ValueError("'values' can't be empty.")
+
     bin_edges = create_log_bins(min(values), max(values), bins_per_decade)
     bin_centers = get_log_bin_centers(bin_edges)
     bins = group_values_by_bins(values, bin_edges)
