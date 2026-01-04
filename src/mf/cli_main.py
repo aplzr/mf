@@ -50,9 +50,9 @@ import typer
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
-from .utils.cache import load_library_cache
+from .utils.cache import load_library
 from .utils.config import get_config
-from .utils.console import console, print_and_raise, print_warn
+from .utils.console import console, print_and_raise, print_columns, print_warn
 from .utils.file import cleanup
 from .utils.misc import open_imdb_entry
 from .utils.play import launch_video_player, resolve_play_target
@@ -184,46 +184,30 @@ def stats():
     Loads library metadata from cache if caching is activated, otherwise performs a
     fresh filesystem scan to compute library statistics.
     """
-    layout = StatsLayout.from_terminal()
     cfg = get_config()
-    cache_library = bool(cfg["cache_library"])
     configured_extensions = cast(list[str], cfg["media_extensions"])
-
-    results = (
-        load_library_cache()
-        if cache_library
-        else FindQuery(
-            "*",
-            auto_wildcards=False,
-            cache_stat=True,
-            show_progress=True,
-            cache_library=False,
-            media_extensions=[],
-            match_extensions=False,
-        ).execute()
-    )
+    results = load_library()
+    layout = StatsLayout.from_terminal()
+    panels = []
 
     if configured_extensions:
         results_filtered = results.copy()
         results_filtered.filter_by_extension(configured_extensions)
 
-    # Extension histogram (all files)
-    console.print(make_extension_histogram(results, type="all_files", layout=layout))
+    # Create statistics
+    panels.append(make_extension_histogram(results, type="all_files", layout=layout))
+    panels.append(make_resolution_histogram(results, layout))
 
-    # Extension histogram (media file extensions only)
     if configured_extensions:
-        console.print(
+        panels.append(
             make_extension_histogram(
                 results_filtered, type="media_files", layout=layout
             )
         )
+        panels.append(make_filesize_histogram(results_filtered, layout))
 
-    # Resolution distribution
-    console.print(make_resolution_histogram(results, layout))
-
-    # File size distribution
-    if configured_extensions:
-        console.print(make_filesize_histogram(results_filtered, layout))
+    # Render statistics in a multi-column layout
+    print_columns(panels, n_columns=layout.n_columns, padding=layout.padding)
 
 
 @app_mf.callback(invoke_without_command=True)
