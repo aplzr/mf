@@ -35,12 +35,11 @@ def test_cli_cache_stats_invokes_histograms(monkeypatch, tmp_path):
     cache_paths = [tmp_path / "a.mp4", tmp_path / "b.mkv", tmp_path / "c.txt"]
     fake_cache = FakeResults(cache_paths)
 
-    monkeypatch.setattr(cli_main, "load_library_cache", lambda: fake_cache)
+    monkeypatch.setattr(cli_main, "load_library", lambda: fake_cache)
     monkeypatch.setattr(
         cli_main,
         "get_config",
         lambda: {
-            "cache_library": True,
             "media_extensions": [".mp4", ".mkv"],
         },
     )
