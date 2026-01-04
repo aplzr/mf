@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+from rich.panel import Panel
 from typer.testing import CliRunner
 
 import mf.cli_main as cli_main
@@ -44,26 +45,29 @@ def test_cli_cache_stats_invokes_histograms(monkeypatch, tmp_path):
         },
     )
 
-    # Stub the new utility functions to no-op while tracking calls
+    # Stub the new utility functions to return Panel while tracking calls
     calls = {"extension": 0, "resolution": 0, "file_size": 0}
 
-    def fake_print_extension_histogram(results, type):
+    def fake_make_extension_histogram(results, type, layout):
         calls["extension"] += 1
+        return Panel("test")
 
-    def fake_print_resolution_histogram(results):
+    def fake_make_resolution_histogram(results, layout):
         calls["resolution"] += 1
+        return Panel("test")
 
-    def fake_print_file_size_histogram(results):
+    def fake_make_filesize_histogram(results, layout):
         calls["file_size"] += 1
+        return Panel("test")
 
     monkeypatch.setattr(
-        cli_main, "print_extension_histogram", fake_print_extension_histogram
+        cli_main, "make_extension_histogram", fake_make_extension_histogram
     )
     monkeypatch.setattr(
-        cli_main, "print_resolution_histogram", fake_print_resolution_histogram
+        cli_main, "make_resolution_histogram", fake_make_resolution_histogram
     )
     monkeypatch.setattr(
-        cli_main, "print_file_size_histogram", fake_print_file_size_histogram
+        cli_main, "make_filesize_histogram", fake_make_filesize_histogram
     )
 
     result = runner.invoke(cli_main.app_mf, ["stats"])
