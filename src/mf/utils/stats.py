@@ -258,6 +258,88 @@ def make_histogram(
     )
 
 
+def make_extension_histogram(
+    results: FileResults,
+    type: Literal["all_files", "media_files"],
+    layout: StatsLayout,
+) -> Panel:
+    """Make a histogram of file extensions.
+
+    Args:
+        results (FileResults): File collection. For type "media_files", collection must
+            be filtered to media files.
+        type (Literal["all_files", "media_files"]): Histogram type. Defines histogram
+            formatting.
+        layout (StatsLayout): Panel layout.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    bins = get_string_counts(file.suffix for file in results.get_paths())
+
+    if type == "all_files":
+        return make_histogram(
+            bins=bins,
+            title="File extensions (all files)",
+            layout=layout,
+            sort=True,
+            sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
+            top_n=20,
+        )
+    else:  # media_files
+        return make_histogram(
+            bins=bins,
+            title="File extensions (media files)",
+            layout=layout,
+            sort=True,
+        )
+
+
+def make_resolution_histogram(results: FileResults, layout: StatsLayout) -> Panel:
+    """Make a histogram of video resolutions.
+
+    Args:
+        results (FileResults): File collection.
+        layout (StatsLayout): Panel layout.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    return make_histogram(
+        bins=get_string_counts(parse_resolutions(results)),
+        title="Media file resolution",
+        layout=layout,
+        sort=True,
+        sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
+    )
+
+
+def make_filesize_histogram(results: FileResults, layout: StatsLayout) -> Panel:
+    """Make a histogram of file sizes.
+
+    Args:
+        results (FileResults): File collection.
+        layout (LayoutConfig): Panel layout.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    bin_centers, bin_counts = get_log_histogram(
+        [
+            result.stat.st_size
+            for result in results
+            if isinstance(result.stat, stat_result)
+        ]
+    )
+    # Centers are file sizes in bytes. Convert to string with appropriate size prefix.
+    bin_labels = [format_size(bin_center) for bin_center in bin_centers]
+    bins: list[BinData] = [
+        (label, count) for label, count in zip(bin_labels, bin_counts)
+    ]
+
+    return make_histogram(bins=bins, title="Media file size", layout=layout)
+
+
 def create_log_bins(
     min_size: float, max_size: float, bins_per_decade: int = 4
 ) -> list[float]:
@@ -397,85 +479,3 @@ def get_log_histogram(
     bins = group_values_by_bins(values, bin_edges)
 
     return bin_centers, [len(bin) for bin in bins]
-
-
-def make_extension_histogram(
-    results: FileResults,
-    type: Literal["all_files", "media_files"],
-    layout: StatsLayout,
-) -> Panel:
-    """Make a histogram of file extensions.
-
-    Args:
-        results (FileResults): File collection. For type "media_files", collection must
-            be filtered to media files.
-        type (Literal["all_files", "media_files"]): Histogram type. Defines histogram
-            formatting.
-        layout (StatsLayout): Panel layout.
-
-    Returns:
-        Panel: Ready-to-render histogram panel.
-    """
-    bins = get_string_counts(file.suffix for file in results.get_paths())
-
-    if type == "all_files":
-        return make_histogram(
-            bins=bins,
-            title="File extensions (all files)",
-            layout=layout,
-            sort=True,
-            sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
-            top_n=20,
-        )
-    else:  # media_files
-        return make_histogram(
-            bins=bins,
-            title="File extensions (media files)",
-            layout=layout,
-            sort=True,
-        )
-
-
-def make_resolution_histogram(results: FileResults, layout: StatsLayout) -> Panel:
-    """Make a histogram of video resolutions.
-
-    Args:
-        results (FileResults): File collection.
-        layout (StatsLayout): Panel layout.
-
-    Returns:
-        Panel: Ready-to-render histogram panel.
-    """
-    return make_histogram(
-        bins=get_string_counts(parse_resolutions(results)),
-        title="Media file resolution",
-        layout=layout,
-        sort=True,
-        sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
-    )
-
-
-def make_filesize_histogram(results: FileResults, layout: StatsLayout) -> Panel:
-    """Make a histogram of file sizes.
-
-    Args:
-        results (FileResults): File collection.
-        layout (LayoutConfig): Panel layout.
-
-    Returns:
-        Panel: Ready-to-render histogram panel.
-    """
-    bin_centers, bin_counts = get_log_histogram(
-        [
-            result.stat.st_size
-            for result in results
-            if isinstance(result.stat, stat_result)
-        ]
-    )
-    # Centers are file sizes in bytes. Convert to string with appropriate size prefix.
-    bin_labels = [format_size(bin_center) for bin_center in bin_centers]
-    bins: list[BinData] = [
-        (label, count) for label, count in zip(bin_labels, bin_counts)
-    ]
-
-    return make_histogram(bins=bins, title="Media file size", layout=layout)
