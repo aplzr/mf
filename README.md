@@ -200,9 +200,7 @@ If no editor is found, it prints the path so you can edit manually.
 ### Library Statistics
 Use the `mf stats` command to print various statistics that describe your collection:
 
-![](static/stats_example_resolution.png)
-
-![](static/stats_example_filesize.png)
+![](static/stats_example.png)
 
 ## Search Patterns
 
