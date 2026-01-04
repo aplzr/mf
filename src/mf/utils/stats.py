@@ -446,9 +446,8 @@ def get_log_histogram(
 ) -> tuple[list[float], list[int]]:
     """Create a logarithmic histogram of numeric values.
 
-    Bins values using logarithmically-spaced intervals and returns labeled bins
-    with their counts. For data spanning multiple orders of magnitude, such as file
-    sizes or response times.
+    Bins values using logarithmically-spaced intervals. For data spanning multiple
+    orders of magnitude, such as file sizes or response times.
 
     Args:
         values (list[float]): List of numeric values to bin. Must be non-empty.
@@ -457,7 +456,8 @@ def get_log_histogram(
             Higher values create finer granularity.
 
     Returns:
-        tuple[list[float], list[int]]: Bin centers and bin counts.
+        tuple[list[float], list[int]]: Bin centers (geometric means of bin edges) and
+        bin counts.
 
     Example:
         >>> values = [100_000_000, 500_000_000, 2_000_000_000, 5_000_000_000]
