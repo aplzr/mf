@@ -47,7 +47,9 @@ from __future__ import annotations
 from typing import NoReturn
 
 import typer
-from rich.console import Console
+from rich.columns import Columns
+from rich.console import Console, Group
+from rich.panel import Panel
 
 from ..constants import STATUS_SYMBOLS
 
@@ -101,3 +103,22 @@ def print_info(msg: str):
         msg (str): Info message.
     """
     console.print(f"{STATUS_SYMBOLS['info']}  {msg}", style="bright_cyan")
+
+
+def print_columns(panels: list[Panel], n_columns: int, padding: tuple[int, int]):
+    """Print a collection of Panels in a multi-column layout.
+
+    Panels are distributed alternatingly between columns, i.e. row-first.
+
+    Args:
+        panels (list[Panel]): List of panels to print.
+        n_columns (int): Number of columns.
+        padding (tuple[int, int]): (vertical, horizontal) padding between columns.
+    """
+    columns: list[list[Panel]] = [[] for _ in range(n_columns)]
+
+    for i, panel in enumerate(panels):
+        columns[i % n_columns].append(panel)
+
+    column_groups = [Group(*column) for column in columns]
+    console.print(Columns(column_groups, padding=padding))
