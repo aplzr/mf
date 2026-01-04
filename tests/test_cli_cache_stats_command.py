@@ -44,25 +44,34 @@ def test_cli_cache_stats_invokes_histograms(monkeypatch, tmp_path):
         },
     )
 
-    # Stub dependent functions to no-op while tracking calls
-    calls = {"console": 0, "hist": 0}
+    # Stub the new utility functions to no-op while tracking calls
+    calls = {"extension": 0, "resolution": 0, "file_size": 0}
 
-    def fake_console_print(*args, **kwargs):
-        calls["console"] += 1
+    def fake_print_extension_histogram(results, type):
+        calls["extension"] += 1
 
-    def fake_show_histogram(*args, **kwargs):
-        calls["hist"] += 1
+    def fake_print_resolution_histogram(results):
+        calls["resolution"] += 1
 
-    def fake_parse_resolutions(results):
-        return ["1080p", "720p"]
+    def fake_print_file_size_histogram(results):
+        calls["file_size"] += 1
 
-    monkeypatch.setattr(cli_main, "console", SimpleNamespace(print=fake_console_print))
-    monkeypatch.setattr(cli_main, "show_histogram", fake_show_histogram)
-    monkeypatch.setattr(cli_main, "parse_resolutions", fake_parse_resolutions)
+    monkeypatch.setattr(
+        cli_main, "print_extension_histogram", fake_print_extension_histogram
+    )
+    monkeypatch.setattr(
+        cli_main, "print_resolution_histogram", fake_print_resolution_histogram
+    )
+    monkeypatch.setattr(
+        cli_main, "print_file_size_histogram", fake_print_file_size_histogram
+    )
 
     result = runner.invoke(cli_main.app_mf, ["stats"])
 
     assert result.exit_code == 0
-    # At least one console print and multiple histograms called
-    assert calls["console"] >= 1
-    assert calls["hist"] >= 3
+    # Should call extension histogram twice (all files + media files)
+    assert calls["extension"] == 2
+    # Should call resolution histogram once
+    assert calls["resolution"] == 1
+    # Should call file size histogram once
+    assert calls["file_size"] == 1

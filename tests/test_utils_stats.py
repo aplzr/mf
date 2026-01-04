@@ -66,3 +66,83 @@ def test_show_histogram_runs_without_error():
     bins = [(".mp4", 3), (".mkv", 2), (".avi", 1)]
     # Exercise sort and top_n branches
     show_histogram(bins, title="Extensions", sort=True, sort_reverse=False, top_n=2)
+
+
+def test_print_extension_histogram_all_files(tmp_path):
+    """Test extension histogram for all files."""
+    from pathlib import Path
+
+    from mf.utils.file import FileResults
+    from mf.utils.stats import print_extension_histogram
+
+    # Create test files
+    files = [
+        tmp_path / "movie.mp4",
+        tmp_path / "show.mkv",
+        tmp_path / "other.txt",
+        tmp_path / "another.mp4",
+    ]
+    for f in files:
+        f.touch()
+
+    results = FileResults.from_paths([str(f) for f in files])
+    # Should run without error
+    print_extension_histogram(results, type="all_files")
+
+
+def test_print_extension_histogram_media_files(tmp_path):
+    """Test extension histogram for media files only."""
+    from pathlib import Path
+
+    from mf.utils.file import FileResults
+    from mf.utils.stats import print_extension_histogram
+
+    # Create test files
+    files = [tmp_path / "movie.mp4", tmp_path / "show.mkv"]
+    for f in files:
+        f.touch()
+
+    results = FileResults.from_paths([str(f) for f in files])
+    # Should run without error
+    print_extension_histogram(results, type="media_files")
+
+
+def test_print_resolution_histogram(tmp_path):
+    """Test resolution histogram."""
+    from pathlib import Path
+
+    from mf.utils.file import FileResults
+    from mf.utils.stats import print_resolution_histogram
+
+    # Create test files with resolutions that can be parsed
+    files = [tmp_path / "movie.1080p.mp4", tmp_path / "show.720p.mkv"]
+    for f in files:
+        f.touch()
+
+    results = FileResults.from_paths([str(f) for f in files])
+    # Should run without error
+    print_resolution_histogram(results)
+
+
+def test_print_file_size_histogram(tmp_path):
+    """Test file size histogram."""
+    import os
+    from pathlib import Path
+
+    from mf.utils.file import FileResult, FileResults
+    from mf.utils.stats import print_file_size_histogram
+
+    # Create test files with different sizes
+    files = []
+    for i, size in enumerate([1000, 5000, 10000]):
+        f = tmp_path / f"file{i}.mp4"
+        f.write_bytes(b"0" * size)
+        files.append(f)
+
+    # Create FileResults with stat info
+    results = FileResults(
+        [FileResult(str(f), os.stat(f)) for f in files]
+    )
+
+    # Should run without error
+    print_file_size_histogram(results)
