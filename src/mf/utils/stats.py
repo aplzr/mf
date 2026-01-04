@@ -1,17 +1,30 @@
 """Statistics and histogram visualization utilities.
 
-Provides functions for creating and displaying histograms with support for both
-categorical data and numeric data spanning multiple orders of magnitude.
+Provides functions for creating histogram panels with support for both categorical dat
+and numeric data spanning multiple orders of magnitude. Histograms are returned as Ric
+Panel objects configured via StatsLayout for consistent, responsive formatting.
 
 Features:
     - Logarithmic binning for data spanning orders of magnitude (file sizes, etc.)
     - Rich terminal-based histogram rendering with bars and percentages
     - Flexible sorting and filtering of histogram bins
     - Geometric mean bin centers for log-spaced histograms
+    - Responsive layout system that adapts to terminal width
+
+Architecture:
+    StatsLayout: Configures panel dimensions, padding, spacing, and column layout
+    make_*_histogram(): Factory functions that return configured Panel objects
+    get_*(): Data processing functions that compute bin counts
 
 Histogram Types:
     Categorical: Use get_string_counts() to create bins from categories
     Numeric (log-scale): Use get_log_histogram() for data like file sizes
+
+Layout System:
+    StatsLayout controls panel formatting and can be created from terminal width:
+    - StatsLayout.from_terminal(): Auto-configures based on current terminal
+    - Supports multi-column layouts with configurable spacing
+    - Enforces minimum/maximum panel widths for readability
 
 Display:
     Histograms are rendered as Rich panels with:
@@ -21,22 +34,27 @@ Display:
     - Customizable sorting and top-N filtering
 
 Mathematical Notes:
-    Logarithmic binning uses base-10 logarithms and geometric means for bin
-    centers, which are appropriate for data that varies over orders of magnitude.
-    For example, file sizes from 1KB to 1GB benefit from log-scale binning rather
-    than linear binning.
+    Logarithmic binning uses base-10 logarithms and geometric means for bin centers,
+    which are appropriate for data that varies over orders of magnitude. For example,
+    file sizes from 1KB to 1GB benefit from log-scale binning rather than linear
+    binning.
 
 Examples:
+    >>> # Configure layout based on terminal
+    >>> layout = StatsLayout.from_terminal()
+
     >>> # Categorical histogram (file extensions)
     >>> extensions = ['.mp4', '.mkv', '.mp4', '.avi', '.mp4']
     >>> bins = get_string_counts(extensions)
-    >>> show_histogram(bins, "File Extensions by Count", sort=True)
+    >>> panel = make_histogram(bins, "File Extensions", layout, sort=True)
+    >>> console.print(panel)
 
     >>> # Numeric histogram (file sizes in bytes)
     >>> sizes = [1_000_000, 5_000_000, 10_000_000, 50_000_000]
     >>> bin_centers, counts = get_log_histogram(sizes)
     >>> bins = [(f"{c/1e6:.1f}MB", count) for c, count in zip(bin_centers, counts)]
-    >>> show_histogram(bins, "File Sizes")
+    >>> panel = make_histogram(bins, "File Sizes", layout)
+    >>> console.print(panel)
 """
 
 from __future__ import annotations
@@ -57,6 +75,95 @@ from .misc import format_size
 from .parsers import parse_resolutions
 
 BinData: TypeAlias = tuple[str, int]  # (label, count)
+
+
+@dataclass
+class StatsLayout:
+    """Configuration for histogram panel layout and formatting.
+
+    Controls panel dimensions, spacing, and alignment for statistics displays. Supports
+    responsive multi-column layouts that adapt to terminal width.
+
+    Usage:
+        Use StatsLayout.from_terminal() to auto-configure based on current terminal:
+
+        >>> layout = StatsLayout.from_terminal()
+        >>> panel = make_histogram(bins, "Title", layout)
+
+    Attributes:
+        n_columns (int): Number of panels to render side by side.
+        panel_width (int): Width of a single panel in characters.
+        terminal_width (int | None): Terminal width in characters, if detected.
+        padding (tuple[int, int]): (vertical, horizontal) padding inside panels.
+        spacing (int): Horizontal spacing between panels.
+        title_align (str): Panel title alignment ('left', 'center', 'right').
+        expand (bool): Whether to expand to terminal width. Always False.
+    """
+
+    n_columns: int
+    panel_width: int
+    terminal_width: int | None = None
+    padding: tuple[int, int] = (1, 1)
+    spacing: int = 1
+    title_align: str = "left"
+    _expand: bool = field(default=False, repr=False)
+
+    @property
+    def expand(self):  # noqa: D102
+        return self._expand
+
+    @staticmethod
+    def from_terminal(
+        max_columns: int = 5,
+        min_width: int = 39,
+        max_width: int = 80,
+        padding: tuple[int, int] = (1, 1),
+        spacing: int = 1,
+    ) -> StatsLayout:
+        """Create layout optimized for current terminal width.
+
+        Determines optimal column count and panel width to maximize terminal space while
+        respecting min/max width constraints. Prioritizes more columns over wider
+        panels.
+
+        Args:
+            max_columns: Maximum panels to display side by side. Defaults to 5.
+            min_width: Minimum panel width in characters. Defaults to 39.
+            max_width: Maximum panel width in characters. Defaults to 80.
+            padding: (vertical, horizontal) padding inside panels. Defaults to (1, 1).
+            spacing: Horizontal gap between panels. Defaults to 1.
+
+        Returns:
+            StatsLayout: Responsive layout for current terminal dimensions.
+
+        Example:
+            >>> layout = StatsLayout.from_terminal(max_columns=3, min_width=50)
+        """
+        fallback_cols = 80
+        fallback_rows = 24
+        terminal_width = shutil.get_terminal_size(
+            fallback=(fallback_cols, fallback_rows)
+        ).columns
+
+        # Calculate columns that fit
+        for n_columns in range(max_columns, 0, -1):
+            needed = min_width * n_columns + spacing * (n_columns - 1)
+
+            if needed <= terminal_width:
+                available = terminal_width - spacing * (n_columns - 1)
+                width = available // n_columns
+                panel_width = min(width, max_width)
+
+                return StatsLayout(
+                    n_columns=n_columns,
+                    panel_width=panel_width,
+                    terminal_width=terminal_width,
+                    padding=padding,
+                    spacing=spacing,
+                )
+
+        # Fallback
+        return StatsLayout(n_columns=1, panel_width=min_width)
 
 
 def make_histogram(
@@ -372,88 +479,3 @@ def make_filesize_histogram(results: FileResults, layout: StatsLayout) -> Panel:
     ]
 
     return make_histogram(bins=bins, title="Media file size", layout=layout)
-
-
-@dataclass
-class StatsLayout:
-    """Stats layout configuration.
-
-    Attributes:
-        n_columns (int): Number of stats panels to render side by side.
-        panel_width (int): Width of a single stats panel.
-        terminal_width (int | None): Width of the terminal in characters.
-        padding (tuple[int, int]): Vertical and horizontal padding inside the panel in
-            characters.
-        spacing (int): Horizontal spacing between panels in characters.
-        title_align (str): Panel title alignment.
-        expand (bool): Whether to expand panel border to the width of the terminal.
-            Always False.
-    """
-
-    n_columns: int
-    panel_width: int
-    terminal_width: int | None = None
-    padding: tuple[int, int] = (1, 1)
-    spacing: int = 1
-    title_align: str = "left"
-    _expand: bool = field(default=False, repr=False)
-
-    @property
-    def expand(self):  # noqa: D102
-        return self._expand
-
-    @staticmethod
-    def from_terminal(
-        max_columns: int = 5,
-        min_width: int = 39,
-        max_width: int = 80,
-        padding: tuple[int, int] = (1, 1),
-        spacing: int = 1,
-    ) -> StatsLayout:
-        """Create stats layout configuration based on the width of the current terminal
-        session.
-
-        Chooses the highest number of columns that fit into the current terminal width
-        at min_width + spacing, then maximizes panel width up to max_width so that the
-        space is used efficiently.
-
-        Args:
-            max_columns (int, optional): Maximum number of stats panels to display side
-                by side. Defaults to 5.
-            min_width (int, optional): Minimum panel width in characters. Defaults to
-                39.
-            max_width (int, optional): Maximum panel width in characters. Defaults to
-                80.
-            padding (tuple[int, int], optional): Vertical and horizontal padding inside
-                the panel in characters.
-            spacing (int, optional): Horizontal spacing between panels in characters.
-                Defaults to 1.
-
-        Returns:
-            LayoutConfig: Layout based on current terminal session width.
-        """
-        fallback_cols = 80
-        fallback_rows = 24
-        terminal_width = shutil.get_terminal_size(
-            fallback=(fallback_cols, fallback_rows)
-        ).columns
-
-        # Calculate columns that fit
-        for n_columns in range(max_columns, 0, -1):
-            needed = min_width * n_columns + spacing * (n_columns - 1)
-
-            if needed <= terminal_width:
-                available = terminal_width - spacing * (n_columns - 1)
-                width = available // n_columns
-                panel_width = min(width, max_width)
-
-                return StatsLayout(
-                    n_columns=n_columns,
-                    panel_width=panel_width,
-                    terminal_width=terminal_width,
-                    padding=padding,
-                    spacing=spacing,
-                )
-
-        # Fallback
-        return StatsLayout(n_columns=1, panel_width=min_width)
