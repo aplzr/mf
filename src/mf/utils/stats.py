@@ -128,7 +128,8 @@ class StatsLayout:
             max_columns: Maximum panels to display side by side. Defaults to 5.
             min_width: Minimum panel width in characters. Defaults to 39.
             max_width: Maximum panel width in characters. Defaults to 80.
-            padding: (vertical, horizontal) padding inside panels. Defaults to (1, 1).
+            padding: (vertical, horizontal) padding inside panels and between panels.
+                Defaults to (1, 1).
 
         Returns:
             StatsLayout: Responsive layout for current terminal dimensions.
