@@ -94,9 +94,9 @@ class StatsLayout:
         n_columns (int): Number of panels to render side by side.
         panel_width (int): Width of a single panel in characters.
         terminal_width (int | None): Terminal width in characters, if detected.
-        padding (tuple[int, int]): (vertical, horizontal) padding inside panels.
-        spacing (int): Horizontal spacing between panels.
-        title_align (str): Panel title alignment ('left', 'center', 'right').
+        padding (tuple[int, int]): (vertical, horizontal) padding inside panels and
+            between panels.
+        title_align (Literal["left", "center", "right"]): Panel title alignment.
         expand (bool): Whether to expand to terminal width. Always False.
     """
 
@@ -104,8 +104,7 @@ class StatsLayout:
     panel_width: int
     terminal_width: int | None = None
     padding: tuple[int, int] = (1, 1)
-    spacing: int = 1
-    title_align: str = "left"
+    title_align: Literal["left", "center", "right"] = "left"
     _expand: bool = field(default=False, repr=False)
 
     @property
@@ -118,7 +117,6 @@ class StatsLayout:
         min_width: int = 39,
         max_width: int = 80,
         padding: tuple[int, int] = (1, 1),
-        spacing: int = 1,
     ) -> StatsLayout:
         """Create layout optimized for current terminal width.
 
@@ -130,8 +128,8 @@ class StatsLayout:
             max_columns: Maximum panels to display side by side. Defaults to 5.
             min_width: Minimum panel width in characters. Defaults to 39.
             max_width: Maximum panel width in characters. Defaults to 80.
-            padding: (vertical, horizontal) padding inside panels. Defaults to (1, 1).
-            spacing: Horizontal gap between panels. Defaults to 1.
+            padding: (vertical, horizontal) padding inside panels and between panels.
+                Defaults to (1, 1).
 
         Returns:
             StatsLayout: Responsive layout for current terminal dimensions.
@@ -147,10 +145,10 @@ class StatsLayout:
 
         # Calculate columns that fit
         for n_columns in range(max_columns, 0, -1):
-            needed = min_width * n_columns + spacing * (n_columns - 1)
+            needed = min_width * n_columns + padding[1] * (n_columns - 1)
 
             if needed <= terminal_width:
-                available = terminal_width - spacing * (n_columns - 1)
+                available = terminal_width - padding[1] * (n_columns - 1)
                 width = available // n_columns
                 panel_width = min(width, max_width)
 
@@ -159,7 +157,6 @@ class StatsLayout:
                     panel_width=panel_width,
                     terminal_width=terminal_width,
                     padding=padding,
-                    spacing=spacing,
                 )
 
         # Fallback
@@ -256,6 +253,88 @@ def make_histogram(
         title_align=layout.title_align,
         expand=layout.expand,
     )
+
+
+def make_extension_histogram(
+    results: FileResults,
+    type: Literal["all_files", "media_files"],
+    layout: StatsLayout,
+) -> Panel:
+    """Make a histogram of file extensions.
+
+    Args:
+        results (FileResults): File collection. For type "media_files", collection must
+            be filtered to media files.
+        type (Literal["all_files", "media_files"]): Histogram type. Defines histogram
+            formatting.
+        layout (StatsLayout): Panel layout.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    bins = get_string_counts(file.suffix for file in results.get_paths())
+
+    if type == "all_files":
+        return make_histogram(
+            bins=bins,
+            title="File extensions (all files)",
+            layout=layout,
+            sort=True,
+            sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
+            top_n=20,
+        )
+    else:  # media_files
+        return make_histogram(
+            bins=bins,
+            title="File extensions (media files)",
+            layout=layout,
+            sort=True,
+        )
+
+
+def make_resolution_histogram(results: FileResults, layout: StatsLayout) -> Panel:
+    """Make a histogram of video resolutions.
+
+    Args:
+        results (FileResults): File collection.
+        layout (StatsLayout): Panel layout.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    return make_histogram(
+        bins=get_string_counts(parse_resolutions(results)),
+        title="Media file resolution",
+        layout=layout,
+        sort=True,
+        sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
+    )
+
+
+def make_filesize_histogram(results: FileResults, layout: StatsLayout) -> Panel:
+    """Make a histogram of file sizes.
+
+    Args:
+        results (FileResults): File collection.
+        layout (LayoutConfig): Panel layout.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    bin_centers, bin_counts = get_log_histogram(
+        [
+            result.stat.st_size
+            for result in results
+            if isinstance(result.stat, stat_result)
+        ]
+    )
+    # Centers are file sizes in bytes. Convert to string with appropriate size prefix.
+    bin_labels = [format_size(bin_center) for bin_center in bin_centers]
+    bins: list[BinData] = [
+        (label, count) for label, count in zip(bin_labels, bin_counts)
+    ]
+
+    return make_histogram(bins=bins, title="Media file size", layout=layout)
 
 
 def create_log_bins(
@@ -397,85 +476,3 @@ def get_log_histogram(
     bins = group_values_by_bins(values, bin_edges)
 
     return bin_centers, [len(bin) for bin in bins]
-
-
-def make_extension_histogram(
-    results: FileResults,
-    type: Literal["all_files", "media_files"],
-    layout: StatsLayout,
-) -> Panel:
-    """Make a histogram of file extensions.
-
-    Args:
-        results (FileResults): File collection. For type "media_files", collection must
-            be filtered to media files.
-        type (Literal["all_files", "media_files"]): Histogram type. Defines histogram
-            formatting.
-        layout (StatsLayout): Panel layout.
-
-    Returns:
-        Panel: Ready-to-render histogram panel.
-    """
-    bins = get_string_counts(file.suffix for file in results.get_paths())
-
-    if type == "all_files":
-        return make_histogram(
-            bins=bins,
-            title="File extensions (all files)",
-            layout=layout,
-            sort=True,
-            sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
-            top_n=20,
-        )
-    else:  # media_files
-        return make_histogram(
-            bins=bins,
-            title="File extensions (media files)",
-            layout=layout,
-            sort=True,
-        )
-
-
-def make_resolution_histogram(results: FileResults, layout: StatsLayout) -> Panel:
-    """Make a histogram of video resolutions.
-
-    Args:
-        results (FileResults): File collection.
-        layout (StatsLayout): Panel layout.
-
-    Returns:
-        Panel: Ready-to-render histogram panel.
-    """
-    return make_histogram(
-        bins=get_string_counts(parse_resolutions(results)),
-        title="Media file resolution",
-        layout=layout,
-        sort=True,
-        sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
-    )
-
-
-def make_filesize_histogram(results: FileResults, layout: StatsLayout) -> Panel:
-    """Make a histogram of file sizes.
-
-    Args:
-        results (FileResults): File collection.
-        layout (LayoutConfig): Panel layout.
-
-    Returns:
-        Panel: Ready-to-render histogram panel.
-    """
-    bin_centers, bin_counts = get_log_histogram(
-        [
-            result.stat.st_size
-            for result in results
-            if isinstance(result.stat, stat_result)
-        ]
-    )
-    # Centers are file sizes in bytes. Convert to string with appropriate size prefix.
-    bin_labels = [format_size(bin_center) for bin_center in bin_centers]
-    bins: list[BinData] = [
-        (label, count) for label, count in zip(bin_labels, bin_counts)
-    ]
-
-    return make_histogram(bins=bins, title="Media file size", layout=layout)

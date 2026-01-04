@@ -205,7 +205,6 @@ def test_stats_layout_basic_initialization():
     assert layout.panel_width == 50
     assert layout.terminal_width is None
     assert layout.padding == (1, 1)
-    assert layout.spacing == 1
     assert layout.title_align == "left"
     assert layout.expand is False
 
