@@ -1,7 +1,7 @@
 """Statistics and histogram visualization utilities.
 
-Provides functions for creating histogram panels with support for both categorical dat
-and numeric data spanning multiple orders of magnitude. Histograms are returned as Ric
+Provides functions for creating histogram panels with support for both categorical data
+and numeric data spanning multiple orders of magnitude. Histograms are returned as Rich
 Panel objects configured via StatsLayout for consistent, responsive formatting.
 
 Features:
