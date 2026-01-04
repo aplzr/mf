@@ -94,8 +94,8 @@ class StatsLayout:
         n_columns (int): Number of panels to render side by side.
         panel_width (int): Width of a single panel in characters.
         terminal_width (int | None): Terminal width in characters, if detected.
-        padding (tuple[int, int]): (vertical, horizontal) padding inside panels.
-        spacing (int): Horizontal spacing between panels.
+        padding (tuple[int, int]): (vertical, horizontal) padding inside panels and
+            between panels.
         title_align (Literal["left", "center", "right"]): Panel title alignment.
         expand (bool): Whether to expand to terminal width. Always False.
     """
@@ -104,7 +104,6 @@ class StatsLayout:
     panel_width: int
     terminal_width: int | None = None
     padding: tuple[int, int] = (1, 1)
-    spacing: int = 1
     title_align: Literal["left", "center", "right"] = "left"
     _expand: bool = field(default=False, repr=False)
 
@@ -118,7 +117,6 @@ class StatsLayout:
         min_width: int = 39,
         max_width: int = 80,
         padding: tuple[int, int] = (1, 1),
-        spacing: int = 1,
     ) -> StatsLayout:
         """Create layout optimized for current terminal width.
 
@@ -131,7 +129,6 @@ class StatsLayout:
             min_width: Minimum panel width in characters. Defaults to 39.
             max_width: Maximum panel width in characters. Defaults to 80.
             padding: (vertical, horizontal) padding inside panels. Defaults to (1, 1).
-            spacing: Horizontal gap between panels. Defaults to 1.
 
         Returns:
             StatsLayout: Responsive layout for current terminal dimensions.
@@ -147,10 +144,10 @@ class StatsLayout:
 
         # Calculate columns that fit
         for n_columns in range(max_columns, 0, -1):
-            needed = min_width * n_columns + spacing * (n_columns - 1)
+            needed = min_width * n_columns + padding[1] * (n_columns - 1)
 
             if needed <= terminal_width:
-                available = terminal_width - spacing * (n_columns - 1)
+                available = terminal_width - padding[1] * (n_columns - 1)
                 width = available // n_columns
                 panel_width = min(width, max_width)
 
@@ -159,7 +156,6 @@ class StatsLayout:
                     panel_width=panel_width,
                     terminal_width=terminal_width,
                     padding=padding,
-                    spacing=spacing,
                 )
 
         # Fallback
