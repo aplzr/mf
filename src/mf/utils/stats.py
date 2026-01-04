@@ -44,12 +44,16 @@ from __future__ import annotations
 import math
 from bisect import bisect_left
 from collections import Counter
-from collections.abc import Callable
-from typing import Any, TypeAlias
+from collections.abc import Callable, Iterable
+from os import stat_result
+from typing import Any, Literal, TypeAlias
 
 from rich.panel import Panel
 
 from .console import console
+from .file import FileResults
+from .misc import format_size
+from .parsers import parse_resolutions
 
 BinData: TypeAlias = tuple[str, int]  # (label, count)
 
@@ -200,7 +204,7 @@ def group_values_by_bins(
     return bins
 
 
-def get_string_counts(values: list[str]) -> list[tuple[str, int]]:
+def get_string_counts(values: Iterable[str]) -> list[tuple[str, int]]:
     """Calculate the frequency distribution of string values.
 
     Takes a list of strings and returns the unique values along with their
@@ -221,7 +225,7 @@ def get_string_counts(values: list[str]) -> list[tuple[str, int]]:
 
 def get_log_histogram(
     values: list[float], bins_per_decade: int = 4
-) -> tuple[list[float], list[float]]:
+) -> tuple[list[float], list[int]]:
     """Create a logarithmic histogram of numeric values.
 
     Bins values using logarithmically-spaced intervals and returns labeled bins
@@ -234,7 +238,7 @@ def get_log_histogram(
             Higher values create finer granularity.
 
     Returns:
-        tuple[list[float], list[float]]: Bin centers and bin counts.
+        tuple[list[float], list[int]]: Bin centers and bin counts.
 
     Example:
         >>> values = [100_000_000, 500_000_000, 2_000_000_000, 5_000_000_000]
@@ -250,3 +254,71 @@ def get_log_histogram(
     bins = group_values_by_bins(values, bin_edges)
 
     return bin_centers, [len(bin) for bin in bins]
+
+
+def print_extension_histogram(
+    results: FileResults, type: Literal["all_files", "media_files"]
+):
+    """Print a histogram of file extensions.
+
+    Args:
+        results (FileResults): File collection. For type "media_files", collection must
+            be filtered to media files.
+        type (Literal["all_files", "media_files"]): Histogram type. Defines histogram
+            formatting.
+    """
+    bins = get_string_counts(file.suffix for file in results.get_paths())
+    console.print("")
+
+    if type == "all_files":
+        show_histogram(
+            bins=bins,
+            title="File extensions (all files)",
+            sort=True,
+            sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
+            top_n=20,
+        )
+    else:  # media_files
+        show_histogram(
+            bins=bins,
+            title="File extensions (media files)",
+            sort=True,
+        )
+
+
+def print_resolution_histogram(results: FileResults):
+    """Print a histogram of video resolutions.
+
+    Args:
+        results (FileResults): File collection.
+    """
+    console.print("")
+    show_histogram(
+        bins=get_string_counts(parse_resolutions(results)),
+        title="Media file resolution",
+        sort=True,
+        sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
+    )
+
+
+def print_file_size_histogram(results: FileResults):
+    """Print a histogram of file sizes.
+
+    Args:
+        results (FileResults): File collection.
+    """
+    bin_centers, bin_counts = get_log_histogram(
+        [
+            result.stat.st_size
+            for result in results
+            if isinstance(result.stat, stat_result)
+        ]
+    )
+    # Centers are file sizes in bytes. Convert to string with appropriate size prefix.
+    bin_labels = [format_size(bin_center) for bin_center in bin_centers]
+    bins: list[BinData] = [
+        (label, count) for label, count in zip(bin_labels, bin_counts)
+    ]
+
+    console.print("")
+    show_histogram(bins=bins, title="Media file size")

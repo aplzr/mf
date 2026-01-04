@@ -86,11 +86,11 @@ def open_imdb_entry(result: FileResult):
         print_and_raise(f"No IMDB results found for parsed title {title}.")
 
 
-def format_size(size_bytes: int) -> str:
+def format_size(size_bytes: int | float) -> str:
     """Format a size in bytes to human-readable string with appropriate prefix.
 
     Args:
-        size_bytes (int): Size in bytes.
+        size_bytes (int | float): Size in bytes.
 
     Returns:
         str: Formatted string like "1.5 GB" or "250 MB".
