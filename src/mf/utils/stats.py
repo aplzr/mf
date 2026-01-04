@@ -96,7 +96,7 @@ class StatsLayout:
         terminal_width (int | None): Terminal width in characters, if detected.
         padding (tuple[int, int]): (vertical, horizontal) padding inside panels.
         spacing (int): Horizontal spacing between panels.
-        title_align (str): Panel title alignment ('left', 'center', 'right').
+        title_align (Literal["left", "center", "right"]): Panel title alignment.
         expand (bool): Whether to expand to terminal width. Always False.
     """
 
@@ -105,7 +105,7 @@ class StatsLayout:
     terminal_width: int | None = None
     padding: tuple[int, int] = (1, 1)
     spacing: int = 1
-    title_align: str = "left"
+    title_align: Literal["left", "center", "right"] = "left"
     _expand: bool = field(default=False, repr=False)
 
     @property
