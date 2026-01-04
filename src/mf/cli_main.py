@@ -59,9 +59,10 @@ from .utils.play import launch_video_player, resolve_play_target
 from .utils.scan import FindQuery, NewQuery
 from .utils.search import get_result_by_index, print_search_results, save_search_results
 from .utils.stats import (
-    print_extension_histogram,
-    print_file_size_histogram,
-    print_resolution_histogram,
+    StatsLayout,
+    make_extension_histogram,
+    make_filesize_histogram,
+    make_resolution_histogram,
 )
 from .version import __version__, check_version
 
@@ -183,6 +184,7 @@ def stats():
     Loads library metadata from cache if caching is activated, otherwise performs a
     fresh filesystem scan to compute library statistics.
     """
+    layout = StatsLayout.from_terminal()
     cfg = get_config()
     cache_library = bool(cfg["cache_library"])
     configured_extensions = cast(list[str], cfg["media_extensions"])
@@ -206,18 +208,22 @@ def stats():
         results_filtered.filter_by_extension(configured_extensions)
 
     # Extension histogram (all files)
-    print_extension_histogram(results, type="all_files")
+    console.print(make_extension_histogram(results, type="all_files", layout=layout))
 
     # Extension histogram (media file extensions only)
     if configured_extensions:
-        print_extension_histogram(results_filtered, type="media_files")
+        console.print(
+            make_extension_histogram(
+                results_filtered, type="media_files", layout=layout
+            )
+        )
 
     # Resolution distribution
-    print_resolution_histogram(results)
+    console.print(make_resolution_histogram(results, layout))
 
     # File size distribution
     if configured_extensions:
-        print_file_size_histogram(results_filtered)
+        console.print(make_filesize_histogram(results_filtered, layout))
 
 
 @app_mf.callback(invoke_without_command=True)
