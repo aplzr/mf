@@ -1,3 +1,5 @@
+"""Library loading and organization utilities."""
+
 from pathlib import Path
 
 from .cache import load_library_cache
