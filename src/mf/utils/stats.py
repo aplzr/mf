@@ -74,15 +74,20 @@ import math
 from bisect import bisect_left
 from collections import Counter
 from collections.abc import Callable, Iterable
+from datetime import datetime
 from os import stat_result
+from pathlib import Path
+from statistics import mean
 from typing import Any, Literal, TypeAlias, cast
 
+from rich import box
 from rich.panel import Panel
+from rich.table import Table
 
 from .config import get_config
-from .console import ColumnLayout, PanelFormat
+from .console import ColumnLayout, PanelFormat, console
 from .file import FileResults
-from .library import load_library
+from .library import load_library, split_by_search_path
 from .misc import format_size
 from .parsers import parse_resolutions
 
@@ -203,7 +208,7 @@ def make_extension_histogram(
     if type == "all_files":
         return make_histogram(
             bins=bins,
-            title="File extensions (all files)",
+            title="File extensions",
             format=format,
             sort=True,
             sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
@@ -212,7 +217,7 @@ def make_extension_histogram(
     else:  # media_files
         return make_histogram(
             bins=bins,
-            title="File extensions (media files)",
+            title="Media file extensions",
             format=format,
             sort=True,
         )
@@ -230,7 +235,7 @@ def make_resolution_histogram(results: FileResults, format: PanelFormat) -> Pane
     """
     return make_histogram(
         bins=get_string_counts(parse_resolutions(results)),
-        title="Media file resolution",
+        title="File resolution",
         format=format,
         sort=True,
         sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
@@ -261,6 +266,35 @@ def make_filesize_histogram(results: FileResults, format: PanelFormat) -> Panel:
     ]
 
     return make_histogram(bins=bins, title="Media file size", format=format)
+
+
+def make_file_age_histogram(
+    results: FileResults, format: PanelFormat, title: str = "File age"
+) -> Panel:
+    """Make a histogram of file age by year.
+
+    Args:
+        results (FileResults): File collection.
+        format (PanelFormat): Panel format.
+        title (str, optional): Panel title. Defaults to "File age".
+
+    Returns:
+        Panel: _description_
+    """
+    year_strings = [
+        datetime.fromtimestamp(file.stat.st_mtime).strftime("%Y")
+        for file in results
+        if file.stat
+    ]
+    bins = get_string_counts(year_strings)
+
+    return make_histogram(
+        bins,
+        title=title,
+        format=format,
+        sort=True,
+        sort_key=lambda bin: bin[0],
+    )
 
 
 def create_log_bins(
@@ -434,14 +468,58 @@ def print_stats():
         layout.add_panel(
             make_filesize_histogram(results_filtered, format=layout.panel_format)
         )
+        layout.add_panel(
+            make_file_age_histogram(
+                results_filtered, format=layout.panel_format, title="Media file age"
+            )
+        )
+    else:
+        layout.add_panel(make_file_age_histogram(results, format=layout.panel_format))
 
     # Render statistics in a multi-column layout
+    print_summary()
     layout.print()
 
 
 def print_summary():
-    # For stats over search paths, we need to load the library, then split it into
-    # search path groups by checking result.path.is_relative_to(search_path). This is
-    # ok to do because search paths are symlink-resolved at validation time. Saves
-    # having to add search paths to FileResult and should not be too slow.
-    pass
+    """Print summary statistics of individual search paths and the full library."""
+    cfg = get_config()
+    library = load_library()
+    search_paths = [Path(path_str) for path_str in cfg["search_paths"]]
+    media_extensions = cast(list[str], cfg["media_extensions"])
+    subsets = split_by_search_path(library, search_paths)
+    subsets["Full library"] = library  # NOTE: Other keys are paths, not strings
+
+    table = Table(
+        box=box.ROUNDED, padding=(0, 1), header_style="bright_cyan", show_lines=False
+    )
+    table.add_column("Subset", justify="left", overflow="ellipsis")
+
+    for header in ["Files", "Media", "Newest", "Oldest", "Av. Size", "Total Size"]:
+        table.add_column(header, justify="right")
+
+    def build_row(label: str, subset: FileResults) -> tuple[str, ...]:
+        subset.sort(by_mtime=True)
+        subset_media = subset.filtered_by_extension(media_extensions)
+
+        files = str(len(subset))
+        media_files = str(len(subset_media)) if media_extensions else "N/A"
+        newest = (
+            datetime.fromtimestamp(subset[0].stat.st_mtime).strftime("%Y-%m-%d")
+            if subset[0].stat
+            else "N/A"
+        )
+        oldest = (
+            datetime.fromtimestamp(subset[-1].stat.st_mtime).strftime("%Y-%m-%d")
+            if subset[-1].stat
+            else "N/A"
+        )
+        av_size = format_size(mean(file.stat.st_size for file in subset if file.stat))
+        total_size = format_size(sum(file.stat.st_size for file in subset if file.stat))
+
+        return label, files, media_files, newest, oldest, av_size, total_size
+
+    for label, subset in subsets.items():
+        table.add_row(*build_row(str(label), subset))
+
+    console.print(table)
