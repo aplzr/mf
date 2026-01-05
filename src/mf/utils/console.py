@@ -95,6 +95,8 @@ __all__ = [
     "print_warn",
 ]
 
+COLUMNLAYOUT_MAX_COLUMNS = 5
+
 # Shared console instance for the project
 console = Console()
 
@@ -192,7 +194,7 @@ class ColumnLayout:
 
     @staticmethod
     def from_terminal(
-        max_columns: int = 5,
+        max_columns: int = COLUMNLAYOUT_MAX_COLUMNS,
         min_width: int = 39,
         max_width: int = 80,
         padding: tuple[int, int] = (1, 1),
