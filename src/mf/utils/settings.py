@@ -107,7 +107,9 @@ class SettingSpec:
         normalize: Function converting a raw string into what is written to TOML.
         from_toml: Function converting value from TOML to the typed value.
         display: Function producing a human readable representation.
-        validate_all: Function validating the (possibly list) value(s).
+        validate_all: Function validating the final state before changes are applied.
+            Called with the complete value (scalar or list) that will be set. Should
+            raise an exception if validation fails, preventing the change.
         after_update: Hook to trigger additional action(s) after an update.
         help: Human readable help text shown to the user.
     """
@@ -324,28 +326,43 @@ def _apply_action(
             validate_allowed_value(value, spec)
 
     if action == "set":
+        # Validate final state before making changes
+        spec.validate_all(normalized_values)
         cfg[key].clear()  # type: ignore [union-attr]
         cfg[key].extend(normalized_values)  # type: ignore [union-attr]
         print_ok(f"Set {key} to {normalized_values}.")
+        spec.after_update(cfg[key])
 
     elif action == "add":
+        # Build hypothetical final state and validate before making changes
+        final_state = list(cfg[key])  # type: ignore [arg-type]
+        for value in normalized_values:
+            if value not in final_state:
+                final_state.append(value)
+        spec.validate_all(final_state)
+
+        # Now actually add the values
         for value in normalized_values:
             if value not in cfg[key]:  # type: ignore [operator]
                 cfg[key].append(value)  # type: ignore [operator, union-attr, call-arg]
                 print_ok(f"Added '{value}' to {key}.")
             else:
                 print_warn(f"{key} already contains '{value}', skipping.")
+        spec.after_update(cfg[key])
 
     elif action == "remove":
+        # Build hypothetical final state and validate before making changes
+        final_state = [v for v in cfg[key] if v not in normalized_values]  # type: ignore [union-attr]
+        spec.validate_all(final_state)
+
+        # Now actually remove the values
         for value in normalized_values:
             if value in cfg[key]:  # type: ignore [operator]
                 cfg[key].remove(value)  # type: ignore [union-attr]
                 print_ok(f"Removed '{value}' from {key}.")
             else:
                 print_warn(f"'{value}' not found in {key}, skipping.")
-
-    spec.validate_all(cfg[key])
-    spec.after_update(cfg[key])
+        spec.after_update(cfg[key])
 
 
 def apply_action(key: str, action: Action, values: list[str] | None):
