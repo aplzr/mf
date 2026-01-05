@@ -143,7 +143,7 @@ SETTINGS: dict[str, SettingSpec] = {
         normalize=normalize_path,
         from_toml=lambda path: Path(path).resolve(),
         default=[],
-        validate_all=lambda paths: _validate_search_paths_overlap(paths),
+        validate_all=_validate_search_paths_overlap,
         after_update=lambda _: _rebuild_cache_if_enabled(),
         help="Directories scanned for media files.",
     ),
