@@ -1,4 +1,5 @@
 import math
+import os
 
 import pytest
 from rich.panel import Panel
@@ -11,6 +12,7 @@ from mf.utils.stats import (
     get_string_counts,
     group_values_by_bins,
     make_histogram,
+    print_stats,
 )
 
 
@@ -354,3 +356,61 @@ def test_stats_layout_from_terminal_uses_fallback(monkeypatch):
     # Should successfully create a layout (using 80x24 fallback)
     assert layout.n_columns >= 1
     assert layout.panel_width >= 39
+
+
+def test_print_stats_runs_without_error(monkeypatch, tmp_path):
+    """Test that print_stats executes without error."""
+    from pathlib import Path
+
+    from mf.utils.file import FileResult, FileResults
+
+    # Create test files with resolution info in filenames for parse_resolutions
+    files = []
+    test_files = [
+        ("movie.1080p.mp4", 10000),
+        ("show.720p.mkv", 5000),
+        ("video.4k.mp4", 20000),
+    ]
+    for filename, size in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"0" * size)
+        files.append(f)
+
+    # Create FileResults with stat info - FileResult expects Path, not str
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    # Mock dependencies
+    monkeypatch.setattr(
+        "mf.utils.stats.get_config", lambda: {"media_extensions": [".mp4", ".mkv"]}
+    )
+    monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
+
+    # Should run without error
+    print_stats()
+
+
+def test_print_stats_without_configured_extensions(monkeypatch, tmp_path):
+    """Test print_stats when no media extensions are configured."""
+    from pathlib import Path
+
+    from mf.utils.file import FileResult, FileResults
+
+    # Create test files with resolution info
+    files = []
+    test_files = ["movie.1080p.mp4", "show.720p.mkv", "video.4k.mp4"]
+    for filename in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"0" * 1000)
+        files.append(f)
+
+    # FileResult expects Path, not str
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    # Mock with no media extensions configured
+    monkeypatch.setattr(
+        "mf.utils.stats.get_config", lambda: {"media_extensions": []}
+    )
+    monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
+
+    # Should run without error (won't create media_files histograms)
+    print_stats()

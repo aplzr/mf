@@ -66,10 +66,13 @@ from collections import Counter
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from os import stat_result
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal, TypeAlias, cast
 
 from rich.panel import Panel
 
+from .cache import load_library
+from .config import get_config
+from .console import print_columns
 from .file import FileResults
 from .misc import format_size
 from .parsers import parse_resolutions
@@ -476,3 +479,35 @@ def get_log_histogram(
     bins = group_values_by_bins(values, bin_edges)
 
     return bin_centers, [len(bin) for bin in bins]
+
+
+def print_stats():
+    """Print library statistics.
+
+    Loads library metadata from cache if caching is activated, otherwise performs a
+    fresh filesystem scan to compute library statistics.
+    """
+    cfg = get_config()
+    configured_extensions = cast(list[str], cfg["media_extensions"])
+    results = load_library()
+    layout = StatsLayout.from_terminal()
+    panels = []
+
+    if configured_extensions:
+        results_filtered = results.copy()
+        results_filtered.filter_by_extension(configured_extensions)
+
+    # Create statistics
+    panels.append(make_extension_histogram(results, type="all_files", layout=layout))
+    panels.append(make_resolution_histogram(results, layout))
+
+    if configured_extensions:
+        panels.append(
+            make_extension_histogram(
+                results_filtered, type="media_files", layout=layout
+            )
+        )
+        panels.append(make_filesize_histogram(results_filtered, layout))
+
+    # Render statistics in a multi-column layout
+    print_columns(panels, n_columns=layout.n_columns, padding=layout.padding)
