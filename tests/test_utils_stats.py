@@ -124,7 +124,7 @@ def test_make_extension_histogram_all_files(tmp_path):
     panel = make_extension_histogram(results, type="all_files", format=format)
 
     assert isinstance(panel, Panel)
-    assert "all files" in str(panel.title).lower()
+    assert "file extensions" in str(panel.title).lower()
     # Should include top_n in title
     assert "(top" in str(panel.title)
 
@@ -147,7 +147,7 @@ def test_make_extension_histogram_media_files(tmp_path):
     panel = make_extension_histogram(results, type="media_files", format=format)
 
     assert isinstance(panel, Panel)
-    assert "media files" in str(panel.title).lower()
+    assert "media file extensions" in str(panel.title).lower()
 
 
 def test_make_resolution_histogram(tmp_path):
@@ -381,7 +381,11 @@ def test_print_stats_runs_without_error(monkeypatch, tmp_path):
 
     # Mock dependencies
     monkeypatch.setattr(
-        "mf.utils.stats.get_config", lambda: {"media_extensions": [".mp4", ".mkv"]}
+        "mf.utils.stats.get_config",
+        lambda: {
+            "media_extensions": [".mp4", ".mkv"],
+            "search_paths": [str(tmp_path)],
+        },
     )
     monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
 
@@ -408,7 +412,11 @@ def test_print_stats_without_configured_extensions(monkeypatch, tmp_path):
 
     # Mock with no media extensions configured
     monkeypatch.setattr(
-        "mf.utils.stats.get_config", lambda: {"media_extensions": []}
+        "mf.utils.stats.get_config",
+        lambda: {
+            "media_extensions": [],
+            "search_paths": [str(tmp_path)],
+        },
     )
     monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
 
