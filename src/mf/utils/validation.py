@@ -13,12 +13,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .config import get_config
 from .console import print_and_raise, print_warn
 
 
-def validate_search_paths() -> list[Path]:
+def validate_search_paths(search_paths: list[str]) -> list[Path]:
     """Return existing configured search paths.
+
+    Args:
+        search_paths (list[str]): Search path strings to validate.
 
     Raises:
         typer.Exit: If no valid search paths are configured.
@@ -26,10 +28,9 @@ def validate_search_paths() -> list[Path]:
     Returns:
         list[Path]: List of validated existing search paths.
     """
-    search_paths = get_config()["search_paths"]
     validated: list[Path] = []
 
-    for search_path in search_paths:  # type: ignore [union-attr]
+    for search_path in search_paths:
         p = Path(search_path)
 
         if not p.exists():

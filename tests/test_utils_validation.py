@@ -90,12 +90,9 @@ def test_validate_search_paths_all_exist(monkeypatch, tmp_path: Path):
     dir2 = tmp_path / "media2"
     dir1.mkdir()
     dir2.mkdir()
+    path_strings = [str(dir1), str(dir2)]
 
-    # Mock config to return these paths
-    mock_config = {"search_paths": [str(dir1), str(dir2)]}
-    monkeypatch.setattr("mf.utils.validation.get_config", lambda: mock_config)
-
-    result = validate_search_paths()
+    result = validate_search_paths(path_strings)
     assert len(result) == 2
     assert dir1 in result
     assert dir2 in result
@@ -107,12 +104,9 @@ def test_validate_search_paths_some_exist(monkeypatch, tmp_path: Path):
     existing_dir = tmp_path / "media1"
     existing_dir.mkdir()
     nonexistent_dir = tmp_path / "media2_does_not_exist"
+    path_strings = [str(existing_dir), str(nonexistent_dir)]
 
-    # Mock config to return both paths
-    mock_config = {"search_paths": [str(existing_dir), str(nonexistent_dir)]}
-    monkeypatch.setattr("mf.utils.validation.get_config", lambda: mock_config)
-
-    result = validate_search_paths()
+    result = validate_search_paths(path_strings)
     assert len(result) == 1
     assert existing_dir in result
     assert Path(nonexistent_dir) not in result
@@ -123,18 +117,13 @@ def test_validate_search_paths_none_exist(monkeypatch, tmp_path: Path):
     # Use paths that don't exist
     nonexistent1 = tmp_path / "fake1"
     nonexistent2 = tmp_path / "fake2"
-
-    mock_config = {"search_paths": [str(nonexistent1), str(nonexistent2)]}
-    monkeypatch.setattr("mf.utils.validation.get_config", lambda: mock_config)
+    path_strings = [str(nonexistent1), str(nonexistent2)]
 
     with pytest.raises(typer.Exit):
-        validate_search_paths()
+        validate_search_paths(path_strings)
 
 
 def test_validate_search_paths_empty_list(monkeypatch):
     """Test validation fails when search paths list is empty."""
-    mock_config = {"search_paths": []}
-    monkeypatch.setattr("mf.utils.validation.get_config", lambda: mock_config)
-
     with pytest.raises(typer.Exit):
-        validate_search_paths()
+        validate_search_paths([])

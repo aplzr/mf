@@ -18,7 +18,7 @@ def test_scan_search_paths_progress_no_estimate(monkeypatch, tmp_path: Path):
         },
     )
 
-    monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda: [tmp_path])
+    monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda paths: [tmp_path])
     # Ensure cache file doesn't exist
     monkeypatch.setattr(
         "mf.utils.file.get_library_cache_file", lambda: tmp_path / "no.json"

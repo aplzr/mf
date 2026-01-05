@@ -104,7 +104,7 @@ def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
     (tmp_path / "c.txt").write_text("x")
 
     # Avoid validate_search_paths side effects by returning our tmp_path
-    monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda: [tmp_path])
+    monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda paths: [tmp_path])
     # Use direct instantiation with explicit parameters (no need to mock get_config!)
     q = FindQuery(
         "*",
@@ -129,7 +129,7 @@ def test_new_query_latest(monkeypatch, tmp_path: Path):
     # Ensure different mtimes
     os.utime(f1, (os.path.getatime(f1), os.path.getmtime(f1) - 10))
 
-    monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda: [tmp_path])
+    monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda paths: [tmp_path])
     # Use direct instantiation with explicit parameters (no need to mock get_config!)
     q = NewQuery(2, cache_library=False, media_extensions=[".mp4"], match_extensions=True)
     results = q.execute()
