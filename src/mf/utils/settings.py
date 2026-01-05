@@ -90,6 +90,12 @@ def _rebuild_cache_if_enabled():
         rebuild_library_cache()
 
 
+def _validate_search_paths_overlap(search_paths: list[str]):
+    from .validation import validate_search_paths_overlap
+
+    validate_search_paths_overlap(search_paths)
+
+
 Action = Literal["set", "add", "remove", "clear"]
 
 
@@ -137,6 +143,7 @@ SETTINGS: dict[str, SettingSpec] = {
         normalize=normalize_path,
         from_toml=lambda path: Path(path).resolve(),
         default=[],
+        validate_all=lambda paths: _validate_search_paths_overlap(paths),
         after_update=lambda _: _rebuild_cache_if_enabled(),
         help="Directories scanned for media files.",
     ),
