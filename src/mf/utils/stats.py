@@ -79,10 +79,10 @@ from typing import Any, Literal, TypeAlias, cast
 
 from rich.panel import Panel
 
-from .cache import load_library
 from .config import get_config
 from .console import ColumnLayout, PanelFormat
 from .file import FileResults
+from .library import load_library
 from .misc import format_size
 from .parsers import parse_resolutions
 
