@@ -183,6 +183,9 @@ def make_histogram(
         padding=format.padding,
         title_align=format.title_align,
         expand=False,
+        # Need to set these so we can later query them for panel sorting
+        width=format.panel_width,
+        height=len(bars) + 2 * panel_border_width + 2 * format.padding[0],
     )
 
 
