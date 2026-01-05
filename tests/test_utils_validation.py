@@ -4,7 +4,11 @@ from pathlib import Path
 import pytest
 import typer
 
-from mf.utils.validation import validate_search_cache, validate_search_paths
+from mf.utils.validation import (
+    validate_search_cache,
+    validate_search_paths,
+    validate_search_paths_overlap,
+)
 
 
 def test_validate_search_cache_valid():
@@ -127,3 +131,69 @@ def test_validate_search_paths_empty_list(monkeypatch):
     """Test validation fails when search paths list is empty."""
     with pytest.raises(typer.Exit):
         validate_search_paths([])
+
+
+# Search path overlap validation tests
+
+
+def test_validate_search_paths_overlap_no_overlap():
+    """Test validation passes when paths don't overlap."""
+    paths = ["/media/videos", "/home/user/downloads", "/mnt/external"]
+    # Should not raise
+    validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_parent_child():
+    """Test validation fails when one path is parent of another."""
+    paths = ["/media", "/media/videos"]
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_child_parent_order():
+    """Test validation fails regardless of path order."""
+    paths = ["/media/videos", "/media"]  # Child before parent
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_multiple_pairs():
+    """Test validation catches first overlapping pair in multiple paths."""
+    paths = ["/media", "/home/user", "/media/videos", "/mnt/external"]
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_single_path():
+    """Test validation passes with single path."""
+    paths = ["/media/videos"]
+    # Should not raise
+    validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_empty_list():
+    """Test validation passes with empty list."""
+    paths = []
+    # Should not raise
+    validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_deeply_nested():
+    """Test validation catches deeply nested overlaps."""
+    paths = ["/media/videos/movies/hd", "/media/videos"]
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_windows_paths():
+    """Test validation works with Windows-style paths."""
+    paths = ["C:/Media", "C:/Media/Videos"]
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_similar_names_no_overlap():
+    """Test paths with similar names but no overlap pass validation."""
+    paths = ["/media/videos", "/media/videos-archive", "/media/audio"]
+    # These don't overlap - just similar names
+    validate_search_paths_overlap(paths)
