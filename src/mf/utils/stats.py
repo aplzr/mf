@@ -493,9 +493,7 @@ def print_summary():
     subsets = split_by_search_path(library, search_paths)
     subsets["Full library"] = library  # NOTE: Other keys are paths, not strings
 
-    table = Table(
-        box=box.ROUNDED, padding=(0, 1), header_style="bright_cyan", show_lines=False
-    )
+    table = Table(box=box.ROUNDED, padding=(0, 1), header_style="bright_cyan")
     table.add_column("Subset", justify="left", overflow="ellipsis")
 
     for header in ["Files", "Media", "Newest", "Oldest", "Av. Size", "Total Size"]:
