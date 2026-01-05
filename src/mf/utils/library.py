@@ -7,7 +7,7 @@ from .file import FileResults
 
 def load_library() -> FileResults:
     """Loads the full library from cache if caching is activated, does a fresh
-    filesystem scan otherwise.
+    filesystem scan with stat caching otherwise.
 
     Returns:
         FileResilts: Full library.
@@ -51,12 +51,12 @@ def split_by_search_path(
         path will work reliably. This is not necessarily true for file_results built in
         other ways.
     """
-    files_by_search_paths = {search_path: FileResults() for search_path in search_paths}
+    files_by_search_path = {search_path: FileResults() for search_path in search_paths}
 
     for file_result in file_results:
         for search_path in search_paths:
             if file_result.get_path().is_relative_to(search_path):
-                files_by_search_paths[search_path].append(file_result)
+                files_by_search_path[search_path].append(file_result)
                 break
 
-    return files_by_search_paths
+    return files_by_search_path
