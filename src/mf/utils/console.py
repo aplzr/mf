@@ -48,8 +48,7 @@ from typing import NoReturn
 
 import typer
 from rich.columns import Columns
-from rich.console import Console, Group
-from rich.panel import Panel
+from rich.console import Console, Group, RenderableType
 
 from ..constants import STATUS_SYMBOLS
 
@@ -105,20 +104,22 @@ def print_info(msg: str):
     console.print(f"{STATUS_SYMBOLS['info']}  {msg}", style="bright_cyan")
 
 
-def print_columns(panels: list[Panel], n_columns: int, padding: tuple[int, int]):
-    """Print a collection of Panels in a multi-column layout.
+def print_columns(
+    renderables: list[RenderableType], n_columns: int, padding: tuple[int, int]
+):
+    """Print a collection of rich renderables in a multi-column layout.
 
-    Panels are distributed alternatingly between columns, i.e. row-first.
+    Renderables are distributed alternatingly between columns, i.e. row-first.
 
     Args:
-        panels (list[Panel]): List of panels to print.
+        renderables (list[RenderableType]): List of rich renderables to print.
         n_columns (int): Number of columns.
         padding (tuple[int, int]): (vertical, horizontal) padding between columns.
     """
-    columns: list[list[Panel]] = [[] for _ in range(n_columns)]
+    columns: list[list[RenderableType]] = [[] for _ in range(n_columns)]
 
-    for i, panel in enumerate(panels):
-        columns[i % n_columns].append(panel)
+    for i, renderable in enumerate(renderables):
+        columns[i % n_columns].append(renderable)
 
     column_groups = [Group(*column) for column in columns]
     console.print(Columns(column_groups, padding=padding))
