@@ -1,30 +1,31 @@
 """Statistics and histogram visualization utilities.
 
-Provides functions for creating histogram panels with support for both categorical data
-and numeric data spanning multiple orders of magnitude. Histograms are returned as Rich
-Panel objects configured via StatsLayout for consistent, responsive formatting.
+Provides functions for creating histogram panels from categorical and numeric data.
+Histograms are returned as Rich Panel objects that can be displayed directly or
+accumulated in a ColumnLayout for multi-column presentation.
 
 Features:
     - Logarithmic binning for data spanning orders of magnitude (file sizes, etc.)
-    - Rich terminal-based histogram rendering with bars and percentages
+    - Terminal-based histogram rendering with bars and percentages
     - Flexible sorting and filtering of histogram bins
     - Geometric mean bin centers for log-spaced histograms
-    - Responsive layout system that adapts to terminal width
+    - Customizable panel formatting via PanelFormat
 
-Architecture:
-    StatsLayout: Configures panel dimensions, padding, spacing, and column layout
-    make_*_histogram(): Factory functions that return configured Panel objects
-    get_*(): Data processing functions that compute bin counts
+Functions:
+    make_histogram(): Create histogram panel from (label, count) bin data
+    make_extension_histogram(): Histogram of file extensions
+    make_resolution_histogram(): Histogram of video resolutions
+    make_filesize_histogram(): Histogram of file sizes (logarithmic)
+
+    get_string_counts(): Count frequency of categorical values
+    get_log_histogram(): Create logarithmic histogram bins for numeric data
+    create_log_bins(): Generate logarithmically-spaced bin edges
+    get_log_bin_centers(): Calculate geometric mean bin centers
+    group_values_by_bins(): Assign values to histogram bins
 
 Histogram Types:
-    Categorical: Use get_string_counts() to create bins from categories
+    Categorical: Use get_string_counts() to create bins from string values
     Numeric (log-scale): Use get_log_histogram() for data like file sizes
-
-Layout System:
-    StatsLayout controls panel formatting and can be created from terminal width:
-    - StatsLayout.from_terminal(): Auto-configures based on current terminal
-    - Supports multi-column layouts with configurable spacing
-    - Enforces minimum/maximum panel widths for readability
 
 Display:
     Histograms are rendered as Rich panels with:
@@ -35,36 +36,44 @@ Display:
 
 Mathematical Notes:
     Logarithmic binning uses base-10 logarithms and geometric means for bin centers,
-    which are appropriate for data that varies over orders of magnitude. For example,
-    file sizes from 1KB to 1GB benefit from log-scale binning rather than linear
-    binning.
+    which are appropriate for data spanning multiple orders of magnitude. For example,
+    file sizes from 1KB to 1GB benefit from log-scale binning rather than linear bins.
 
 Examples:
-    >>> # Configure layout based on terminal
-    >>> layout = StatsLayout.from_terminal()
+    Categorical histogram (file extensions):
+        >>> from mf.utils.console import ColumnLayout
+        >>> extensions = ['.mp4', '.mkv', '.mp4', '.avi', '.mp4']
+        >>> bins = get_string_counts(extensions)
+        >>>
+        >>> layout = ColumnLayout.from_terminal()
+        >>> format = layout.panel_format
+        >>> panel = make_histogram(bins, "File Extensions", format, sort=True)
+        >>> layout.add_panel(panel)
+        >>> layout.print()
 
-    >>> # Categorical histogram (file extensions)
-    >>> extensions = ['.mp4', '.mkv', '.mp4', '.avi', '.mp4']
-    >>> bins = get_string_counts(extensions)
-    >>> panel = make_histogram(bins, "File Extensions", layout, sort=True)
-    >>> console.print(panel)
+    Numeric histogram (file sizes):
+        >>> sizes = [1_000_000, 5_000_000, 10_000_000, 50_000_000]
+        >>> bin_centers, counts = get_log_histogram(sizes)
+        >>> bins = [(f"{c/1e6:.1f}MB", count) for c, count in zip(bin_centers, counts)]
+        >>>
+        >>> panel = make_histogram(bins, "File Sizes", format)
+        >>> layout.add_panel(panel)
+        >>> layout.print()
 
-    >>> # Numeric histogram (file sizes in bytes)
-    >>> sizes = [1_000_000, 5_000_000, 10_000_000, 50_000_000]
-    >>> bin_centers, counts = get_log_histogram(sizes)
-    >>> bins = [(f"{c/1e6:.1f}MB", count) for c, count in zip(bin_centers, counts)]
-    >>> panel = make_histogram(bins, "File Sizes", layout)
-    >>> console.print(panel)
+    Direct display (single histogram):
+        >>> from mf.utils.config import console
+        >>> from mf.utils.console import PanelFormat
+        >>> format = PanelFormat(panel_width=60)
+        >>> panel = make_histogram(bins, "Title", format)
+        >>> console.print(panel)
 """
 
 from __future__ import annotations
 
 import math
-import shutil
 from bisect import bisect_left
 from collections import Counter
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass, field
 from os import stat_result
 from typing import Any, Literal, TypeAlias, cast
 
@@ -72,7 +81,7 @@ from rich.panel import Panel
 
 from .cache import load_library
 from .config import get_config
-from .console import print_columns
+from .console import ColumnLayout, PanelFormat
 from .file import FileResults
 from .misc import format_size
 from .parsers import parse_resolutions
@@ -80,96 +89,10 @@ from .parsers import parse_resolutions
 BinData: TypeAlias = tuple[str, int]  # (label, count)
 
 
-@dataclass
-class StatsLayout:
-    """Configuration for histogram panel layout and formatting.
-
-    Controls panel dimensions, spacing, and alignment for statistics displays. Supports
-    responsive multi-column layouts that adapt to terminal width.
-
-    Usage:
-        Use StatsLayout.from_terminal() to auto-configure based on current terminal:
-
-        >>> layout = StatsLayout.from_terminal()
-        >>> panel = make_histogram(bins, "Title", layout)
-
-    Attributes:
-        n_columns (int): Number of panels to render side by side.
-        panel_width (int): Width of a single panel in characters.
-        terminal_width (int | None): Terminal width in characters, if detected.
-        padding (tuple[int, int]): (vertical, horizontal) padding inside panels and
-            between panels.
-        title_align (Literal["left", "center", "right"]): Panel title alignment.
-        expand (bool): Whether to expand to terminal width. Always False.
-    """
-
-    n_columns: int
-    panel_width: int
-    terminal_width: int | None = None
-    padding: tuple[int, int] = (1, 1)
-    title_align: Literal["left", "center", "right"] = "left"
-    _expand: bool = field(default=False, repr=False)
-
-    @property
-    def expand(self):  # noqa: D102
-        return self._expand
-
-    @staticmethod
-    def from_terminal(
-        max_columns: int = 5,
-        min_width: int = 39,
-        max_width: int = 80,
-        padding: tuple[int, int] = (1, 1),
-    ) -> StatsLayout:
-        """Create layout optimized for current terminal width.
-
-        Determines optimal column count and panel width to maximize terminal space while
-        respecting min/max width constraints. Prioritizes more columns over wider
-        panels.
-
-        Args:
-            max_columns: Maximum panels to display side by side. Defaults to 5.
-            min_width: Minimum panel width in characters. Defaults to 39.
-            max_width: Maximum panel width in characters. Defaults to 80.
-            padding: (vertical, horizontal) padding inside panels and between panels.
-                Defaults to (1, 1).
-
-        Returns:
-            StatsLayout: Responsive layout for current terminal dimensions.
-
-        Example:
-            >>> layout = StatsLayout.from_terminal(max_columns=3, min_width=50)
-        """
-        fallback_cols = 80
-        fallback_rows = 24
-        terminal_width = shutil.get_terminal_size(
-            fallback=(fallback_cols, fallback_rows)
-        ).columns
-
-        # Calculate columns that fit
-        for n_columns in range(max_columns, 0, -1):
-            needed = min_width * n_columns + padding[1] * (n_columns - 1)
-
-            if needed <= terminal_width:
-                available = terminal_width - padding[1] * (n_columns - 1)
-                width = available // n_columns
-                panel_width = min(width, max_width)
-
-                return StatsLayout(
-                    n_columns=n_columns,
-                    panel_width=panel_width,
-                    terminal_width=terminal_width,
-                    padding=padding,
-                )
-
-        # Fallback
-        return StatsLayout(n_columns=1, panel_width=min_width)
-
-
 def make_histogram(
     bins: list[BinData],
     title: str,
-    layout: StatsLayout,
+    format: PanelFormat,
     sort: bool = False,
     sort_reverse: bool = False,
     sort_key: Callable[[BinData], Any] | None = None,
@@ -183,7 +106,7 @@ def make_histogram(
         bins (list[BinData]): List of (label, count) pairs that represent one histogram
             bin each.
         title (str): Histogram title.
-        layout (LayoutConfig): Panel layout.
+        format (PanelFormat): Panel format.
         sort (bool, optional): Whether to sort bins. Sorts by label if no sort_key is
             given. Defaults to False.
         sort_reverse (bool, optional): Reverse sort order of sort==True. Defaults to
@@ -194,7 +117,7 @@ def make_histogram(
             None.
 
     Returns:
-        Panel: Ready-to-render panel conforming to the specified layout.
+        Panel: Ready-to-render panel conforming to the specified format.
     """
     if sort:
         bins = sorted(bins, key=sort_key, reverse=sort_reverse)
@@ -226,9 +149,9 @@ def make_histogram(
 
     # This is the free parameter that needs to be adjusted to hit the target total width
     max_bar_width = (
-        layout.panel_width
+        format.panel_width
         - 2 * panel_border_width
-        - 2 * layout.padding[1]
+        - 2 * format.padding[1]
         - len_max_label
         - len_max_count
         - (percentage_width + 3)  # "( 2.4%)"
@@ -252,16 +175,16 @@ def make_histogram(
     return Panel(
         "\n".join(bars),
         title=(f"[bold cyan]{title}[/bold cyan]"),
-        padding=layout.padding,
-        title_align=layout.title_align,
-        expand=layout.expand,
+        padding=format.padding,
+        title_align=format.title_align,
+        expand=False,
     )
 
 
 def make_extension_histogram(
     results: FileResults,
     type: Literal["all_files", "media_files"],
-    layout: StatsLayout,
+    format: PanelFormat,
 ) -> Panel:
     """Make a histogram of file extensions.
 
@@ -270,7 +193,7 @@ def make_extension_histogram(
             be filtered to media files.
         type (Literal["all_files", "media_files"]): Histogram type. Defines histogram
             formatting.
-        layout (StatsLayout): Panel layout.
+        format (PanelFormat): Panel format.
 
     Returns:
         Panel: Ready-to-render histogram panel.
@@ -281,7 +204,7 @@ def make_extension_histogram(
         return make_histogram(
             bins=bins,
             title="File extensions (all files)",
-            layout=layout,
+            format=format,
             sort=True,
             sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
             top_n=20,
@@ -290,17 +213,17 @@ def make_extension_histogram(
         return make_histogram(
             bins=bins,
             title="File extensions (media files)",
-            layout=layout,
+            format=format,
             sort=True,
         )
 
 
-def make_resolution_histogram(results: FileResults, layout: StatsLayout) -> Panel:
+def make_resolution_histogram(results: FileResults, format: PanelFormat) -> Panel:
     """Make a histogram of video resolutions.
 
     Args:
         results (FileResults): File collection.
-        layout (StatsLayout): Panel layout.
+        format (PanelFormat): Panel format.
 
     Returns:
         Panel: Ready-to-render histogram panel.
@@ -308,18 +231,18 @@ def make_resolution_histogram(results: FileResults, layout: StatsLayout) -> Pane
     return make_histogram(
         bins=get_string_counts(parse_resolutions(results)),
         title="Media file resolution",
-        layout=layout,
+        format=format,
         sort=True,
         sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
     )
 
 
-def make_filesize_histogram(results: FileResults, layout: StatsLayout) -> Panel:
+def make_filesize_histogram(results: FileResults, format: PanelFormat) -> Panel:
     """Make a histogram of file sizes.
 
     Args:
         results (FileResults): File collection.
-        layout (LayoutConfig): Panel layout.
+        format (PanelFormat): Panel format.
 
     Returns:
         Panel: Ready-to-render histogram panel.
@@ -337,7 +260,7 @@ def make_filesize_histogram(results: FileResults, layout: StatsLayout) -> Panel:
         (label, count) for label, count in zip(bin_labels, bin_counts)
     ]
 
-    return make_histogram(bins=bins, title="Media file size", layout=layout)
+    return make_histogram(bins=bins, title="Media file size", format=format)
 
 
 def create_log_bins(
@@ -490,27 +413,30 @@ def print_stats():
     cfg = get_config()
     configured_extensions = cast(list[str], cfg["media_extensions"])
     results = load_library()
-    layout = StatsLayout.from_terminal()
-    panels = []
+    layout = ColumnLayout.from_terminal()
 
     if configured_extensions:
         results_filtered = results.copy()
         results_filtered.filter_by_extension(configured_extensions)
 
     # Create statistics
-    panels.append(make_extension_histogram(results, type="all_files", layout=layout))
-    panels.append(make_resolution_histogram(results, layout))
+    layout.add_panel(
+        make_extension_histogram(results, type="all_files", format=layout.panel_format)
+    )
+    layout.add_panel(make_resolution_histogram(results, format=layout.panel_format))
 
     if configured_extensions:
-        panels.append(
+        layout.add_panel(
             make_extension_histogram(
-                results_filtered, type="media_files", layout=layout
+                results_filtered, type="media_files", format=layout.panel_format
             )
         )
-        panels.append(make_filesize_histogram(results_filtered, layout))
+        layout.add_panel(
+            make_filesize_histogram(results_filtered, format=layout.panel_format)
+        )
 
     # Render statistics in a multi-column layout
-    print_columns(panels, n_columns=layout.n_columns, padding=layout.padding)
+    layout.print()
 
 
 def print_summary():
