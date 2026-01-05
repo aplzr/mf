@@ -10,9 +10,11 @@ from mf.utils.cache import PICKLE_PROTOCOL, load_library_cache
 from mf.utils.config import get_config, write_config
 from mf.utils.file import (
     FileResult,
+    FileResults,
     get_cache_dir,
     get_library_cache_file,
 )
+from mf.utils.library import split_by_search_path
 from mf.utils.scan import FindQuery, NewQuery, scan_search_paths
 from mf.utils.search import get_result_by_index, save_search_results
 
@@ -190,3 +192,89 @@ def test_library_cache_json_removal_and_rebuild(isolated_media_dir, capsys):
         loaded_data = pickle.load(f)
     assert "timestamp" in loaded_data
     assert "files" in loaded_data
+
+
+def test_split_by_search_path_basic(tmp_path):
+    """Test basic splitting of files by search path."""
+    # Create two search paths with files
+    path1 = tmp_path / "media1"
+    path2 = tmp_path / "media2"
+    path1.mkdir()
+    path2.mkdir()
+
+    # Create files in each path
+    file1 = path1 / "movie1.mp4"
+    file2 = path1 / "movie2.mkv"
+    file3 = path2 / "show1.mp4"
+    file4 = path2 / "show2.mkv"
+
+    for f in [file1, file2, file3, file4]:
+        f.touch()
+
+    # Create FileResults
+    results = FileResults.from_paths([str(f) for f in [file1, file2, file3, file4]])
+
+    # Split by search paths
+    split = split_by_search_path(results, [path1, path2])
+
+    # Verify split
+    assert len(split[path1]) == 2
+    assert len(split[path2]) == 2
+    assert file1 in [r.get_path() for r in split[path1]]
+    assert file2 in [r.get_path() for r in split[path1]]
+    assert file3 in [r.get_path() for r in split[path2]]
+    assert file4 in [r.get_path() for r in split[path2]]
+
+
+def test_split_by_search_path_empty_results(tmp_path):
+    """Test splitting empty FileResults."""
+    path1 = tmp_path / "media1"
+    path1.mkdir()
+
+    results = FileResults()
+    split = split_by_search_path(results, [path1])
+
+    assert len(split[path1]) == 0
+
+
+def test_split_by_search_path_no_matches(tmp_path):
+    """Test splitting when no files match any search path."""
+    path1 = tmp_path / "media1"
+    path2 = tmp_path / "other"
+    path1.mkdir()
+    path2.mkdir()
+
+    # Create file outside search paths
+    file1 = path2 / "movie.mp4"
+    file1.touch()
+
+    results = FileResults.from_paths([str(file1)])
+    split = split_by_search_path(results, [path1])
+
+    # File doesn't match any search path, so it shouldn't appear
+    assert len(split[path1]) == 0
+
+
+def test_split_by_search_path_nested_paths(tmp_path):
+    """Test that files are assigned to correct path when paths are nested."""
+    # Note: This assumes search paths don't overlap (validated elsewhere)
+    # But test the assignment logic works correctly
+    path1 = tmp_path / "media"
+    path2 = tmp_path / "other"
+    path1.mkdir()
+    path2.mkdir()
+
+    file1 = path1 / "subdir" / "movie.mp4"
+    file1.parent.mkdir()
+    file1.touch()
+
+    file2 = path2 / "show.mkv"
+    file2.touch()
+
+    results = FileResults.from_paths([str(file1), str(file2)])
+    split = split_by_search_path(results, [path1, path2])
+
+    assert len(split[path1]) == 1
+    assert len(split[path2]) == 1
+    assert file1 in [r.get_path() for r in split[path1]]
+    assert file2 in [r.get_path() for r in split[path2]]

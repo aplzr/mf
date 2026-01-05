@@ -281,6 +281,19 @@ class FileResults(UserList[FileResult]):
             if result.file.suffix.lower() in media_extensions
         ]
 
+    def filtered_by_extension(
+        self, media_extensions: list[str] | None = None
+    ) -> FileResults:
+        """Return new collection filtered by media extensions.
+
+        Args:
+            media_extensions (list[str] | None, optional): List of media file
+                extensions, each with a leading '.', for filtering. Defaults to None.
+        """
+        filtered_results = self.copy()
+        filtered_results.filter_by_extension(media_extensions)
+        return filtered_results
+
     def filter_by_pattern(self, pattern: str):
         """Filter files by filename pattern (in-place).
 
@@ -296,9 +309,25 @@ class FileResults(UserList[FileResult]):
             if fnmatch(result.file.name.lower(), pattern.lower())
         ]
 
+    def filtered_by_pattern(self, pattern: str) -> FileResults:
+        """Return new collection filtered by filename pattern.
+
+        Args:
+            pattern (str): Glob-style pattern to match against filenames.
+        """
+        filtered_results = self.copy()
+        filtered_results.filter_by_pattern(pattern)
+        return filtered_results
+
     def filter_by_existence(self):
         """Remove files that don't exist from the collection (in-place)."""
         self.data = [result for result in self.data if result.file.exists()]
+
+    def filtered_by_existence(self) -> FileResults:
+        """Return new collection filtered by file existence."""
+        filtered_results = self.copy()
+        filtered_results.filter_by_existence()
+        return filtered_results
 
     def get_missing(self) -> FileResults:
         """Return new FileResults containing only files that don't exist.
@@ -347,7 +376,7 @@ class FileResults(UserList[FileResult]):
         Raises:
             ValueError: If by_mtime is True and any files lack modification time.
         """
-        sorted_results = FileResults(self.data.copy())
+        sorted_results = self.copy()
         sorted_results.sort(by_mtime=by_mtime, reverse=reverse)
         return sorted_results
 

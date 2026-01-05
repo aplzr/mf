@@ -78,6 +78,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import cast
 
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
@@ -253,7 +254,8 @@ def scan_search_paths(
     Returns:
         FileResults: Results, optionally with stat info.
     """
-    search_paths = validate_search_paths()
+    search_path_strings = cast(list[str], get_config()["search_paths"])
+    search_paths = validate_search_paths(search_path_strings)
 
     if prefer_fd is None:
         prefer_fd = get_config()["prefer_fd"]  # type: ignore [assignment]

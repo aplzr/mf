@@ -95,7 +95,14 @@ def format_size(size_bytes: int | float) -> str:
     Returns:
         str: Formatted string like "1.5 GB" or "250 MB".
     """
-    units = [(1024**3, "GB"), (1024**2, "MB"), (1024**1, "kB"), (1, "B")]
+    units = [
+        (1024**5, "PB"),
+        (1024**4, "TB"),
+        (1024**3, "GB"),
+        (1024**2, "MB"),
+        (1024**1, "kB"),
+        (1, "B"),
+    ]
 
     for threshold, unit in units:
         if size_bytes >= threshold:

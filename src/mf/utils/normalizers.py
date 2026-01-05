@@ -64,13 +64,13 @@ def normalize_bool_str(bool_str: str) -> bool:
 
 
 def normalize_path(path_str: str) -> str:
-    """Normalize a path to an absolute POSIX-style string.
+    """Normalize a path to an absolute, symlink-resolved POSIX-style string.
 
     Args:
         path_str (str): Input path (relative or absolute).
 
     Returns:
-        str: Normalized absolute path with forward slashes.
+        str: Normalized absolute, symlink-resolved path with forward slashes.
     """
     return Path(path_str).resolve().as_posix()
 

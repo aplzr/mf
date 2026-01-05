@@ -1,16 +1,18 @@
 import math
+import os
 
 import pytest
 from rich.panel import Panel
 
+from mf.utils.console import ColumnLayout, PanelFormat
 from mf.utils.stats import (
-    StatsLayout,
     create_log_bins,
     get_log_bin_centers,
     get_log_histogram,
     get_string_counts,
     group_values_by_bins,
     make_histogram,
+    print_stats,
 )
 
 
@@ -72,25 +74,25 @@ def test_get_log_histogram_empty_values_raises():
 
 def test_make_histogram_returns_panel():
     """Test that make_histogram returns a Rich Panel object."""
-    layout = StatsLayout(n_columns=1, panel_width=50)
+    format = PanelFormat(panel_width=50)
     bins = [(".mp4", 3), (".mkv", 2), (".avi", 1)]
 
-    panel = make_histogram(bins, title="Extensions", layout=layout)
+    panel = make_histogram(bins, title="Extensions", format=format)
 
     assert isinstance(panel, Panel)
     assert panel.title == "[bold cyan]Extensions[/bold cyan]"
-    assert panel.padding == layout.padding
-    assert panel.expand == layout.expand
+    assert panel.padding == format.padding
+    assert panel.expand is False
 
 
 def test_make_histogram_sorts_and_limits():
     """Test sorting and top_n parameters."""
-    layout = StatsLayout(n_columns=1, panel_width=50)
+    format = PanelFormat(panel_width=50)
     bins = [(".mp4", 3), (".mkv", 2), (".avi", 1)]
 
     # Should return only top 2 when sorted
     panel = make_histogram(
-        bins, title="Extensions", layout=layout, sort=True,
+        bins, title="Extensions", format=format, sort=True,
         sort_key=lambda x: x[1], sort_reverse=True, top_n=2
     )
 
@@ -106,7 +108,7 @@ def test_make_extension_histogram_all_files(tmp_path):
     from mf.utils.file import FileResults
     from mf.utils.stats import make_extension_histogram
 
-    layout = StatsLayout(n_columns=1, panel_width=50)
+    format = PanelFormat(panel_width=50)
 
     # Create test files
     files = [
@@ -119,10 +121,10 @@ def test_make_extension_histogram_all_files(tmp_path):
         f.touch()
 
     results = FileResults.from_paths([str(f) for f in files])
-    panel = make_extension_histogram(results, type="all_files", layout=layout)
+    panel = make_extension_histogram(results, type="all_files", format=format)
 
     assert isinstance(panel, Panel)
-    assert "all files" in str(panel.title).lower()
+    assert "file extensions" in str(panel.title).lower()
     # Should include top_n in title
     assert "(top" in str(panel.title)
 
@@ -134,7 +136,7 @@ def test_make_extension_histogram_media_files(tmp_path):
     from mf.utils.file import FileResults
     from mf.utils.stats import make_extension_histogram
 
-    layout = StatsLayout(n_columns=1, panel_width=50)
+    format = PanelFormat(panel_width=50)
 
     # Create test files
     files = [tmp_path / "movie.mp4", tmp_path / "show.mkv"]
@@ -142,10 +144,10 @@ def test_make_extension_histogram_media_files(tmp_path):
         f.touch()
 
     results = FileResults.from_paths([str(f) for f in files])
-    panel = make_extension_histogram(results, type="media_files", layout=layout)
+    panel = make_extension_histogram(results, type="media_files", format=format)
 
     assert isinstance(panel, Panel)
-    assert "media files" in str(panel.title).lower()
+    assert "media file extensions" in str(panel.title).lower()
 
 
 def test_make_resolution_histogram(tmp_path):
@@ -155,7 +157,7 @@ def test_make_resolution_histogram(tmp_path):
     from mf.utils.file import FileResults
     from mf.utils.stats import make_resolution_histogram
 
-    layout = StatsLayout(n_columns=1, panel_width=50)
+    format = PanelFormat(panel_width=50)
 
     # Create test files with resolutions that can be parsed
     files = [tmp_path / "movie.1080p.mp4", tmp_path / "show.720p.mkv"]
@@ -163,7 +165,7 @@ def test_make_resolution_histogram(tmp_path):
         f.touch()
 
     results = FileResults.from_paths([str(f) for f in files])
-    panel = make_resolution_histogram(results, layout)
+    panel = make_resolution_histogram(results, format)
 
     assert isinstance(panel, Panel)
     assert "resolution" in str(panel.title).lower()
@@ -177,7 +179,7 @@ def test_make_filesize_histogram(tmp_path):
     from mf.utils.file import FileResult, FileResults
     from mf.utils.stats import make_filesize_histogram
 
-    layout = StatsLayout(n_columns=1, panel_width=50)
+    format = PanelFormat(panel_width=50)
 
     # Create test files with different sizes
     files = []
@@ -191,34 +193,34 @@ def test_make_filesize_histogram(tmp_path):
         [FileResult(str(f), os.stat(f)) for f in files]
     )
 
-    panel = make_filesize_histogram(results, layout)
+    panel = make_filesize_histogram(results, format)
 
     assert isinstance(panel, Panel)
     assert "size" in str(panel.title).lower()
 
 
-def test_stats_layout_basic_initialization():
-    """Test basic StatsLayout initialization."""
-    layout = StatsLayout(n_columns=2, panel_width=50)
+def test_column_layout_basic_initialization():
+    """Test basic ColumnLayout initialization."""
+    format = PanelFormat(panel_width=50, padding=(1, 1), title_align="left")
+    layout = ColumnLayout(n_columns=2, panel_format=format)
 
     assert layout.n_columns == 2
-    assert layout.panel_width == 50
+    assert layout.panel_format.panel_width == 50
     assert layout.terminal_width is None
-    assert layout.padding == (1, 1)
-    assert layout.title_align == "left"
-    assert layout.expand is False
+    assert layout.panel_format.padding == (1, 1)
+    assert layout.panel_format.title_align == "left"
 
 
-def test_stats_layout_expand_always_false():
-    """Test that expand property is always False (read-only)."""
-    layout = StatsLayout(n_columns=1, panel_width=50)
+def test_panel_format_is_frozen():
+    """Test that PanelFormat is immutable."""
+    format = PanelFormat(panel_width=50)
 
-    assert layout.expand is False
-    # _expand should not appear in repr
-    assert "_expand" not in repr(layout)
+    # Should not be able to modify frozen dataclass
+    with pytest.raises(Exception):  # FrozenInstanceError
+        format.panel_width = 100
 
 
-def test_stats_layout_from_terminal_standard_80_cols(monkeypatch):
+def test_column_layout_from_terminal_standard_80_cols(monkeypatch):
     """Test layout for standard 80-column terminal."""
     # Mock terminal size to return 80 columns
     class FakeTerminalSize:
@@ -232,16 +234,16 @@ def test_stats_layout_from_terminal_standard_80_cols(monkeypatch):
     import shutil
     monkeypatch.setattr(shutil, "get_terminal_size", fake_get_terminal_size)
 
-    layout = StatsLayout.from_terminal()
+    layout = ColumnLayout.from_terminal()
 
     # 80 cols should fit 2 columns at min_width 39
     # 39 * 2 + 1 (spacing) = 79
     assert layout.n_columns == 2
-    assert layout.panel_width == 39
+    assert layout.panel_format.panel_width == 39
     assert layout.terminal_width == 80
 
 
-def test_stats_layout_from_terminal_wide_terminal(monkeypatch):
+def test_column_layout_from_terminal_wide_terminal(monkeypatch):
     """Test layout for wide terminal (160 columns)."""
     class FakeTerminalSize:
         def __init__(self, columns, lines):
@@ -254,16 +256,16 @@ def test_stats_layout_from_terminal_wide_terminal(monkeypatch):
     import shutil
     monkeypatch.setattr(shutil, "get_terminal_size", fake_get_terminal_size)
 
-    layout = StatsLayout.from_terminal()
+    layout = ColumnLayout.from_terminal()
 
     # 160 cols should fit 4 columns at min_width 39
     # 39 * 4 + 3 (spacing) = 159
     assert layout.n_columns == 4
-    assert layout.panel_width == 39
+    assert layout.panel_format.panel_width == 39
     assert layout.terminal_width == 160
 
 
-def test_stats_layout_from_terminal_narrow_terminal(monkeypatch):
+def test_column_layout_from_terminal_narrow_terminal(monkeypatch):
     """Test layout for narrow terminal (< 39 columns)."""
     class FakeTerminalSize:
         def __init__(self, columns, lines):
@@ -276,14 +278,14 @@ def test_stats_layout_from_terminal_narrow_terminal(monkeypatch):
     import shutil
     monkeypatch.setattr(shutil, "get_terminal_size", fake_get_terminal_size)
 
-    layout = StatsLayout.from_terminal()
+    layout = ColumnLayout.from_terminal()
 
     # Too narrow for min_width, should fall back to 1 column at min_width
     assert layout.n_columns == 1
-    assert layout.panel_width == 39
+    assert layout.panel_format.panel_width == 39
 
 
-def test_stats_layout_from_terminal_respects_max_width(monkeypatch):
+def test_column_layout_from_terminal_respects_max_width(monkeypatch):
     """Test that panel width is capped at max_width."""
     class FakeTerminalSize:
         def __init__(self, columns, lines):
@@ -296,17 +298,17 @@ def test_stats_layout_from_terminal_respects_max_width(monkeypatch):
     import shutil
     monkeypatch.setattr(shutil, "get_terminal_size", fake_get_terminal_size)
 
-    layout = StatsLayout.from_terminal(max_width=60)
+    layout = ColumnLayout.from_terminal(max_width=60)
 
     # Should fit 5 columns at min_width 39
     # 39 * 5 + 4 (spacing) = 199
     assert layout.n_columns == 5
     # Available width: 200 - 4 (spacing) = 196 / 5 = 39.2
     # Should be capped at max_width, but also can't exceed calculated width
-    assert layout.panel_width <= 60
+    assert layout.panel_format.panel_width <= 60
 
 
-def test_stats_layout_from_terminal_custom_min_width(monkeypatch):
+def test_column_layout_from_terminal_custom_min_width(monkeypatch):
     """Test from_terminal with custom min_width."""
     class FakeTerminalSize:
         def __init__(self, columns, lines):
@@ -319,15 +321,15 @@ def test_stats_layout_from_terminal_custom_min_width(monkeypatch):
     import shutil
     monkeypatch.setattr(shutil, "get_terminal_size", fake_get_terminal_size)
 
-    layout = StatsLayout.from_terminal(min_width=50)
+    layout = ColumnLayout.from_terminal(min_width=50)
 
     # 100 cols with min_width 50: should fit 1 column
     # 50 * 2 + 1 = 101 > 100, so only 1 column fits
     assert layout.n_columns == 1
-    assert layout.panel_width >= 50
+    assert layout.panel_format.panel_width >= 50
 
 
-def test_stats_layout_from_terminal_respects_max_columns(monkeypatch):
+def test_column_layout_from_terminal_respects_max_columns(monkeypatch):
     """Test that n_columns is capped at max_columns."""
     class FakeTerminalSize:
         def __init__(self, columns, lines):
@@ -340,17 +342,83 @@ def test_stats_layout_from_terminal_respects_max_columns(monkeypatch):
     import shutil
     monkeypatch.setattr(shutil, "get_terminal_size", fake_get_terminal_size)
 
-    layout = StatsLayout.from_terminal(max_columns=3)
+    layout = ColumnLayout.from_terminal(max_columns=3)
 
     # Even though 300 cols could fit many columns, should be capped at 3
     assert layout.n_columns <= 3
 
 
-def test_stats_layout_from_terminal_uses_fallback(monkeypatch):
+def test_column_layout_from_terminal_uses_fallback(monkeypatch):
     """Test that from_terminal uses fallback when terminal size unavailable."""
     # shutil.get_terminal_size returns fallback when running without a terminal
-    layout = StatsLayout.from_terminal()
+    layout = ColumnLayout.from_terminal()
 
     # Should successfully create a layout (using 80x24 fallback)
     assert layout.n_columns >= 1
-    assert layout.panel_width >= 39
+    assert layout.panel_format.panel_width >= 39
+
+
+def test_print_stats_runs_without_error(monkeypatch, tmp_path):
+    """Test that print_stats executes without error."""
+    from pathlib import Path
+
+    from mf.utils.file import FileResult, FileResults
+
+    # Create test files with resolution info in filenames for parse_resolutions
+    files = []
+    test_files = [
+        ("movie.1080p.mp4", 10000),
+        ("show.720p.mkv", 5000),
+        ("video.4k.mp4", 20000),
+    ]
+    for filename, size in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"0" * size)
+        files.append(f)
+
+    # Create FileResults with stat info - FileResult expects Path, not str
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    # Mock dependencies
+    monkeypatch.setattr(
+        "mf.utils.stats.get_config",
+        lambda: {
+            "media_extensions": [".mp4", ".mkv"],
+            "search_paths": [str(tmp_path)],
+        },
+    )
+    monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
+
+    # Should run without error
+    print_stats()
+
+
+def test_print_stats_without_configured_extensions(monkeypatch, tmp_path):
+    """Test print_stats when no media extensions are configured."""
+    from pathlib import Path
+
+    from mf.utils.file import FileResult, FileResults
+
+    # Create test files with resolution info
+    files = []
+    test_files = ["movie.1080p.mp4", "show.720p.mkv", "video.4k.mp4"]
+    for filename in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"0" * 1000)
+        files.append(f)
+
+    # FileResult expects Path, not str
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    # Mock with no media extensions configured
+    monkeypatch.setattr(
+        "mf.utils.stats.get_config",
+        lambda: {
+            "media_extensions": [],
+            "search_paths": [str(tmp_path)],
+        },
+    )
+    monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
+
+    # Should run without error (won't create media_files histograms)
+    print_stats()

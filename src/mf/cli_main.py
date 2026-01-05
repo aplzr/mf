@@ -43,27 +43,19 @@ Examples:
 
 from __future__ import annotations
 
-from typing import cast
-
 import typer
 
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
-from .utils.cache import load_library
 from .utils.config import get_config
-from .utils.console import console, print_and_raise, print_columns, print_warn
+from .utils.console import console, print_and_raise, print_warn
 from .utils.file import cleanup
 from .utils.misc import open_imdb_entry
 from .utils.play import launch_video_player, resolve_play_target
 from .utils.scan import FindQuery, NewQuery
 from .utils.search import get_result_by_index, print_search_results, save_search_results
-from .utils.stats import (
-    StatsLayout,
-    make_extension_histogram,
-    make_filesize_histogram,
-    make_resolution_histogram,
-)
+from .utils.stats import print_stats
 from .version import __version__, check_version
 
 app_mf = typer.Typer(help="Media file finder and player")
@@ -179,35 +171,12 @@ def cleanup_mf():
 
 @app_mf.command()
 def stats():
-    """Show library statistics.
+    """Print library statistics.
 
     Loads library metadata from cache if caching is activated, otherwise performs a
     fresh filesystem scan to compute library statistics.
     """
-    cfg = get_config()
-    configured_extensions = cast(list[str], cfg["media_extensions"])
-    results = load_library()
-    layout = StatsLayout.from_terminal()
-    panels = []
-
-    if configured_extensions:
-        results_filtered = results.copy()
-        results_filtered.filter_by_extension(configured_extensions)
-
-    # Create statistics
-    panels.append(make_extension_histogram(results, type="all_files", layout=layout))
-    panels.append(make_resolution_histogram(results, layout))
-
-    if configured_extensions:
-        panels.append(
-            make_extension_histogram(
-                results_filtered, type="media_files", layout=layout
-            )
-        )
-        panels.append(make_filesize_histogram(results_filtered, layout))
-
-    # Render statistics in a multi-column layout
-    print_columns(panels, n_columns=layout.n_columns, padding=layout.padding)
+    print_stats()
 
 
 @app_mf.callback(invoke_without_command=True)

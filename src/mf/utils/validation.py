@@ -10,15 +10,18 @@ Validation Strategy:
 
 from __future__ import annotations
 
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
-from .config import get_config
 from .console import print_and_raise, print_warn
 
 
-def validate_search_paths() -> list[Path]:
+def validate_search_paths(search_paths: list[str]) -> list[Path]:
     """Return existing configured search paths.
+
+    Args:
+        search_paths (list[str]): Search path strings to validate.
 
     Raises:
         typer.Exit: If no valid search paths are configured.
@@ -26,10 +29,9 @@ def validate_search_paths() -> list[Path]:
     Returns:
         list[Path]: List of validated existing search paths.
     """
-    search_paths = get_config()["search_paths"]
     validated: list[Path] = []
 
-    for search_path in search_paths:  # type: ignore [union-attr]
+    for search_path in search_paths:
         p = Path(search_path)
 
         if not p.exists():
@@ -44,6 +46,30 @@ def validate_search_paths() -> list[Path]:
         )
 
     return validated
+
+
+def validate_search_paths_overlap(path_strings: list[str]) -> None:
+    """Check if search paths are overlapping.
+
+    Search paths are scanned recursively, so overlapping paths constitute a
+    misconfiguration.
+
+    Args:
+        path_strings (list[str]): List of search paths.
+
+    Raises:
+        ValueError: Search paths overlap.
+
+    Example:
+        >>> validate_search_paths_overlap(["/media", "/media/videos"])
+        ValueError: Search paths are scanned recursively, so overlapping paths...
+    """
+    for path1, path2 in combinations(path_strings, 2):
+        if Path(path1).is_relative_to(path2) or Path(path2).is_relative_to(path1):
+            print_and_raise(
+                "Search paths are scanned recursively, "
+                f"so overlapping paths ({path1} and {path2}) are not allowed."
+            )
 
 
 def validate_search_cache(cache_data: dict[str, Any]) -> dict[str, Any]:

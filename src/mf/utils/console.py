@@ -1,22 +1,43 @@
-"""Console output utilities for user-facing messages.
+"""Console output utilities for user-facing messages and layouts.
 
 Provides consistent, styled output for the CLI using Rich formatting.
-All messages use status symbols (✓, ⚠, ❌, ℹ) and semantic colors.
+Includes message printing functions with semantic colors and a flexible
+multi-column layout system for Rich Panel objects.
 
-Functions:
-    print_ok: Success/confirmation messages (green)
-    print_warn: Warning messages (yellow)
-    print_info: Informational messages (cyan)
-    print_and_raise: Error messages with exit (red, never returns)
+Message Functions:
+    print_ok: Success/confirmation messages (green with ✓)
+    print_warn: Warning messages (yellow with ⚠)
+    print_info: Informational messages (cyan with ℹ)
+    print_and_raise: Error messages that exit (red with ❌)
 
 Console Instance:
-    Shared Rich console instance to avoid re-initialization overhead.
-    Used throughout the application for consistent styling.
+    Shared Rich console instance used throughout the application
+    for consistent styling and output.
+
+Layout System:
+    PanelFormat: Immutable configuration for panel appearance (width, padding,
+        alignment). Created automatically by ColumnLayout.from_terminal() to ensure
+        consistent formatting across all panels in a layout.
+
+    ColumnLayout: Builder for multi-column panel layouts. Automatically calculates
+        optimal column count based on terminal width, accumulates panels via
+        add_panel(), and renders them in a responsive grid via print().
+
+    Usage Pattern:
+        1. Create layout from terminal dimensions
+        2. Extract panel format for histogram creation
+        3. Add panels to layout
+        4. Print all panels in multi-column grid
+
+    The layout system automatically:
+        - Detects terminal width and calculates optimal column count
+        - Enforces minimum/maximum panel widths for readability
+        - Distributes panels across columns (row-first)
+        - Handles responsive layout with configurable spacing
 
 Error Handling Strategy:
     Utilities should catch exceptions and use print_and_raise() to convert
-    them to user-friendly messages. This ensures users see helpful error
-    messages instead of Python tracebacks.
+    them to user-friendly messages instead of showing Python tracebacks.
 
     Pattern:
         try:
@@ -24,31 +45,45 @@ Error Handling Strategy:
         except SpecificError as e:
             print_and_raise("User-friendly message", raise_from=e)
 
-    This:
-    1. Shows friendly message to user (no traceback)
-    2. Preserves exception chain for debugging
-    3. Exits cleanly with code 1
-    4. Provides consistent error formatting
+    Benefits:
+        - Shows friendly message to user (no traceback)
+        - Preserves exception chain for debugging
+        - Exits cleanly with code 1
+        - Provides consistent error formatting
 
 Examples:
-    >>> print_ok("Configuration saved successfully")
-    ✓ Configuration saved successfully
+    Message printing:
+        >>> print_ok("Configuration saved successfully")
+        ✓ Configuration saved successfully
 
-    >>> print_warn("Cache is outdated, rebuilding...")
-    ⚠ Cache is outdated, rebuilding...
+        >>> print_warn("Cache is outdated, rebuilding...")
+        ⚠ Cache is outdated, rebuilding...
 
-    >>> print_and_raise("File not found", raise_from=FileNotFoundError())
-    ❌ File not found
-    # Exits with code 1
+        >>> print_and_raise("File not found", raise_from=FileNotFoundError())
+        ❌ File not found
+        # Exits with code 1
+
+    Multi-column panel layout:
+        >>> from rich.panel import Panel
+        >>> layout = ColumnLayout.from_terminal()
+        >>> format = layout.panel_format
+        >>>
+        >>> layout.add_panel(Panel("Content 1", title="Panel 1"))
+        >>> layout.add_panel(Panel("Content 2", title="Panel 2"))
+        >>> layout.add_panel(Panel("Content 3", title="Panel 3"))
+        >>> layout.print()  # Renders panels in responsive multi-column grid
 """
 
 from __future__ import annotations
 
-from typing import NoReturn
+import shutil
+from dataclasses import dataclass, field
+from typing import Literal, NoReturn
 
 import typer
 from rich.columns import Columns
-from rich.console import Console, Group, RenderableType
+from rich.console import Console, Group
+from rich.panel import Panel
 
 from ..constants import STATUS_SYMBOLS
 
@@ -59,6 +94,8 @@ __all__ = [
     "print_ok",
     "print_warn",
 ]
+
+COLUMNLAYOUT_MAX_COLUMNS = 5
 
 # Shared console instance for the project
 console = Console()
@@ -104,22 +141,144 @@ def print_info(msg: str):
     console.print(f"{STATUS_SYMBOLS['info']}  {msg}", style="bright_cyan")
 
 
-def print_columns(
-    renderables: list[RenderableType], n_columns: int, padding: tuple[int, int]
-):
-    """Print a collection of rich renderables in a multi-column layout.
+@dataclass(frozen=True)
+class PanelFormat:
+    """Immutable configuration for Rich Panel formatting.
 
-    Renderables are distributed alternatingly between columns, i.e. row-first.
+    Defines the visual appearance of panels including width, internal padding,
+    and title alignment. Typically created by ColumnLayout.from_terminal() to
+    ensure consistent formatting across multiple panels.
 
-    Args:
-        renderables (list[RenderableType]): List of rich renderables to print.
-        n_columns (int): Number of columns.
-        padding (tuple[int, int]): (vertical, horizontal) padding between columns.
+    Attributes:
+        panel_width: Width of panel content area in characters.
+        padding: (vertical, horizontal) internal padding within panels.
+        title_align: Alignment of panel titles.
     """
-    columns: list[list[RenderableType]] = [[] for _ in range(n_columns)]
 
-    for i, renderable in enumerate(renderables):
-        columns[i % n_columns].append(renderable)
+    panel_width: int
+    padding: tuple[int, int] = (1, 1)
+    title_align: Literal["left", "center", "right"] = "left"
 
-    column_groups = [Group(*column) for column in columns]
-    console.print(Columns(column_groups, padding=padding))
+
+@dataclass
+class ColumnLayout:
+    """Mutable builder for multi-column panel layouts.
+
+    Accumulates Rich Panel objects and renders them in a responsive multi-column
+    grid. The layout automatically distributes panels across columns (row-first)
+    and adapts to terminal width constraints.
+
+    Usage:
+        Create layout from terminal dimensions, add panels, then print:
+
+        >>> layout = ColumnLayout.from_terminal()
+        >>> layout.add_panel(make_histogram(bins, "Title", layout.format))
+        >>> layout.add_panel(Panel("More content"))
+        >>> layout.print()
+
+    Attributes:
+        n_columns: Number of columns to render panels in.
+        panel_format: Immutable PanelFormat configuration for panel appearance.
+        terminal_width: Detected terminal width in characters, or None.
+        panels: Read-only list of accumulated panels.
+    """
+
+    n_columns: int
+    panel_format: PanelFormat
+    terminal_width: int | None = None
+    _panels: list[Panel] = field(default_factory=list, repr=False)
+
+    @property
+    def panels(self):  # noqa: D102
+        return self._panels
+
+    @staticmethod
+    def from_terminal(
+        max_columns: int = COLUMNLAYOUT_MAX_COLUMNS,
+        min_width: int = 39,
+        max_width: int = 80,
+        padding: tuple[int, int] = (1, 1),
+        title_align: Literal["left", "center", "right"] = "left",
+    ) -> ColumnLayout:
+        """Create layout optimized for current terminal width.
+
+        Determines optimal column count and panel width to maximize terminal space while
+        respecting min/max width constraints. Prioritizes more columns over wider
+        panels.
+
+        Args:
+            max_columns (int, optional): Maximum panels to display side by side.
+                Defaults to 5.
+            min_width (int, optional): Minimum panel width in characters. Defaults to
+                39.
+            max_width (int, optional): Maximum panel width in characters. Defaults to
+                80.
+            padding (tuple[int, int], optional): (vertical, horizontal) padding inside
+                panels and between panels.
+                Defaults to (1, 1).
+            title_align (Literal["left", "center", "right"], optional): Title alignment
+                of panels formatted by the layout. Defaults to "left".
+
+        Returns:
+            ColumnLayout: Responsive layout for current terminal dimensions.
+
+        Example:
+            >>> layout = ColumnLayout.from_terminal(max_columns=3, min_width=50)
+        """
+        fallback_cols = 80
+        fallback_rows = 24
+        terminal_width = shutil.get_terminal_size(
+            fallback=(fallback_cols, fallback_rows)
+        ).columns
+
+        # Calculate columns that fit
+        for n_columns in range(max_columns, 0, -1):
+            needed = min_width * n_columns + padding[1] * (n_columns - 1)
+
+            if needed <= terminal_width:
+                available = terminal_width - padding[1] * (n_columns - 1)
+                width = available // n_columns
+                panel_width = min(width, max_width)
+
+                return ColumnLayout(
+                    n_columns=n_columns,
+                    panel_format=PanelFormat(
+                        panel_width=panel_width,
+                        padding=padding,
+                        title_align=title_align,
+                    ),
+                    terminal_width=terminal_width,
+                )
+
+        # Fallback
+        return ColumnLayout(
+            n_columns=1,
+            panel_format=PanelFormat(
+                panel_width=min_width,
+                padding=padding,
+                title_align=title_align,
+            ),
+            terminal_width=terminal_width,
+        )
+
+    def add_panel(self, panel: Panel | list[Panel]):
+        """Add panel(s) to the layout.
+
+        Args:
+            panel (Panel | list[Panel]): Panel(s) to add.
+        """
+        if isinstance(panel, Panel):
+            self._panels.append(panel)
+            return
+
+        self._panels.extend(panel)
+
+    def print(self):
+        """Print layout."""
+        columns: list[list[Panel]] = [[] for _ in range(self.n_columns)]
+
+        for i, panel in enumerate(self.panels):
+            columns[i % self.n_columns].append(panel)
+
+        column_groups = [Group(*column) for column in columns]
+        console.print(Columns(column_groups, padding=self.panel_format.padding))

@@ -4,7 +4,11 @@ from pathlib import Path
 import pytest
 import typer
 
-from mf.utils.validation import validate_search_cache, validate_search_paths
+from mf.utils.validation import (
+    validate_search_cache,
+    validate_search_paths,
+    validate_search_paths_overlap,
+)
 
 
 def test_validate_search_cache_valid():
@@ -90,12 +94,9 @@ def test_validate_search_paths_all_exist(monkeypatch, tmp_path: Path):
     dir2 = tmp_path / "media2"
     dir1.mkdir()
     dir2.mkdir()
+    path_strings = [str(dir1), str(dir2)]
 
-    # Mock config to return these paths
-    mock_config = {"search_paths": [str(dir1), str(dir2)]}
-    monkeypatch.setattr("mf.utils.validation.get_config", lambda: mock_config)
-
-    result = validate_search_paths()
+    result = validate_search_paths(path_strings)
     assert len(result) == 2
     assert dir1 in result
     assert dir2 in result
@@ -107,12 +108,9 @@ def test_validate_search_paths_some_exist(monkeypatch, tmp_path: Path):
     existing_dir = tmp_path / "media1"
     existing_dir.mkdir()
     nonexistent_dir = tmp_path / "media2_does_not_exist"
+    path_strings = [str(existing_dir), str(nonexistent_dir)]
 
-    # Mock config to return both paths
-    mock_config = {"search_paths": [str(existing_dir), str(nonexistent_dir)]}
-    monkeypatch.setattr("mf.utils.validation.get_config", lambda: mock_config)
-
-    result = validate_search_paths()
+    result = validate_search_paths(path_strings)
     assert len(result) == 1
     assert existing_dir in result
     assert Path(nonexistent_dir) not in result
@@ -123,18 +121,79 @@ def test_validate_search_paths_none_exist(monkeypatch, tmp_path: Path):
     # Use paths that don't exist
     nonexistent1 = tmp_path / "fake1"
     nonexistent2 = tmp_path / "fake2"
-
-    mock_config = {"search_paths": [str(nonexistent1), str(nonexistent2)]}
-    monkeypatch.setattr("mf.utils.validation.get_config", lambda: mock_config)
+    path_strings = [str(nonexistent1), str(nonexistent2)]
 
     with pytest.raises(typer.Exit):
-        validate_search_paths()
+        validate_search_paths(path_strings)
 
 
 def test_validate_search_paths_empty_list(monkeypatch):
     """Test validation fails when search paths list is empty."""
-    mock_config = {"search_paths": []}
-    monkeypatch.setattr("mf.utils.validation.get_config", lambda: mock_config)
-
     with pytest.raises(typer.Exit):
-        validate_search_paths()
+        validate_search_paths([])
+
+
+# Search path overlap validation tests
+
+
+def test_validate_search_paths_overlap_no_overlap():
+    """Test validation passes when paths don't overlap."""
+    paths = ["/media/videos", "/home/user/downloads", "/mnt/external"]
+    # Should not raise
+    validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_parent_child():
+    """Test validation fails when one path is parent of another."""
+    paths = ["/media", "/media/videos"]
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_child_parent_order():
+    """Test validation fails regardless of path order."""
+    paths = ["/media/videos", "/media"]  # Child before parent
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_multiple_pairs():
+    """Test validation catches first overlapping pair in multiple paths."""
+    paths = ["/media", "/home/user", "/media/videos", "/mnt/external"]
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_single_path():
+    """Test validation passes with single path."""
+    paths = ["/media/videos"]
+    # Should not raise
+    validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_empty_list():
+    """Test validation passes with empty list."""
+    paths = []
+    # Should not raise
+    validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_deeply_nested():
+    """Test validation catches deeply nested overlaps."""
+    paths = ["/media/videos/movies/hd", "/media/videos"]
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_windows_paths():
+    """Test validation works with Windows-style paths."""
+    paths = ["C:/Media", "C:/Media/Videos"]
+    with pytest.raises(typer.Exit):
+        validate_search_paths_overlap(paths)
+
+
+def test_validate_search_paths_overlap_similar_names_no_overlap():
+    """Test paths with similar names but no overlap pass validation."""
+    paths = ["/media/videos", "/media/videos-archive", "/media/audio"]
+    # These don't overlap - just similar names
+    validate_search_paths_overlap(paths)
