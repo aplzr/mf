@@ -511,3 +511,11 @@ def print_stats():
 
     # Render statistics in a multi-column layout
     print_columns(panels, n_columns=layout.n_columns, padding=layout.padding)
+
+
+def print_summary():
+    # For stats over search paths, we need to load the library, then split it into
+    # search path groups by checking result.path.is_relative_to(search_path). This is
+    # ok to do because search paths are symlink-resolved at validation time. Saves
+    # having to add search paths to FileResult and should not be too slow.
+    pass
