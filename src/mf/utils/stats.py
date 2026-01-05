@@ -215,7 +215,7 @@ def make_extension_histogram(
             format=format,
             sort=True,
             sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
-            top_n=20,
+            top_n=10,
         )
     else:  # media_files
         return make_histogram(
