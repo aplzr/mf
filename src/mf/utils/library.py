@@ -7,6 +7,7 @@ from .config import get_config
 from .file import FileResults
 
 
+# TODO: make progress bar optional
 def load_library() -> FileResults:
     """Loads the full library from cache if caching is activated, does a fresh
     filesystem scan with stat caching otherwise.
@@ -36,7 +37,7 @@ def load_library() -> FileResults:
 
 def split_by_search_path(
     file_results: FileResults, search_paths: list[Path]
-) -> dict[Path, FileResults]:
+) -> dict[str, FileResults]:
     """Split file_results by corresponding search paths.
 
     Args:
@@ -44,7 +45,7 @@ def split_by_search_path(
         search_paths (list[Path]): Search paths to split by.
 
     Returns:
-        dict[Path, FileResults]: Files split by search path.
+        dict[str, FileResults]: Files split by search path.
 
     Note:
         Search paths are symlink-resolved when they're set, and the library is built by
@@ -53,12 +54,14 @@ def split_by_search_path(
         path will work reliably. This is not necessarily true for file_results built in
         other ways.
     """
-    files_by_search_path = {search_path: FileResults() for search_path in search_paths}
+    files_by_search_path = {
+        str(search_path): FileResults() for search_path in search_paths
+    }
 
     for file_result in file_results:
         for search_path in search_paths:
             if file_result.get_path().is_relative_to(search_path):
-                files_by_search_path[search_path].append(file_result)
+                files_by_search_path[str(search_path)].append(file_result)
                 break
 
     return files_by_search_path

@@ -218,12 +218,12 @@ def test_split_by_search_path_basic(tmp_path):
     split = split_by_search_path(results, [path1, path2])
 
     # Verify split
-    assert len(split[path1]) == 2
-    assert len(split[path2]) == 2
-    assert file1 in [r.get_path() for r in split[path1]]
-    assert file2 in [r.get_path() for r in split[path1]]
-    assert file3 in [r.get_path() for r in split[path2]]
-    assert file4 in [r.get_path() for r in split[path2]]
+    assert len(split[str(path1)]) == 2
+    assert len(split[str(path2)]) == 2
+    assert file1 in [r.get_path() for r in split[str(path1)]]
+    assert file2 in [r.get_path() for r in split[str(path1)]]
+    assert file3 in [r.get_path() for r in split[str(path2)]]
+    assert file4 in [r.get_path() for r in split[str(path2)]]
 
 
 def test_split_by_search_path_empty_results(tmp_path):
@@ -234,7 +234,7 @@ def test_split_by_search_path_empty_results(tmp_path):
     results = FileResults()
     split = split_by_search_path(results, [path1])
 
-    assert len(split[path1]) == 0
+    assert len(split[str(path1)]) == 0
 
 
 def test_split_by_search_path_no_matches(tmp_path):
@@ -252,7 +252,7 @@ def test_split_by_search_path_no_matches(tmp_path):
     split = split_by_search_path(results, [path1])
 
     # File doesn't match any search path, so it shouldn't appear
-    assert len(split[path1]) == 0
+    assert len(split[str(path1)]) == 0
 
 
 def test_split_by_search_path_nested_paths(tmp_path):
@@ -274,7 +274,7 @@ def test_split_by_search_path_nested_paths(tmp_path):
     results = FileResults.from_paths([str(file1), str(file2)])
     split = split_by_search_path(results, [path1, path2])
 
-    assert len(split[path1]) == 1
-    assert len(split[path2]) == 1
-    assert file1 in [r.get_path() for r in split[path1]]
-    assert file2 in [r.get_path() for r in split[path2]]
+    assert len(split[str(path1)]) == 1
+    assert len(split[str(path2)]) == 1
+    assert file1 in [r.get_path() for r in split[str(path1)]]
+    assert file2 in [r.get_path() for r in split[str(path2)]]

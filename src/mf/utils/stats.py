@@ -78,7 +78,7 @@ from datetime import datetime
 from os import stat_result
 from pathlib import Path
 from statistics import mean
-from typing import Any, Literal, TypeAlias, cast
+from typing import Any, Literal, TypeAlias
 
 from rich import box
 from rich.panel import Panel
@@ -441,20 +441,23 @@ def get_log_histogram(
     return bin_centers, [len(bin) for bin in bins]
 
 
-def print_stats():
-    """Print library statistics.
+def _print_stats(
+    results: FileResults,
+    search_paths: list[Path],
+    media_extensions: list[str] | None = None,
+):
+    """Print results statistics.
 
-    Loads library metadata from cache if caching is activated, otherwise performs a
-    fresh filesystem scan to compute library statistics.
+    Args:
+        results (FileResults): Results to summarize.
+        search_paths (list[Path]): Base paths by which to split results into subsets.
+        media_extensions (list[str] | None, optional): If given, additional statistics
+            of media files only are displayed.
     """
-    cfg = get_config()
-    configured_extensions = cast(list[str], cfg["media_extensions"])
-    results = load_library()
     layout = ColumnLayout.from_terminal()
 
-    if configured_extensions:
-        results_filtered = results.copy()
-        results_filtered.filter_by_extension(configured_extensions)
+    if media_extensions:
+        results_media = results.filtered_by_extension(media_extensions)
 
     # Create statistics
     layout.add_panel(
@@ -462,36 +465,51 @@ def print_stats():
     )
     layout.add_panel(make_resolution_histogram(results, format=layout.panel_format))
 
-    if configured_extensions:
+    if media_extensions:
         layout.add_panel(
             make_extension_histogram(
-                results_filtered, type="media_files", format=layout.panel_format
+                results_media, type="media_files", format=layout.panel_format
             )
         )
         layout.add_panel(
-            make_filesize_histogram(results_filtered, format=layout.panel_format)
+            make_filesize_histogram(results_media, format=layout.panel_format)
         )
         layout.add_panel(
             make_file_age_histogram(
-                results_filtered, format=layout.panel_format, title="Media file age"
+                results_media, format=layout.panel_format, title="Media file age"
             )
         )
     else:
         layout.add_panel(make_file_age_histogram(results, format=layout.panel_format))
 
-    # Render statistics in a multi-column layout
-    print_summary()
+    # Render summary statistics table followed by more in-depth statistics in a
+    # multi-column layout
+    print_summary(results, search_paths, media_extensions)
     layout.print()
 
 
-def print_summary():
-    """Print summary statistics of individual search paths and the full library."""
+def print_stats():
+    """Print library statistics."""
     cfg = get_config()
-    library = load_library()
     search_paths = [Path(path_str) for path_str in cfg["search_paths"]]
-    media_extensions = cast(list[str], cfg["media_extensions"])
-    subsets = split_by_search_path(library, search_paths)
-    subsets["Full library"] = library  # NOTE: Other keys are paths, not strings
+    media_extensions = cfg["media_extensions"]
+    library = load_library()
+    _print_stats(library, search_paths, media_extensions)
+
+
+def print_summary(
+    results: FileResults, search_paths: list[Path], media_extensions: list[str] | None
+):
+    """Print summary statistics table of individual search paths and the full results.
+
+    Args:
+        results (FileResults): Results to summarize.
+        search_paths (list[Path]): Base paths by which to split results into subsets.
+        media_extensions (list[str] | None): Media file extensions by which to split
+            into "all files" and "media files".
+    """
+    subsets = split_by_search_path(results, search_paths)
+    subsets["Full library"] = results
 
     table = Table(box=box.ROUNDED, padding=(0, 1), header_style="bright_cyan")
     table.add_column("Subset", justify="left", overflow="ellipsis")
