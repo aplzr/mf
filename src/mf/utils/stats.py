@@ -78,7 +78,7 @@ from datetime import datetime
 from os import stat_result
 from pathlib import Path
 from statistics import mean
-from typing import Any, Literal, TypeAlias, cast
+from typing import Any, Literal, TypeAlias
 
 from rich import box
 from rich.panel import Panel
@@ -441,11 +441,16 @@ def get_log_histogram(
     return bin_centers, [len(bin) for bin in bins]
 
 
-def _print_stats(results: FileResults, media_extensions: list[str] | None = None):
+def _print_stats(
+    results: FileResults,
+    search_paths: list[Path],
+    media_extensions: list[str] | None = None,
+):
     """Print results statistics.
 
     Args:
         results (FileResults): Results to summarize.
+        search_paths (list[Path]): Base paths by which to split results into subsets.
         media_extensions (list[str] | None, optional): If given, additional statistics
             of media files only are displayed.
     """
@@ -479,26 +484,30 @@ def _print_stats(results: FileResults, media_extensions: list[str] | None = None
 
     # Render summary statistics table followed by more in-depth statistics in a
     # multi-column layout
-    print_summary(results)
+    print_summary(results, search_paths, media_extensions)
     layout.print()
 
 
 def print_stats():
     """Print library statistics."""
-    media_extensions = get_config()["media_extensions"]
+    cfg = get_config()
+    search_paths = [Path(path_str) for path_str in cfg["search_paths"]]
+    media_extensions = cfg["media_extensions"]
     library = load_library()
-    _print_stats(library, media_extensions)
+    _print_stats(library, search_paths, media_extensions)
 
 
-def print_summary(results: FileResults):
+def print_summary(
+    results: FileResults, search_paths: list[Path], media_extensions: list[str] | None
+):
     """Print summary statistics table of individual search paths and the full results.
 
     Args:
         results (FileResults): Results to summarize.
+        search_paths (list[Path]): Base paths by which to split results into subsets.
+        media_extensions (list[str] | None): Media file extensions by which to split
+            into "all files" and "media files".
     """
-    cfg = get_config()
-    search_paths = [Path(path_str) for path_str in cfg["search_paths"]]
-    media_extensions = cast(list[str], cfg["media_extensions"])
     subsets = split_by_search_path(results, search_paths)
     subsets["Full library"] = results
 
