@@ -209,20 +209,20 @@ class Configuration:
         setattr(self, key, value)
 
 
-def add_default_setting(cfg: TOMLDocument, key: str):
+def add_default_setting(raw_cfg: TOMLDocument, key: str):
     """Add setting with default value to the configuration (in-place).
 
     Args:
-        cfg (TOMLDocument): mediafinder configuration.
+        raw_cfg (TOMLDocument): mediafinder configuration.
         key (str): Setting name as defined in the registry.
     """
     spec = SETTINGS[key]
 
     for line in wrap(spec.help, width=80):
-        cfg.add(comment(line))
+        raw_cfg.add(comment(line))
 
-    cfg.add(key, spec.default)
-    cfg.add(nl())
+    raw_cfg.add(key, spec.default)
+    raw_cfg.add(nl())
 
 
 def get_default_cfg() -> TOMLDocument:
@@ -241,14 +241,14 @@ def get_default_cfg() -> TOMLDocument:
     return default_cfg
 
 
-def write_config(cfg: TOMLDocument):
+def write_config(raw_cfg: TOMLDocument):
     """Persist configuration to disk.
 
     Args:
-        cfg (TOMLDocument): Configuration object to write.
+        raw_cfg (TOMLDocument): Configuration object to write.
     """
     with open_utf8(get_config_file(), "w") as f:
-        tomlkit.dump(cfg, f)
+        tomlkit.dump(raw_cfg, f)
 
 
 def write_default_config() -> TOMLDocument:
@@ -264,12 +264,12 @@ def write_default_config() -> TOMLDocument:
     return default_cfg
 
 
-def migrate_config(cfg: TOMLDocument) -> bool:
+def migrate_config(raw_cfg: TOMLDocument) -> bool:
     """Migrate configuration by updating settings and adding missing settings from the
     registry (in-place).
 
     Args:
-        cfg (TOMLDocument): Configuration to migrate.
+        raw_cfg (TOMLDocument): Configuration to migrate.
 
     Returns:
         bool: True if configuration was modified in-place, false otherwise.
@@ -281,8 +281,8 @@ def migrate_config(cfg: TOMLDocument) -> bool:
     # format if necessary.
     key_interval = "library_cache_interval"
 
-    if key_interval in cfg:
-        interval_value = cfg[key_interval]
+    if key_interval in raw_cfg:
+        interval_value = raw_cfg[key_interval]
 
         if isinstance(interval_value, str):
             with suppress(AttributeError, ValueError):
@@ -291,14 +291,14 @@ def migrate_config(cfg: TOMLDocument) -> bool:
 
                 # Update with old value converted to new format (this will not update
                 # the help text comment)
-                cfg[key_interval] = interval_s
+                raw_cfg[key_interval] = interval_s
 
                 modified = True
 
     # Add missing settings with default values.
-    if missing_settings := set(SETTINGS.keys()) - set(cfg.keys()):
+    if missing_settings := set(SETTINGS.keys()) - set(raw_cfg.keys()):
         for missing_setting in missing_settings:
-            add_default_setting(cfg, missing_setting)
+            add_default_setting(raw_cfg, missing_setting)
 
         modified = True
 

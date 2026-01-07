@@ -275,14 +275,14 @@ def validate_allowed_value(value: Any, spec: SettingSpec) -> None:
 
 
 def _apply_action(
-    cfg: TOMLDocument, key: str, action: Action, values: list[str] | None
+    raw_cfg: TOMLDocument, key: str, action: Action, values: list[str] | None
 ) -> None:
     """Apply action to setting.
 
     Modifies the configuration in-place.
 
     Args:
-        cfg (TOMLDocument): Current configuration to modify.
+        raw_cfg (TOMLDocument): Current configuration to modify.
         key (str): Setting to apply action to.
         action (Action): Action to perform.
         values (list[str] | None): Values to act with.
@@ -306,14 +306,14 @@ def _apply_action(
         new_value = spec.normalize(values[0])
         validate_allowed_value(new_value, spec)
         spec.validate_all(new_value)
-        cfg[key] = new_value
-        spec.after_update(cfg[key])
+        raw_cfg[key] = new_value
+        spec.after_update(raw_cfg[key])
         print_ok(f"Set {key} to '{spec.display(new_value)}'.")
         return
 
     # List setting
     if action == "clear":
-        cfg[key].clear()  # type: ignore [union-attr]
+        raw_cfg[key].clear()  # type: ignore [union-attr]
         print_ok(f"Cleared {key}.")
         return
 
@@ -329,14 +329,14 @@ def _apply_action(
     if action == "set":
         # Validate final state before making changes
         spec.validate_all(normalized_values)
-        cfg[key].clear()  # type: ignore [union-attr]
-        cfg[key].extend(normalized_values)  # type: ignore [union-attr]
+        raw_cfg[key].clear()  # type: ignore [union-attr]
+        raw_cfg[key].extend(normalized_values)  # type: ignore [union-attr]
         print_ok(f"Set {key} to {normalized_values}.")
-        spec.after_update(cfg[key])
+        spec.after_update(raw_cfg[key])
 
     elif action == "add":
         # Build hypothetical final state and validate before making changes
-        final_state = list(cfg[key])  # type: ignore [arg-type]
+        final_state = list(raw_cfg[key])  # type: ignore [arg-type]
         for value in normalized_values:
             if value not in final_state:
                 final_state.append(value)
@@ -344,26 +344,26 @@ def _apply_action(
 
         # Now actually add the values
         for value in normalized_values:
-            if value not in cfg[key]:  # type: ignore [operator]
-                cfg[key].append(value)  # type: ignore [operator, union-attr, call-arg]
+            if value not in raw_cfg[key]:  # type: ignore [operator]
+                raw_cfg[key].append(value)  # type: ignore [operator, union-attr, call-arg]
                 print_ok(f"Added '{value}' to {key}.")
             else:
                 print_warn(f"{key} already contains '{value}', skipping.")
-        spec.after_update(cfg[key])
+        spec.after_update(raw_cfg[key])
 
     elif action == "remove":
         # Build hypothetical final state and validate before making changes
-        final_state = [v for v in cfg[key] if v not in normalized_values]  # type: ignore [union-attr]
+        final_state = [v for v in raw_cfg[key] if v not in normalized_values]  # type: ignore [union-attr]
         spec.validate_all(final_state)
 
         # Now actually remove the values
         for value in normalized_values:
-            if value in cfg[key]:  # type: ignore [operator]
-                cfg[key].remove(value)  # type: ignore [union-attr]
+            if value in raw_cfg[key]:  # type: ignore [operator]
+                raw_cfg[key].remove(value)  # type: ignore [union-attr]
                 print_ok(f"Removed '{value}' from {key}.")
             else:
                 print_warn(f"'{value}' not found in {key}, skipping.")
-        spec.after_update(cfg[key])
+        spec.after_update(raw_cfg[key])
 
 
 def apply_action(key: str, action: Action, values: list[str] | None):
