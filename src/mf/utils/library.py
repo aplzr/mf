@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from .cache import load_library_cache
-from .config import get_config
+from .config import build_config
 from .file import FileResults
 
 
@@ -17,8 +17,7 @@ def load_library() -> FileResults:
     """
     from .scan import FindQuery
 
-    cfg = get_config()
-    cache_library = bool(cfg["cache_library"])
+    cache_library = build_config().cache_library
 
     return (
         load_library_cache()

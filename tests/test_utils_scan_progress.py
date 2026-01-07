@@ -1,21 +1,20 @@
 from pathlib import Path
 
 from mf.utils.scan import scan_search_paths
-
+from types import SimpleNamespace
 
 def test_scan_search_paths_progress_no_estimate(monkeypatch, tmp_path: Path):
     # Ensure progress branch without estimate
     monkeypatch.setattr(
-        "mf.utils.scan.get_config",
-        lambda: {
-            "prefer_fd": False,
-            "cache_stat": False,
-            "cache_library": False,
-            "media_extensions": [],
-            "match_extensions": False,
-            "search_paths": [tmp_path.as_posix()],
-            "parallel_search": True,
-        },
+        "mf.utils.scan.build_config",
+        lambda: SimpleNamespace(
+                    prefer_fd=False,
+                    cache_stat=False,
+                    cache_library=False,
+                    media_extensions=[],
+                    match_extensions=False,
+                    search_paths=[tmp_path.as_posix()],
+                    parallel_search=True)
     )
 
     monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda paths: [tmp_path])

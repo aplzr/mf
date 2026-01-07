@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-
+from types import SimpleNamespace
 from mf.utils.file import FileResult, FileResults
 from mf.utils.scan import (
     FindQuery,
@@ -87,16 +87,14 @@ def test__scan_with_progress_bar_no_estimate(tmp_path: Path):
 def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
     # Configure to not use cache and to match extensions
     monkeypatch.setattr(
-        "mf.utils.scan.get_config",
-        lambda: {
-            "cache_library": False,
-            "prefer_fd": False,
-            "media_extensions": [".mp4", ".mkv"],
-            "match_extensions": True,
-            "search_paths": [tmp_path.as_posix()],
-            "auto_wildcards": True,
-            "parallel_search": True,
-        },
+        "mf.utils.scan.build_config",
+        lambda: SimpleNamespace(cache_library=False,
+                        prefer_fd=False,
+                        media_extensions=[".mp4", ".mkv"],
+                        match_extensions=True,
+                        search_paths=[tmp_path.as_posix()],
+                        auto_wildcards=True,
+                        parallel_search=True)
     )
     # Create files
     (tmp_path / "b.mkv").write_text("x")
