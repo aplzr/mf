@@ -28,7 +28,7 @@ import tomlkit
 import typer
 from rich.syntax import Syntax
 
-from .utils.config import get_config, list_settings
+from .utils.config import get_raw_config, list_settings
 from .utils.console import console, print_and_raise
 from .utils.file import get_config_file
 from .utils.misc import start_editor
@@ -55,7 +55,7 @@ def list_config():
     console.print(f"Configuration file: {get_config_file()}\n", style="dim")
     console.print(
         Syntax(
-            code=tomlkit.dumps(get_config()),
+            code=tomlkit.dumps(get_raw_config()),
             lexer="toml",
             line_numbers=True,
         )
@@ -66,7 +66,7 @@ def list_config():
 def get(key: str):
     """Get a setting."""
     try:
-        setting = get_config()[key]
+        setting = get_raw_config()[key]
     except tomlkit.exceptions.NonExistentKey as e:
         print_and_raise(
             f"Invalid key: '{key}'. Available keys: "

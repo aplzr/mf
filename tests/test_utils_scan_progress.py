@@ -6,7 +6,7 @@ from types import SimpleNamespace
 def test_scan_search_paths_progress_no_estimate(monkeypatch, tmp_path: Path):
     # Ensure progress branch without estimate
     monkeypatch.setattr(
-        "mf.utils.scan.build_config",
+        "mf.utils.scan.Configuration.from_config",
         lambda: SimpleNamespace(
                     prefer_fd=False,
                     cache_stat=False,

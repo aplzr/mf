@@ -3,7 +3,7 @@ import os
 from typer.testing import CliRunner
 
 from mf.cli_config import app_config
-from mf.utils.config import get_config
+from mf.utils.config import get_raw_config
 from mf.utils.file import get_config_file
 
 runner = CliRunner()
@@ -21,7 +21,7 @@ def test_config_set_and_list(tmp_path, monkeypatch):
         app_config, ["set", "search_paths", str(tmp_path / "p1"), str(tmp_path / "p2")]
     )
     assert r.exit_code == 0
-    cfg = get_config()
+    cfg = get_raw_config()
     assert len(cfg["search_paths"]) == 2
     r2 = runner.invoke(app_config, ["list"])  # smoke check output
     assert r2.exit_code == 0
@@ -43,7 +43,7 @@ def test_config_remove_missing(tmp_path, monkeypatch):
 def test_config_clear_media_extensions(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
     runner.invoke(app_config, ["clear", "media_extensions"])  # ensure clears
-    cfg = get_config()
+    cfg = get_raw_config()
     assert cfg["media_extensions"] == []
 
 
@@ -51,7 +51,7 @@ def test_config_set_match_extensions(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
     r = runner.invoke(app_config, ["set", "match_extensions", "false"])  # disable
     assert r.exit_code == 0
-    cfg = get_config()
+    cfg = get_raw_config()
     assert cfg["match_extensions"] is False
 
 

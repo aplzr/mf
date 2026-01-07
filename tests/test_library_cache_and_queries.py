@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from mf.utils.cache import PICKLE_PROTOCOL, load_library_cache
-from mf.utils.config import get_config, write_config
+from mf.utils.config import get_raw_config, write_config
 from mf.utils.file import (
     FileResult,
     FileResults,
@@ -24,7 +24,7 @@ def isolated_media_dir(tmp_path):
     media_dir = tmp_path / "media"
     media_dir.mkdir()
     # Update config to use this search path only
-    cfg = get_config()
+    cfg = get_raw_config()
     cfg["search_paths"] = [media_dir.as_posix()]
     cfg["cache_library"] = True
     cfg["library_cache_interval"] = 600  # non-zero default for most tests
@@ -55,7 +55,7 @@ def test_library_cache_rebuild_on_missing(isolated_media_dir):
 
 def test_library_cache_no_expiry_zero_interval(isolated_media_dir):
     # Set interval to zero so cache never expires.
-    cfg = get_config()
+    cfg = get_raw_config()
     cfg["library_cache_interval"] = "0"
     write_config(cfg)
     create_files(isolated_media_dir, ["c1.mkv"])  # one file
@@ -91,7 +91,7 @@ def test_scan_for_media_files_fd_fallback(monkeypatch, isolated_media_dir):
     import subprocess
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    cfg = get_config()
+    cfg = get_raw_config()
     cfg["prefer_fd"] = True
     write_config(cfg)
     results = scan_search_paths(cache_stat=False, prefer_fd=True)

@@ -9,10 +9,10 @@ from tomlkit import document
 from mf.utils.config import (
     _read_config,
     add_default_setting,
-    build_config,
-    get_config,
+    get_raw_config,
     migrate_config,
     write_config,
+    Configuration
 )
 from mf.utils.file import get_config_file
 from mf.utils.settings import SETTINGS
@@ -211,7 +211,7 @@ def test_read_config_migrates_and_persists(isolated_config):
     mf.utils.config._config = None
 
     # Read config (should migrate)
-    loaded_cfg = get_config()
+    loaded_cfg = get_raw_config()
 
     # Assert all settings present in memory
     for setting in SETTINGS:
@@ -219,7 +219,7 @@ def test_read_config_migrates_and_persists(isolated_config):
 
     # Clear cache and read from disk again
     mf.utils.config._config = None
-    disk_cfg = get_config()
+    disk_cfg = get_raw_config()
 
     # Assert all settings persisted to disk
     for setting in SETTINGS:
@@ -240,7 +240,7 @@ def test_read_config_handles_corrupted_toml(isolated_config, capsys):
     mf.utils.config._config = None
 
     # Read config (should handle corruption)
-    cfg = get_config()
+    cfg = get_raw_config()
 
     # Assert backup file created
     backup_path = config_file.with_suffix(".toml.backup")
@@ -269,7 +269,7 @@ def test_read_config_migration_silent(isolated_config, capsys):
     mf.utils.config._config = None
 
     # Read config (should migrate silently)
-    get_config()
+    get_raw_config()
 
     # Assert no migration messages printed
     captured = capsys.readouterr()
@@ -322,7 +322,7 @@ def test_build_config_after_migration(isolated_config):
     mf.utils.config._config = None
 
     # Build config (should migrate first)
-    config_obj = build_config()
+    config_obj = Configuration.from_config()
 
     # Assert no errors and all attributes present
     for setting in SETTINGS:
@@ -352,7 +352,7 @@ def test_upgrade_scenario(isolated_config):
     mf.utils.config._config = None
 
     # Access config (should auto-upgrade)
-    loaded_cfg = get_config()
+    loaded_cfg = get_raw_config()
 
     # Assert all REGISTRY settings present (old + new)
     for setting in SETTINGS:
@@ -360,7 +360,7 @@ def test_upgrade_scenario(isolated_config):
 
     # Verify file was updated
     mf.utils.config._config = None
-    disk_cfg = get_config()
+    disk_cfg = get_raw_config()
 
     for setting in SETTINGS:
         assert setting in disk_cfg

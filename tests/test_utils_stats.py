@@ -381,7 +381,7 @@ def test_print_stats_runs_without_error(monkeypatch, tmp_path):
 
     # Mock dependencies
     monkeypatch.setattr(
-        "mf.utils.stats.build_config",
+        "mf.utils.stats.Configuration.from_config",
         lambda: SimpleNamespace(
             media_extensions=[".mp4", ".mkv"],
             search_paths=[str(tmp_path)],
@@ -412,7 +412,7 @@ def test_print_stats_without_configured_extensions(monkeypatch, tmp_path):
 
     # Mock with no media extensions configured
     monkeypatch.setattr(
-        "mf.utils.stats.build_config",
+        "mf.utils.stats.Configuration.from_config",
         lambda: SimpleNamespace(
             media_extensions=[],
             search_paths=[str(tmp_path)],

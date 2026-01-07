@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from mf.utils.config import get_config, write_config
+from mf.utils.config import get_raw_config, write_config
 from mf.utils.file import get_config_file
 
 # --- Fixtures for test isolation ---
@@ -32,7 +32,7 @@ def isolated_config(monkeypatch):
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_root))
         monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_root))
     # Force re-load to create default config in isolated dir
-    cfg = get_config()
+    cfg = get_raw_config()
     write_config(cfg)
     # No direct monkeypatch of get_cache_file: environment vars ensure isolation.
     # Tests that need a different cache location can override env vars themselves.
@@ -52,7 +52,7 @@ def isolated_cache(monkeypatch, isolated_config):
 @pytest.fixture
 def fresh_config():
     """Return a mutable copy of the current (isolated) config TOML document."""
-    return get_config()
+    return get_raw_config()
 
 
 @pytest.fixture
