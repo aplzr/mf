@@ -275,10 +275,9 @@ class ColumnLayout:
 
     def print(self):
         """Print layout."""
-        column_groups = self._distribute_panels()
-        console.print(Columns(column_groups, padding=self.panel_format.padding))
+        console.print(self._distribute_panels())
 
-    def _distribute_panels(self) -> list[Group]:
+    def _distribute_panels(self) -> Columns:
         """Distribute panels among columns using a greedy best-fit algorithm.
 
         Panels are sorted by height, then iteratively placed in the column that
@@ -286,8 +285,7 @@ class ColumnLayout:
         of column heights as the outcome.
 
         Returns:
-            list[Group]: n_columns groups of panels, pseudo-evenly distributed by
-                height.
+            Columns: Grouped panels, pseudo-evenly distributed by height.
         """
         if any(panel.height is None for panel in self.panels):
             raise ValueError("Can't distribute panels: some panels have no height set.")
@@ -302,4 +300,7 @@ class ColumnLayout:
             columns[min_idx].append(panel)
             column_heights[min_idx] += panel.height
 
-        return [Group(*column) for column in columns]
+        return Columns(
+            [Group(*column) for column in columns],
+            padding=self.panel_format.padding,
+        )
