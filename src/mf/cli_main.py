@@ -121,8 +121,9 @@ def play(
     ),
 ):
     """Play a media file by its index."""
+    cfg = Configuration.from_config()
     file_to_play = resolve_play_target(target)
-    launch_video_player(file_to_play)
+    launch_video_player(file_to_play, cfg)
 
 
 @app_mf.command()

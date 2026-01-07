@@ -261,13 +261,13 @@ def get_mpv_command() -> ResolvedPlayer | None:
     )
 
 
-def launch_video_player(media: FileResult | FileResults):
+def launch_video_player(media: FileResult | FileResults, cfg: Configuration):
     """Launch video player with selected file(s).
 
     Args:
         media (FileResult | FileResults): File or files to play.
+        cfg (Configuration): mediafinder configuration.
     """
-    cfg = Configuration.from_config()
     resolved_player = resolve_configured_player(cfg)
 
     if not resolved_player:
