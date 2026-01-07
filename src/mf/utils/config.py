@@ -141,7 +141,28 @@ def reload_raw_config() -> TOMLDocument:
 
 
 class Configuration:
-    """Configuration object with settings as attributes."""
+    """Typed configuration object with automatic TOML-to-Python conversion.
+
+    Provides read-only access to configuration settings with proper Python types
+    (Path, timedelta, etc.) converted from raw TOML values. Supports both attribute
+    and dictionary-style access.
+
+    Use this class for reading configuration values in application code. For
+    modifying configuration, use get_raw_config() to get the raw TOMLDocument.
+
+    Examples:
+        >>> config = Configuration.from_config()
+        >>> config.video_player  # Attribute access
+        'vlc'
+        >>> config["search_paths"]  # Dict access
+        [Path('/media/videos'), Path('/media/movies')]
+        >>> config.library_cache_interval
+        timedelta(days=1)
+
+    See Also:
+        get_raw_config(): For raw TOML access when modifying configuration.
+        Configuration.from_default(): Create configuration with default values.
+    """
 
     search_paths: list[Path]
     media_extensions: list[str]
