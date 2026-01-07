@@ -192,8 +192,9 @@ class ColumnLayout:
     def panels(self):  # noqa: D102
         return self._panels
 
-    @staticmethod
+    @classmethod
     def from_terminal(
+        cls,
         max_columns: int = COLUMNLAYOUT_MAX_COLUMNS,
         min_width: int = 39,
         max_width: int = 80,
@@ -240,7 +241,7 @@ class ColumnLayout:
                 width = available // n_columns
                 panel_width = min(width, max_width)
 
-                return ColumnLayout(
+                return cls(
                     n_columns=n_columns,
                     panel_format=PanelFormat(
                         panel_width=panel_width,
@@ -251,7 +252,7 @@ class ColumnLayout:
                 )
 
         # Fallback
-        return ColumnLayout(
+        return cls(
             n_columns=1,
             panel_format=PanelFormat(
                 panel_width=min_width,
