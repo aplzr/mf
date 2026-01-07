@@ -25,12 +25,6 @@ Architecture:
         List settings: Support 'set', 'add', 'remove', 'clear' actions
         Each setting declares which actions it supports in its spec
 
-Design Trade-off:
-    Configuration class uses dynamic attributes (setattr) to maintain single
-    source of truth in SETTINGS registry. This sacrifices static type checking
-    for DRY principle - adding a new setting only requires updating the registry,
-    not parallel class definitions.
-
 Features:
     - Type conversion pipeline (string → TOML → Python type)
     - Custom validation per setting
@@ -84,9 +78,9 @@ from .normalizers import (
 def _rebuild_cache_if_enabled():
     # Helper function with lazy imports to avoid circular import
     from .cache import rebuild_library_cache
-    from .config import get_config
+    from .config import build_config
 
-    if get_config()["cache_library"]:
+    if build_config().cache_library:
         rebuild_library_cache()
 
 
@@ -382,6 +376,6 @@ def apply_action(key: str, action: Action, values: list[str] | None):
     """
     from .config import get_config, write_config
 
-    cfg = get_config()
-    _apply_action(cfg, key, action, values)
-    write_config(cfg)
+    cfg_raw = get_config()
+    _apply_action(cfg_raw, key, action, values)
+    write_config(cfg_raw)

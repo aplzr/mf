@@ -84,7 +84,7 @@ from rich import box
 from rich.panel import Panel
 from rich.table import Table
 
-from .config import get_config
+from .config import build_config
 from .console import ColumnLayout, PanelFormat, console
 from .file import FileResults
 from .library import load_library, split_by_search_path
@@ -490,11 +490,9 @@ def _print_stats(
 
 def print_stats():
     """Print library statistics."""
-    cfg = get_config()
-    search_paths = [Path(path_str) for path_str in cfg["search_paths"]]
-    media_extensions = cfg["media_extensions"]
+    cfg = build_config()
     library = load_library()
-    _print_stats(library, search_paths, media_extensions)
+    _print_stats(library, cfg.search_paths, cfg.media_extensions)
 
 
 def print_summary(

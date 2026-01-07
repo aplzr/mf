@@ -43,9 +43,8 @@ from pathlib import Path
 from random import choice
 from typing import Literal, NamedTuple, TypedDict, cast
 
-from tomlkit import TOMLDocument
-
-from .config import get_config
+from ..constants import STATUS_SYMBOLS
+from .config import Configuration, build_config
 from .console import console, print_and_raise, print_warn
 from .file import FileResult, FileResults
 from .playlist import get_next, save_last_played
@@ -268,7 +267,7 @@ def launch_video_player(media: FileResult | FileResults):
     Args:
         media (FileResult | FileResults): File or files to play.
     """
-    resolved_player = resolve_configured_player(get_config())
+    resolved_player = resolve_configured_player(build_config())
 
     if not resolved_player:
         print_and_raise("No video player could be found. Please install VLC or mpv.")
@@ -300,7 +299,7 @@ def launch_video_player(media: FileResult | FileResults):
         )
         player_args.extend(str(result.file) for result in media)
 
-    if extra_args := build_player_args(PLAYERS[resolved_player.label], get_config()):
+    if extra_args := build_player_args(PLAYERS[resolved_player.label], build_config()):
         player_args.extend(extra_args)
 
     try:
@@ -310,7 +309,10 @@ def launch_video_player(media: FileResult | FileResults):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        console.print(f"[green]✓[/green] {resolved_player.label} launched successfully")
+        console.print(
+            f"[green]{STATUS_SYMBOLS['ok']}[/green]  "
+            f"{resolved_player.label} launched successfully"
+        )
 
     except FileNotFoundError as e:
         print_and_raise(
@@ -374,39 +376,38 @@ class ResolvedPlayer(NamedTuple):
     path: Path
 
 
-def resolve_configured_player(cfg: TOMLDocument) -> ResolvedPlayer | None:
+def resolve_configured_player(cfg: Configuration) -> ResolvedPlayer | None:
     """Resolve the configured video player.
 
     If the 'video_player' setting is set to 'auto' (the default), will try to use VLC
     with automatic fallback to mpv, otherwise use the configured player.
 
     Args:
-        cfg (TOMLDocument): mediafinder configuration.
+        cfg (Configuration): mediafinder configuration.
 
     Returns:
         ResolvedPlayer | None: Resolved video player if present or None if no player can
             be found.
     """
-    player = str(cfg["video_player"])
-
-    if player == "auto":
+    if cfg.video_player == "auto":
         return get_vlc_command() or get_mpv_command()
 
-    if player not in PLAYERS:
+    if cfg.video_player not in PLAYERS:
         print_and_raise(
-            f"Invalid video player selected: {player}. Use 'vlc', 'mpv', or 'auto'."
+            f"Invalid video player selected: {cfg.video_player}. "
+            "Use 'vlc', 'mpv', or 'auto'."
         )
 
-    return PLAYERS[player].get_command()
+    return PLAYERS[cfg.video_player].get_command()
 
 
-def build_player_args(player_spec: PlayerSpec, cfg: TOMLDocument) -> list[str]:
+def build_player_args(player_spec: PlayerSpec, cfg: Configuration) -> list[str]:
     """Build the argument list for a selected video player for the options that are
     configured in mediafinder's configuration.
 
     Args:
         player_spec (PlayerSpec): Selected video player.
-        cfg (TOMLDocument): mediafinder configuration.
+        cfg (Configuration): mediafinder configuration.
 
     Returns:
         list[str]: Command line arguments for the player call.

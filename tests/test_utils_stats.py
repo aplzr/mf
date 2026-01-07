@@ -3,7 +3,7 @@ import os
 
 import pytest
 from rich.panel import Panel
-
+from types import SimpleNamespace
 from mf.utils.console import ColumnLayout, PanelFormat
 from mf.utils.stats import (
     create_log_bins,
@@ -381,11 +381,11 @@ def test_print_stats_runs_without_error(monkeypatch, tmp_path):
 
     # Mock dependencies
     monkeypatch.setattr(
-        "mf.utils.stats.get_config",
-        lambda: {
-            "media_extensions": [".mp4", ".mkv"],
-            "search_paths": [str(tmp_path)],
-        },
+        "mf.utils.stats.build_config",
+        lambda: SimpleNamespace(
+            media_extensions=[".mp4", ".mkv"],
+            search_paths=[str(tmp_path)],
+            )
     )
     monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
 
@@ -412,11 +412,11 @@ def test_print_stats_without_configured_extensions(monkeypatch, tmp_path):
 
     # Mock with no media extensions configured
     monkeypatch.setattr(
-        "mf.utils.stats.get_config",
-        lambda: {
-            "media_extensions": [],
-            "search_paths": [str(tmp_path)],
-        },
+        "mf.utils.stats.build_config",
+        lambda: SimpleNamespace(
+            media_extensions=[],
+            search_paths=[str(tmp_path)],
+            )
     )
     monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
 

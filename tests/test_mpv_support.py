@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-
+from types import SimpleNamespace
 import pytest
 from click.exceptions import Exit as ClickExit
 
@@ -49,7 +49,7 @@ class TestResolveConfiguredPlayer:
             "vlc": MockPlayerSpec()
         })
 
-        cfg = {"video_player": "vlc"}
+        cfg = SimpleNamespace(video_player="vlc")
         result = resolve_configured_player(cfg)
 
         assert result == mock_vlc
@@ -71,7 +71,7 @@ class TestResolveConfiguredPlayer:
             "mpv": MockPlayerSpec()
         })
 
-        cfg = {"video_player": "mpv"}
+        cfg = SimpleNamespace(video_player="mpv")
         result = resolve_configured_player(cfg)
 
         assert result == mock_mpv
@@ -85,7 +85,7 @@ class TestResolveConfiguredPlayer:
         monkeypatch.setattr("mf.utils.play.get_vlc_command", lambda: mock_vlc)
         monkeypatch.setattr("mf.utils.play.get_mpv_command", lambda: mock_mpv)
 
-        cfg = {"video_player": "auto"}
+        cfg = SimpleNamespace(video_player="auto")
         result = resolve_configured_player(cfg)
 
         assert result == mock_vlc
@@ -98,7 +98,7 @@ class TestResolveConfiguredPlayer:
         monkeypatch.setattr("mf.utils.play.get_vlc_command", lambda: None)
         monkeypatch.setattr("mf.utils.play.get_mpv_command", lambda: mock_mpv)
 
-        cfg = {"video_player": "auto"}
+        cfg = SimpleNamespace(video_player="auto")
         result = resolve_configured_player(cfg)
 
         assert result == mock_mpv
@@ -109,14 +109,14 @@ class TestResolveConfiguredPlayer:
         monkeypatch.setattr("mf.utils.play.get_vlc_command", lambda: None)
         monkeypatch.setattr("mf.utils.play.get_mpv_command", lambda: None)
 
-        cfg = {"video_player": "auto"}
+        cfg = SimpleNamespace(video_player="auto")
         result = resolve_configured_player(cfg)
 
         assert result is None
 
     def test_resolve_invalid_player_raises(self, monkeypatch):
         """Test that invalid player name raises an error."""
-        cfg = {"video_player": "invalid_player"}
+        cfg = SimpleNamespace(video_player="invalid_player")
 
         with pytest.raises(ClickExit):
             resolve_configured_player(cfg)
@@ -183,7 +183,7 @@ class TestLaunchVideoPlayerWithMpv:
 
         mock_player = ResolvedPlayer("mpv", Path("mpv"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.get_config", lambda: {"fullscreen_playback": False, "video_player": "mpv"})
+        monkeypatch.setattr("mf.utils.play.build_config", lambda: {"fullscreen_playback": False, "video_player": "mpv"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
@@ -208,7 +208,7 @@ class TestLaunchVideoPlayerWithMpv:
 
         mock_player = ResolvedPlayer("mpv", Path("mpv"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.get_config", lambda: {"fullscreen_playback": True, "video_player": "mpv"})
+        monkeypatch.setattr("mf.utils.play.build_config", lambda: {"fullscreen_playback": True, "video_player": "mpv"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 

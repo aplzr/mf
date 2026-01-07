@@ -48,7 +48,7 @@ import typer
 from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
-from .utils.config import get_config
+from .utils.config import build_config
 from .utils.console import console, print_and_raise, print_warn
 from .utils.file import cleanup
 from .utils.misc import open_imdb_entry
@@ -87,7 +87,8 @@ def find(
         print_warn(f"No media files found matching '{query.pattern}'")
         raise typer.Exit(0)
 
-    display_paths = bool(get_config()["display_paths"])
+    display_paths = build_config().display_paths
+
     save_search_results(query.pattern, results)
     print_search_results(f"Search pattern: {query.pattern}", results, display_paths)
 
@@ -99,7 +100,7 @@ def new(
     """Find the latest additions to the media database."""
     newest_files = NewQuery.from_config(n).execute()
     pattern = f"{n} latest additions"
-    display_paths = bool(get_config()["display_paths"])
+    display_paths = build_config().display_paths
 
     if not newest_files:
         print_and_raise("No media files found (empty collection).")

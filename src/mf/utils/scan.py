@@ -78,13 +78,12 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import cast
 
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
 from ..constants import STATUS_SYMBOLS
 from .cache import get_library_cache_size, load_library_cache
-from .config import get_config
+from .config import build_config
 from .console import console, print_warn
 from .file import FileResult, FileResults, get_fd_binary
 from .normalizers import normalize_pattern
@@ -254,14 +253,13 @@ def scan_search_paths(
     Returns:
         FileResults: Results, optionally with stat info.
     """
-    search_path_strings = cast(list[str], get_config()["search_paths"])
-    search_paths = validate_search_paths(search_path_strings)
+    search_paths = validate_search_paths(build_config().search_paths)
 
     if prefer_fd is None:
-        prefer_fd = get_config()["prefer_fd"]  # type: ignore [assignment]
+        prefer_fd = build_config().prefer_fd
 
-    max_workers = get_max_workers(search_paths, get_config()["parallel_search"])  # type: ignore [arg-type]
-    strategy = get_scan_strategy(cache_stat, prefer_fd, show_progress)  # type: ignore [arg-type]
+    max_workers = get_max_workers(search_paths, build_config().parallel_search)
+    strategy = get_scan_strategy(cache_stat, prefer_fd, show_progress)
 
     return strategy.scan(search_paths, max_workers)
 
@@ -555,12 +553,12 @@ class Query(ABC):
             "match_extensions": <bool>,
         }
         """
-        cfg = get_config()
+        cfg = build_config()
 
         return {
-            "cache_library": cfg["cache_library"],
-            "media_extensions": cfg["media_extensions"],
-            "match_extensions": cfg["match_extensions"],
+            "cache_library": cfg.cache_library,
+            "media_extensions": cfg.media_extensions,
+            "match_extensions": cfg.match_extensions,
         }
 
     @abstractmethod
@@ -653,11 +651,9 @@ class FindQuery(Query):
             FindQuery: FindQuery initialized with pattern and parameters from current
                 configuration.
         """
-        auto_wildcards = bool(get_config()["auto_wildcards"])
-
         return cls(
             pattern=pattern,
-            auto_wildcards=auto_wildcards,
+            auto_wildcards=build_config().auto_wildcards,
             cache_stat=cache_stat,
             show_progress=show_progress,
             **cls._get_config_params(),
