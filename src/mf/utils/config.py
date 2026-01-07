@@ -56,6 +56,7 @@ from __future__ import annotations
 
 from contextlib import suppress
 from datetime import timedelta
+from pathlib import Path
 from textwrap import wrap
 from typing import Any
 
@@ -153,7 +154,7 @@ def build_config() -> Configuration:
 class Configuration:
     """Configuration object with settings as attributes."""
 
-    search_paths: list[str]
+    search_paths: list[Path]
     media_extensions: list[str]
     match_extensions: bool
     fullscreen_playback: bool

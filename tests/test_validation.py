@@ -14,19 +14,19 @@ def test_validate_search_paths_none_raises(monkeypatch):
 
 def test_get_validated_search_paths_all_missing(monkeypatch):
     with pytest.raises(typer.Exit):
-        validate_search_paths(["/unlikely/path/that/does/not/exist/for/tests"])
+        validate_search_paths([Path("/unlikely/path/that/does/not/exist/for/tests")])
 
 
 def test_validate_search_paths_none(monkeypatch, tmp_path: Path):
     with pytest.raises(Exception):
-        validate_search_paths([(tmp_path / "missing").as_posix()])
+        validate_search_paths([tmp_path / "missing"])
 
 
 def test_validate_search_paths_mixed(monkeypatch, tmp_path: Path):
     existing = tmp_path / "exists"
     existing.mkdir()
 
-    validated = validate_search_paths([existing.as_posix(), (tmp_path / "missing").as_posix()])
+    validated = validate_search_paths([existing, tmp_path / "missing"])
     assert validated == [existing]
 
 
@@ -37,5 +37,5 @@ def test_validate_search_paths_mixed_valid_and_invalid(monkeypatch, tmp_path: Pa
     valid2.mkdir()
     invalid = tmp_path / "Missing"
 
-    validated = validate_search_paths([str(valid1), str(invalid), str(valid2)])
+    validated = validate_search_paths([valid1, invalid, valid2])
     assert validated == [valid1, valid2]

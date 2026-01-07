@@ -17,11 +17,11 @@ from typing import Any
 from .console import print_and_raise, print_warn
 
 
-def validate_search_paths(search_paths: list[str]) -> list[Path]:
+def validate_search_paths(search_paths: list[Path]) -> list[Path]:
     """Return existing configured search paths.
 
     Args:
-        search_paths (list[str]): Search path strings to validate.
+        search_paths (list[Path]): Search path strings to validate.
 
     Raises:
         typer.Exit: If no valid search paths are configured.
@@ -32,12 +32,10 @@ def validate_search_paths(search_paths: list[str]) -> list[Path]:
     validated: list[Path] = []
 
     for search_path in search_paths:
-        p = Path(search_path)
-
-        if not p.exists():
+        if not search_path.exists():
             print_warn(f"Configured search path {search_path} does not exist.")
         else:
-            validated.append(p)
+            validated.append(search_path)
 
     if not validated:
         print_and_raise(

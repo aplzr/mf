@@ -94,9 +94,8 @@ def test_validate_search_paths_all_exist(monkeypatch, tmp_path: Path):
     dir2 = tmp_path / "media2"
     dir1.mkdir()
     dir2.mkdir()
-    path_strings = [str(dir1), str(dir2)]
 
-    result = validate_search_paths(path_strings)
+    result = validate_search_paths([dir1, dir2])
     assert len(result) == 2
     assert dir1 in result
     assert dir2 in result
@@ -108,9 +107,8 @@ def test_validate_search_paths_some_exist(monkeypatch, tmp_path: Path):
     existing_dir = tmp_path / "media1"
     existing_dir.mkdir()
     nonexistent_dir = tmp_path / "media2_does_not_exist"
-    path_strings = [str(existing_dir), str(nonexistent_dir)]
 
-    result = validate_search_paths(path_strings)
+    result = validate_search_paths([existing_dir, nonexistent_dir])
     assert len(result) == 1
     assert existing_dir in result
     assert Path(nonexistent_dir) not in result
@@ -121,10 +119,9 @@ def test_validate_search_paths_none_exist(monkeypatch, tmp_path: Path):
     # Use paths that don't exist
     nonexistent1 = tmp_path / "fake1"
     nonexistent2 = tmp_path / "fake2"
-    path_strings = [str(nonexistent1), str(nonexistent2)]
 
     with pytest.raises(typer.Exit):
-        validate_search_paths(path_strings)
+        validate_search_paths([nonexistent1, nonexistent2])
 
 
 def test_validate_search_paths_empty_list(monkeypatch):
