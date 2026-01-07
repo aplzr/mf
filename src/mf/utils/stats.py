@@ -443,21 +443,18 @@ def get_log_histogram(
 
 def _print_stats(
     results: FileResults,
-    search_paths: list[Path],
-    media_extensions: list[str] | None = None,
+    layout: ColumnLayout,
+    cfg: Configuration,
 ):
     """Print results statistics.
 
     Args:
         results (FileResults): Results to summarize.
-        search_paths (list[Path]): Base paths by which to split results into subsets.
-        media_extensions (list[str] | None, optional): If given, additional statistics
-            of media files only are displayed.
+        layout (ColumnLayout): Terminal layout to use for printing.
+        cfg (Configuration): mediafinder configuration.
     """
-    layout = ColumnLayout.from_terminal()
-
-    if media_extensions:
-        results_media = results.filtered_by_extension(media_extensions)
+    if cfg.media_extensions:
+        results_media = results.filtered_by_extension(cfg.media_extensions)
 
     # Create statistics
     layout.add_panel(
@@ -465,7 +462,7 @@ def _print_stats(
     )
     layout.add_panel(make_resolution_histogram(results, format=layout.panel_format))
 
-    if media_extensions:
+    if cfg.media_extensions:
         layout.add_panel(
             make_extension_histogram(
                 results_media, type="media_files", format=layout.panel_format
@@ -484,15 +481,16 @@ def _print_stats(
 
     # Render summary statistics table followed by more in-depth statistics in a
     # multi-column layout
-    print_summary(results, search_paths, media_extensions)
+    print_summary(results, cfg.search_paths, cfg.media_extensions)
     layout.print()
 
 
 def print_stats():
     """Print library statistics."""
     cfg = Configuration.from_config()
+    layout = ColumnLayout.from_terminal()
     library = load_library()
-    _print_stats(library, cfg.search_paths, cfg.media_extensions)
+    _print_stats(library, layout, cfg)
 
 
 def print_summary(

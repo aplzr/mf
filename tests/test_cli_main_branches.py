@@ -83,8 +83,6 @@ def test_play_command_integration(monkeypatch):
     """Integration test: verify play command calls resolve and launch functions."""
     from pathlib import Path
 
-    # from mf.utils.file import FileResult
-
     class DummyFile:
         name = "movie.mp4"
         parent = Path("/tmp")
