@@ -1,5 +1,5 @@
 from pathlib import Path
-from mf.utils.config import get_config, write_config
+from mf.utils.config import get_raw_config, write_config
 from mf.utils.validation import validate_search_paths
 
 import pytest

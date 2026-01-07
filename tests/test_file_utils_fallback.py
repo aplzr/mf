@@ -3,12 +3,12 @@ import subprocess
 import time
 from pathlib import Path
 
-from mf.utils.config import get_config, write_config
+from mf.utils.config import get_raw_config, write_config
 from mf.utils.scan import scan_search_paths
 
 
 def _set_search_paths(tmp_path: Path, paths: list[Path], prefer_fd: bool = True):
-    cfg = get_config()
+    cfg = get_raw_config()
     cfg["search_paths"] = [p.as_posix() for p in paths]
     cfg["prefer_fd"] = prefer_fd
     write_config(cfg)

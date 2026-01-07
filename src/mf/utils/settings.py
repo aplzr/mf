@@ -78,9 +78,9 @@ from .normalizers import (
 def _rebuild_cache_if_enabled():
     # Helper function with lazy imports to avoid circular import
     from .cache import rebuild_library_cache
-    from .config import build_config
+    from .config import Configuration
 
-    if build_config().cache_library:
+    if Configuration.from_config().cache_library:
         rebuild_library_cache()
 
 
@@ -374,8 +374,8 @@ def apply_action(key: str, action: Action, values: list[str] | None):
         action (Action): Action to perform.
         values (list[str] | None): Values to act with. None if action is "clear".
     """
-    from .config import get_config, write_config
+    from .config import get_raw_config, write_config
 
-    cfg_raw = get_config()
+    cfg_raw = get_raw_config()
     _apply_action(cfg_raw, key, action, values)
     write_config(cfg_raw)

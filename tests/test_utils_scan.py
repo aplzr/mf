@@ -17,7 +17,7 @@ from mf.utils.scan import (
     PythonSilentScanStrategy,
     PythonProgressScanStrategy,
 )
-from mf.utils.config import get_config
+from mf.utils.config import get_raw_config
 from concurrent.futures import Future
 
 
@@ -87,7 +87,7 @@ def test__scan_with_progress_bar_no_estimate(tmp_path: Path):
 def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
     # Configure to not use cache and to match extensions
     monkeypatch.setattr(
-        "mf.utils.scan.build_config",
+        "mf.utils.scan.Configuration.from_config",
         lambda: SimpleNamespace(cache_library=False,
                         prefer_fd=False,
                         media_extensions=[".mp4", ".mkv"],

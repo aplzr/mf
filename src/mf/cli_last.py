@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import typer
 
-from .utils.config import build_config
+from .utils.config import Configuration
 from .utils.console import console, print_ok
 from .utils.file import get_search_cache_file
 from .utils.search import load_search_results, print_search_results
@@ -45,7 +45,7 @@ def show():
     if "latest additions" not in pattern:
         pattern = f"Search pattern: {pattern}"
 
-    print_search_results(pattern, results, build_config().display_paths)
+    print_search_results(pattern, results, Configuration.from_config().display_paths)
 
 
 @app_last.command()

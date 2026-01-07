@@ -3,7 +3,7 @@ import time
 import pytest
 
 from mf.utils.cache import is_cache_expired, load_library_cache, rebuild_library_cache
-from mf.utils.config import get_config, write_config
+from mf.utils.config import get_raw_config, write_config
 from mf.utils.file import (
     get_library_cache_file,
 )
@@ -13,7 +13,7 @@ from mf.utils.file import (
 def media_dir(tmp_path):
     d = tmp_path / "media"
     d.mkdir()
-    cfg = get_config()
+    cfg = get_raw_config()
     cfg["search_paths"] = [d.as_posix()]
     cfg["cache_library"] = True
     cfg["library_cache_interval"] = 1  # very short expiry
@@ -55,7 +55,7 @@ def test_load_library_cache_with_caching_disabled(tmp_path):
     media_dir.mkdir()
     (media_dir / "test.mkv").write_text("x")
 
-    cfg = get_config()
+    cfg = get_raw_config()
     cfg["search_paths"] = [media_dir.as_posix()]
     cfg["cache_library"] = False  # Key: caching disabled
     write_config(cfg)

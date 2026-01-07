@@ -5,7 +5,7 @@ from typer.testing import CliRunner
 
 from mf.cli_config import app_config
 from mf.cli_main import app_mf
-from mf.utils.config import get_config, write_config
+from mf.utils.config import get_raw_config, write_config
 from mf.utils.file import FileResult
 from mf.utils.normalizers import normalize_media_extension
 from mf.utils.scan import scan_path_with_python
@@ -18,7 +18,7 @@ def test_find_no_results(monkeypatch, tmp_path):
     # Configure empty search path directory with no files
     empty_dir = tmp_path / "empty"
     empty_dir.mkdir()
-    cfg = get_config()
+    cfg = get_raw_config()
     cfg["search_paths"] = [empty_dir.resolve().as_posix()]
     write_config(cfg)
     result = runner.invoke(app_mf, ["find", "nonexistentpattern123"])
@@ -146,5 +146,5 @@ def test_set_match_extensions_false(monkeypatch):
     # Ensure we can set false and cover branch
     result = runner.invoke(app_config, ["set", "match_extensions", "false"])
     assert result.exit_code == 0
-    cfg = get_config()
+    cfg = get_raw_config()
     assert cfg["match_extensions"] is False

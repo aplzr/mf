@@ -5,7 +5,7 @@ import os
 from typer.testing import CliRunner
 
 from mf.cli_config import app_config
-from mf.utils.config import get_config
+from mf.utils.config import get_raw_config
 
 runner = CliRunner()
 
@@ -24,7 +24,7 @@ def test_list_set_all_valid_succeeds(tmp_path, monkeypatch):
     r = runner.invoke(app_config, ["set", "media_extensions", ".mp4", ".mkv"])
     assert r.exit_code == 0
 
-    cfg = get_config()
+    cfg = get_raw_config()
     assert ".mp4" in cfg["media_extensions"]
     assert ".mkv" in cfg["media_extensions"]
 
@@ -37,7 +37,7 @@ def test_list_add_valid_succeeds(tmp_path, monkeypatch):
     r = runner.invoke(app_config, ["add", "media_extensions", ".avi"])
     assert r.exit_code == 0
 
-    cfg = get_config()
+    cfg = get_raw_config()
     assert ".avi" in cfg["media_extensions"]
 
 
@@ -52,6 +52,6 @@ def test_list_remove_allows_any_value(tmp_path, monkeypatch):
     r = runner.invoke(app_config, ["remove", "media_extensions", ".mp4"])
     assert r.exit_code == 0
 
-    cfg = get_config()
+    cfg = get_raw_config()
     assert ".mp4" not in cfg["media_extensions"]
     assert ".mkv" in cfg["media_extensions"]

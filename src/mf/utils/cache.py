@@ -42,12 +42,12 @@ from __future__ import annotations
 import json
 import pickle
 from contextlib import suppress
-from datetime import datetime, timedelta
+from datetime import datetime
 from pickle import UnpicklingError
 from pprint import pprint
 from typing import Any, TypedDict
 
-from .config import build_config
+from .config import Configuration
 from .console import print_and_raise, print_info, print_ok, print_warn
 from .file import (
     FileResults,
@@ -190,7 +190,7 @@ def is_cache_expired() -> bool:
         return True
 
     cache_timestamp = datetime.fromtimestamp(cache_file.stat().st_mtime)
-    cache_interval: timedelta = build_config()["library_cache_interval"]
+    cache_interval = Configuration.from_config().library_cache_interval
 
     if cache_interval.total_seconds() == 0:
         # Cache set to never expire

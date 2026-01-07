@@ -183,7 +183,7 @@ class TestLaunchVideoPlayerWithMpv:
 
         mock_player = ResolvedPlayer("mpv", Path("mpv"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.build_config", lambda: {"fullscreen_playback": False, "video_player": "mpv"})
+        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "mpv"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
@@ -208,7 +208,7 @@ class TestLaunchVideoPlayerWithMpv:
 
         mock_player = ResolvedPlayer("mpv", Path("mpv"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.build_config", lambda: {"fullscreen_playback": True, "video_player": "mpv"})
+        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": True, "video_player": "mpv"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 

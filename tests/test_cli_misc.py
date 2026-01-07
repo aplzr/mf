@@ -5,7 +5,7 @@ from typer.testing import CliRunner
 
 from mf.cli_config import app_config
 from mf.cli_main import app_mf
-from mf.utils.config import get_config, write_config
+from mf.utils.config import get_raw_config, write_config
 from mf.utils.search import save_search_results
 
 runner = CliRunner()
@@ -29,7 +29,7 @@ def test_main_callback_help(monkeypatch):
 
 def test_imdb_parse_failure(monkeypatch, tmp_path):
     # Prepare fake cache with a filename guessit can't parse a title from
-    cfg = get_config()
+    cfg = get_raw_config()
     # Ensure at least one search path exists
     test_dir = tmp_path / "media"
     test_dir.mkdir()
@@ -48,22 +48,22 @@ def test_imdb_parse_failure(monkeypatch, tmp_path):
 
 
 def test_config_clear_paths(monkeypatch):
-    cfg = get_config()
+    cfg = get_raw_config()
     cfg["search_paths"] = [Path.cwd().resolve().as_posix()]
     write_config(cfg)
     result = runner.invoke(app_config, ["clear", "search_paths"])
     assert result.exit_code == 0
-    assert get_config()["search_paths"] == []
+    assert get_raw_config()["search_paths"] == []
 
 
 def test_config_clear_media_extensions(monkeypatch):
-    cfg = get_config()
+    cfg = get_raw_config()
     # Guarantee some entries
     cfg["media_extensions"] = [".mp4", ".mkv"]
     write_config(cfg)
     result = runner.invoke(app_config, ["clear", "media_extensions"])
     assert result.exit_code == 0
-    assert get_config()["media_extensions"] == []
+    assert get_raw_config()["media_extensions"] == []
 
 
 def test_invalid_bool_value(monkeypatch):
@@ -74,7 +74,7 @@ def test_invalid_bool_value(monkeypatch):
 
 
 def test_duplicate_media_extension_add(monkeypatch):
-    cfg = get_config()
+    cfg = get_raw_config()
     cfg["media_extensions"] = [".mp4"]
     write_config(cfg)
     # Add duplicate

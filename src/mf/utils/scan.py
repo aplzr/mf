@@ -83,7 +83,7 @@ from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
 from ..constants import STATUS_SYMBOLS
 from .cache import get_library_cache_size, load_library_cache
-from .config import build_config
+from .config import Configuration
 from .console import console, print_warn
 from .file import FileResult, FileResults, get_fd_binary
 from .normalizers import normalize_pattern
@@ -253,12 +253,13 @@ def scan_search_paths(
     Returns:
         FileResults: Results, optionally with stat info.
     """
-    search_paths = validate_search_paths(build_config().search_paths)
+    cfg = Configuration.from_config()
+    search_paths = validate_search_paths(cfg.search_paths)
 
     if prefer_fd is None:
-        prefer_fd = build_config().prefer_fd
+        prefer_fd = cfg.prefer_fd
 
-    max_workers = get_max_workers(search_paths, build_config().parallel_search)
+    max_workers = get_max_workers(search_paths, cfg.parallel_search)
     strategy = get_scan_strategy(cache_stat, prefer_fd, show_progress)
 
     return strategy.scan(search_paths, max_workers)
@@ -553,7 +554,7 @@ class Query(ABC):
             "match_extensions": <bool>,
         }
         """
-        cfg = build_config()
+        cfg = Configuration.from_config()
 
         return {
             "cache_library": cfg.cache_library,
@@ -653,7 +654,7 @@ class FindQuery(Query):
         """
         return cls(
             pattern=pattern,
-            auto_wildcards=build_config().auto_wildcards,
+            auto_wildcards=Configuration.from_config().auto_wildcards,
             cache_stat=cache_stat,
             show_progress=show_progress,
             **cls._get_config_params(),

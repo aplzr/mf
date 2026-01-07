@@ -5,7 +5,7 @@ import os
 from typer.testing import CliRunner
 
 from mf.cli_config import app_config
-from mf.utils.config import get_config
+from mf.utils.config import get_raw_config
 
 runner = CliRunner()
 
@@ -23,7 +23,7 @@ def test_video_player_set_auto_succeeds(tmp_path, monkeypatch):
     r = runner.invoke(app_config, ["set", "video_player", "auto"])
     assert r.exit_code == 0
 
-    cfg = get_config()
+    cfg = get_raw_config()
     assert cfg["video_player"] == "auto"
 
 
@@ -34,7 +34,7 @@ def test_video_player_set_vlc_succeeds(tmp_path, monkeypatch):
     r = runner.invoke(app_config, ["set", "video_player", "vlc"])
     assert r.exit_code == 0
 
-    cfg = get_config()
+    cfg = get_raw_config()
     assert cfg["video_player"] == "vlc"
 
 
@@ -45,7 +45,7 @@ def test_video_player_set_mpv_succeeds(tmp_path, monkeypatch):
     r = runner.invoke(app_config, ["set", "video_player", "mpv"])
     assert r.exit_code == 0
 
-    cfg = get_config()
+    cfg = get_raw_config()
     assert cfg["video_player"] == "mpv"
 
 
@@ -71,7 +71,7 @@ def test_video_player_normalization_works(tmp_path, monkeypatch):
     r = runner.invoke(app_config, ["set", "video_player", "VLC"])
     assert r.exit_code == 0
 
-    cfg = get_config()
+    cfg = get_raw_config()
     assert cfg["video_player"] == "vlc"  # Normalized to lowercase
 
 
@@ -82,7 +82,7 @@ def test_video_player_whitespace_normalized(tmp_path, monkeypatch):
     r = runner.invoke(app_config, ["set", "video_player", "  mpv  "])
     assert r.exit_code == 0
 
-    cfg = get_config()
+    cfg = get_raw_config()
     assert cfg["video_player"] == "mpv"  # Stripped
 
 
@@ -93,5 +93,5 @@ def test_video_player_mixed_case_normalized(tmp_path, monkeypatch):
     r = runner.invoke(app_config, ["set", "video_player", "AuTo"])
     assert r.exit_code == 0
 
-    cfg = get_config()
+    cfg = get_raw_config()
     assert cfg["video_player"] == "auto"

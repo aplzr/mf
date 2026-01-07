@@ -5,12 +5,12 @@ conversion.
 
 Architecture:
     Two-tier access pattern:
-    1. get_config() → Raw TOMLDocument for low-level access
+    1. get_raw_config() → Raw TOMLDocument for low-level access
        - Returns the TOML document as-is (strings, lists, ints)
        - Use when you need to modify and write config back to disk
        - Use when you need the exact TOML representation
 
-    2. build_config() → Typed Configuration for application use
+    2. Configuration.from_config() → Typed Configuration for application use
        - Converts TOML values to proper Python types (Path, timedelta, etc.)
        - Use for reading configuration values
        - Provides attribute and dict access to settings
@@ -42,7 +42,7 @@ Configuration Object:
 
 Example:
     >>> # Typed access (recommended for reading values)
-    >>> config = build_config()
+    >>> config = Configuration.from_config()
     >>> player = config.video_player
     >>> paths = config.search_paths  # Already converted to Path objects
 
@@ -105,7 +105,7 @@ def _read_config() -> TOMLDocument:
     return cfg
 
 
-def get_config() -> TOMLDocument:
+def get_raw_config() -> TOMLDocument:
     """Get the raw configuration.
 
     Migrates the loaded configuration by adding missing keys with default values if
@@ -129,7 +129,7 @@ def _clear_config_cache():
     _config = None
 
 
-def reload_config() -> TOMLDocument:
+def reload_raw_config() -> TOMLDocument:
     """Reloads the configuration from disk and updates the cached configuration
     instance.
 
@@ -137,18 +137,7 @@ def reload_config() -> TOMLDocument:
         TOMLDocument: Parsed configuration.
     """
     _clear_config_cache()
-    return get_config()
-
-
-def build_config() -> Configuration:
-    """Build integrated Configuration from the raw TOML configuration.
-
-    Transforms raw TOML into typed python values.
-
-    Returns:
-        Configuration: Configuration object with settings as attributes.
-    """
-    return Configuration(get_config(), SETTINGS)
+    return get_raw_config()
 
 
 class Configuration:
@@ -207,6 +196,17 @@ class Configuration:
 
     def __setitem__(self, key: str, value: Any):  # noqa: D105
         setattr(self, key, value)
+
+    @classmethod
+    def from_config(cls) -> Configuration:
+        """Create Configuration from current configuration.
+
+        Reads the configuration file from disk and returns a typed Configuration object.
+
+        Returns:
+            Configuration: current configuration.
+        """
+        return cls(get_raw_config(), SETTINGS)
 
 
 def add_default_setting(raw_cfg: TOMLDocument, key: str):

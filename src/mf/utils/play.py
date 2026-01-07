@@ -44,7 +44,7 @@ from random import choice
 from typing import Literal, NamedTuple, TypedDict, cast
 
 from ..constants import STATUS_SYMBOLS
-from .config import Configuration, build_config
+from .config import Configuration
 from .console import console, print_and_raise, print_warn
 from .file import FileResult, FileResults
 from .playlist import get_next, save_last_played
@@ -267,7 +267,8 @@ def launch_video_player(media: FileResult | FileResults):
     Args:
         media (FileResult | FileResults): File or files to play.
     """
-    resolved_player = resolve_configured_player(build_config())
+    cfg = Configuration.from_config()
+    resolved_player = resolve_configured_player(cfg)
 
     if not resolved_player:
         print_and_raise("No video player could be found. Please install VLC or mpv.")
@@ -299,7 +300,7 @@ def launch_video_player(media: FileResult | FileResults):
         )
         player_args.extend(str(result.file) for result in media)
 
-    if extra_args := build_player_args(PLAYERS[resolved_player.label], build_config()):
+    if extra_args := build_player_args(PLAYERS[resolved_player.label], cfg):
         player_args.extend(extra_args)
 
     try:
