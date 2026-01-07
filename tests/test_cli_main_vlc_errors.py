@@ -25,7 +25,7 @@ def test_play_error_propagates_to_cli(monkeypatch):
     def mock_resolve(target):
         return DummyResult()
 
-    def mock_launch_with_error(file_to_play):
+    def mock_launch_with_error(file_to_play, cfg):
         # Simulate launch_video_player raising an error
         from mf.utils.console import print_and_raise
 

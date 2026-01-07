@@ -15,6 +15,7 @@ from mf.utils.play import (
     launch_video_player,
     resolve_configured_player,
 )
+from mf.utils.config import Configuration
 
 
 class TestGetMpvCommand:
@@ -183,13 +184,14 @@ class TestLaunchVideoPlayerWithMpv:
 
         mock_player = ResolvedPlayer("mpv", Path("mpv"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "mpv"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
+        cfg = Configuration.from_default()
+        cfg.fullscreen_playback = False
         test_path = Path("/tmp/movie.mp4")
         dummy_file = FileResult(test_path)
-        launch_video_player(dummy_file)
+        launch_video_player(dummy_file, cfg)
 
         assert popen_args == ["mpv", str(test_path)]
 
@@ -208,12 +210,14 @@ class TestLaunchVideoPlayerWithMpv:
 
         mock_player = ResolvedPlayer("mpv", Path("mpv"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": True, "video_player": "mpv"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
+        cfg = Configuration.from_default()
+        cfg.fullscreen_playback = True
+        cfg.video_player = "mpv"
         dummy_file = FileResult(Path("/tmp/movie.mp4"))
-        launch_video_player(dummy_file)
+        launch_video_player(dummy_file, cfg)
 
         assert "--fullscreen" in popen_args
         # mpv doesn't use --no-video-title-show

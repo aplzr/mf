@@ -83,7 +83,7 @@ def test_play_command_integration(monkeypatch):
     """Integration test: verify play command calls resolve and launch functions."""
     from pathlib import Path
 
-    from mf.utils.file import FileResult
+    # from mf.utils.file import FileResult
 
     class DummyFile:
         name = "movie.mp4"
@@ -103,7 +103,7 @@ def test_play_command_integration(monkeypatch):
         resolve_called_with = target
         return DummyResult()
 
-    def mock_launch(file_to_play):
+    def mock_launch(file_to_play, cfg):
         nonlocal launch_called_with
         launch_called_with = file_to_play
 

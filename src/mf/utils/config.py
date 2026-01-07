@@ -204,9 +204,21 @@ class Configuration:
         Reads the configuration file from disk and returns a typed Configuration object.
 
         Returns:
-            Configuration: current configuration.
+            Configuration: Current configuration.
         """
         return cls(get_raw_config(), SETTINGS)
+
+    @classmethod
+    def from_default(cls) -> Configuration:
+        """Create Configuration with default settings.
+
+        Returns a typed Configuration object with default settings from the settings
+        registry.
+
+        Returns:
+            Configuration: Default configuration.
+        """
+        return cls(get_default_cfg(), SETTINGS)
 
 
 def add_default_setting(raw_cfg: TOMLDocument, key: str):

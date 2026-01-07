@@ -1,10 +1,10 @@
 """Unit tests for utils/play.py functions."""
 
 from pathlib import Path
-
 import pytest
 from click.exceptions import Exit as ClickExit
 
+from mf.utils.config import Configuration
 from mf.utils.file import FileResult, FileResults
 from mf.utils.play import launch_video_player, resolve_play_target, ResolvedPlayer
 
@@ -208,14 +208,16 @@ class TestLaunchVideoPlayer:
 
         mock_player = ResolvedPlayer("vlc", Path("vlc"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "auto"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
-        # Use real FileResult instance
+        # Use real FileResult instance and config
         test_path = Path("/tmp/movie.mp4")
         dummy_file = FileResult(test_path)
-        launch_video_player(dummy_file)
+        cfg = Configuration.from_config()
+        cfg.fullscreen_playback = False
+        cfg.video_player = "auto"
+        launch_video_player(dummy_file, cfg)
 
         assert popen_args == ["vlc", str(test_path)]
 
@@ -235,7 +237,6 @@ class TestLaunchVideoPlayer:
 
         mock_player = ResolvedPlayer("vlc", Path("vlc"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "auto"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
@@ -247,7 +248,11 @@ class TestLaunchVideoPlayer:
             FileResult(test_path_b)
         ])
 
-        launch_video_player(playlist)
+        cfg = Configuration.from_config()
+        cfg.fullscreen_playback = False
+        cfg.video_player = "auto"
+
+        launch_video_player(playlist, cfg)
 
         assert popen_args == ["vlc", str(test_path_a), str(test_path_b)]
 
@@ -265,12 +270,14 @@ class TestLaunchVideoPlayer:
 
         mock_player = ResolvedPlayer("vlc", Path("vlc"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": True, "video_player": "auto"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
         dummy_file = FileResult(Path("/tmp/movie.mp4"))
-        launch_video_player(dummy_file)
+        cfg = Configuration.from_config()
+        cfg.fullscreen_playback = True
+        cfg.video_player = "auto"
+        launch_video_player(dummy_file, cfg)
 
         assert "--fullscreen" in popen_args
         assert "--no-video-title-show" in popen_args
@@ -285,12 +292,14 @@ class TestLaunchVideoPlayer:
 
         mock_player = ResolvedPlayer("vlc", Path("vlc"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "auto"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
         dummy_file = FileResult(Path("/tmp/movie.mp4"))
-        launch_video_player(dummy_file)
+        cfg = Configuration.from_config()
+        cfg.fullscreen_playback = False
+        cfg.video_player = "auto"
+        launch_video_player(dummy_file, cfg)
 
         assert "--fullscreen" not in popen_args
         assert "--no-video-title-show" not in popen_args
@@ -303,13 +312,16 @@ class TestLaunchVideoPlayer:
 
         mock_player = ResolvedPlayer("vlc", Path("vlc"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "auto"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
         dummy_file = FileResult(Path("/tmp/movie.mp4"))
+        cfg = Configuration.from_config()
+        cfg.fullscreen_playback = False
+        cfg.video_player = "auto"
+
         with pytest.raises(ClickExit):
-            launch_video_player(dummy_file)
+            launch_video_player(dummy_file, cfg)
 
     def test_generic_error(self, monkeypatch):
         """Test error handling for generic exceptions."""
@@ -319,25 +331,30 @@ class TestLaunchVideoPlayer:
 
         mock_player = ResolvedPlayer("vlc", Path("vlc"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "auto"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
 
         dummy_file = FileResult(Path("/tmp/movie.mp4"))
+        cfg = Configuration.from_config()
+        cfg.fullscreen_playback = False
+        cfg.video_player = "auto"
+
         with pytest.raises(ClickExit):
-            launch_video_player(dummy_file)
+            launch_video_player(dummy_file, cfg)
 
     def test_single_file_not_exists(self, monkeypatch, capsys):
         """Test error when trying to play a single file that doesn't exist."""
         mock_player = ResolvedPlayer("vlc", Path("vlc"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "auto"})
         monkeypatch.setattr("pathlib.Path.exists", lambda self: False)
 
         dummy_file = FileResult(Path("/tmp/missing.mp4"))
+        cfg = Configuration.from_config()
+        cfg.fullscreen_playback = False
+        cfg.video_player = "auto"
 
         with pytest.raises(ClickExit):
-            launch_video_player(dummy_file)
+            launch_video_player(dummy_file, cfg)
 
         captured = capsys.readouterr()
         assert "File no longer exists" in captured.out
@@ -357,7 +374,6 @@ class TestLaunchVideoPlayer:
 
         mock_player = ResolvedPlayer("vlc", Path("vlc"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "auto"})
         monkeypatch.setattr("mf.utils.play.subprocess.Popen", mock_popen)
         monkeypatch.setattr("pathlib.Path.exists", mock_exists)
 
@@ -370,7 +386,11 @@ class TestLaunchVideoPlayer:
             FileResult(test_path_c),
         ])
 
-        launch_video_player(playlist)
+        cfg = Configuration.from_config()
+        cfg.fullscreen_playback = False
+        cfg.video_player = "auto"
+
+        launch_video_player(playlist, cfg)
 
         # Should only include existing files
         assert popen_args == ["vlc", str(test_path_a), str(test_path_c)]
@@ -384,7 +404,6 @@ class TestLaunchVideoPlayer:
         """Test playlist where all files are missing - should raise error."""
         mock_player = ResolvedPlayer("vlc", Path("vlc"))
         monkeypatch.setattr("mf.utils.play.resolve_configured_player", lambda cfg: mock_player)
-        monkeypatch.setattr("mf.utils.play.Configuration.from_config", lambda: {"fullscreen_playback": False, "video_player": "auto"})
         monkeypatch.setattr("pathlib.Path.exists", lambda self: False)
 
         playlist = FileResults([
@@ -392,8 +411,12 @@ class TestLaunchVideoPlayer:
             FileResult(Path("/tmp/b.mp4")),
         ])
 
+        cfg = Configuration.from_config()
+        cfg.fullscreen_playback = False
+        cfg.video_player = "auto"
+
         with pytest.raises(ClickExit):
-            launch_video_player(playlist)
+            launch_video_player(playlist, cfg)
 
         captured = capsys.readouterr()
         assert "All files in playlist don't exist anymore" in captured.out
