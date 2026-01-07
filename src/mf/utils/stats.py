@@ -539,6 +539,6 @@ def print_summary(
         return label, files, media_files, newest, oldest, av_size, total_size
 
     for label, subset in subsets.items():
-        table.add_row(*build_row(str(label), subset))
+        table.add_row(*build_row(label, subset))
 
     console.print(table)
