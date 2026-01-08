@@ -19,6 +19,7 @@ Error Handling:
 from __future__ import annotations
 
 import json
+import os
 from json import JSONDecodeError
 from urllib import request
 from urllib.error import URLError
@@ -57,10 +58,15 @@ def check_version():
     local_version = Version(__version__)
 
     if pypi_version > local_version:
+        upgrade_command = {
+            "posix": ("'uv cache clean mediafinder && uv tool upgrade mediafinder'"),
+            "nt": ("'uv cache clean mediafinder; uv tool upgrade mediafinder'"),
+        }
+
         print_info(
             "There's a newer version of mediafinder available "
             f"({local_version} → {pypi_version}). "
-            "Use 'uv tool upgrade mediafinder' to upgrade."
+            f"Run {upgrade_command[os.name]} to upgrade."
         )
     else:
         print_ok(f"You're on the latest version of mediafinder ({local_version}).")
