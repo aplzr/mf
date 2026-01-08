@@ -158,7 +158,9 @@ def version(
     if target and target == "check":
         check_version()
     else:
-        console.print(__version__)
+        console.print(f"mediafinder {__version__}")
+        console.print("Github: https://github.com/aplzr/mf")
+        console.print("PyPI: https://pypi.org/project/mediafinder")
 
 
 @app_mf.command(name="cleanup")
