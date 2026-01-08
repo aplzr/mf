@@ -154,7 +154,7 @@ def version(
         "If 'check', checks if a newer version is available.",
     ),
 ):
-    "Print version or perform version check."
+    "Print version and project websites or perform version check."
     if target and target == "check":
         check_version()
     else:
