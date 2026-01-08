@@ -47,7 +47,7 @@ Example:
     >>> paths = config.search_paths  # Already converted to Path objects
 
     >>> # Raw access (for modifying and writing)
-    >>> cfg = get_config()
+    >>> cfg = get_raw_config()
     >>> cfg["video_player"] = "mpv"
     >>> write_config(cfg)
 """
