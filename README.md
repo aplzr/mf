@@ -21,6 +21,7 @@ A cross-platform command-line tool for finding and playing video files in large 
 - **📁 Multi-path scanning** - Search across multiple configured directories simultaneously
 - **🕒 Latest additions** - Find newest files by modification time
 - **🎬 Media player integration** - Launch files directly in VLC or mpv
+- **📦 RAR archive support** - Automatically extract and play video files from RAR archives
 - **🌐 IMDB lookup** - Automatically open IMDB pages for media files
 - **⚙️ Flexible configuration** - TOML-based config with extension filtering and path management
 - **🖥️ Cross-platform** - Works on Windows, Linux, and macOS
@@ -138,8 +139,10 @@ mf config set search_paths "/movies" "/tv-shows" "/documentaries"
 Control which file types are considered media files:
 
 ```
-mf config set media_extensions ".mp4" ".mkv" ".avi" ".mov" ".wmv"
+mf config set media_extensions ".mp4" ".mkv" ".avi" ".mov" ".wmv" ".rar"
 ```
+
+By default, common video formats and `.rar` archives are included.
 
 #### Extension Matching
 Toggle whether to filter results by media extensions:
@@ -221,6 +224,30 @@ Use the `mf stats` command to print various statistics that describe your collec
 - **Cross-platform paths**: Handles Windows and Unix path conventions
 - **Random Playback**: `mf play` (without index) randomly selects a file by scanning all configured paths (not just the last cached search).
 
+## RAR Archive Support
+
+`mf` can automatically extract and play video files from RAR archives:
+
+- **Automatic detection**: RAR files (`.rar` extension) are recognized as media files
+- **On-demand extraction**: When you play a RAR file, it's automatically extracted to a temporary directory
+- **Smart file selection**: If an archive contains multiple files, the largest video file is selected
+- **Automatic cleanup**: Temporary extraction directories older than 3 hours are cleaned up on startup
+
+**Requirements**: Requires one of these extraction tools installed:
+- `unrar` (official UnRAR utility)
+- `unar` (The Unarchiver command-line tool)
+- `7z` (7-Zip)
+- `bsdtar` (libarchive with RAR support)
+- WinRAR (Windows)
+
+**Example usage**:
+```bash
+mf find "*.rar"      # Find RAR archives
+mf play 1            # Automatically extracts and plays the video
+```
+
+**Note**: The `mf play list` command (playing multiple files as a playlist) is not supported for RAR archives. Play individual RAR files by index instead.
+
 ## Performance
 
 - Uses bundled `fd` binary for fast file scanning when possible
@@ -247,6 +274,7 @@ Use the `mf stats` command to print various statistics that describe your collec
 - Python 3.10+
 - VLC or mpv media player (for `play` command)
 - Internet connection (for IMDB lookup)
+- **Optional**: RAR extraction tool (`unrar`, `unar`, `7z`, `bsdtar`, or WinRAR) for playing archived media files
 
 
 ## License

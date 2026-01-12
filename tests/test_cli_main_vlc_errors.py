@@ -22,6 +22,9 @@ def test_play_error_propagates_to_cli(monkeypatch):
     class DummyResult:
         file = DummyFile()
 
+        def is_rar(self):
+            return False
+
     def mock_resolve(target):
         return DummyResult()
 

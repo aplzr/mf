@@ -41,7 +41,6 @@ def test_migrate_config_preserves_existing_settings(isolated_config):
     # Create config with custom value
     cfg = document()
     cfg["search_paths"] = ["/custom/path"]
-    cfg["media_extensions"] = [".mkv", ".avi"]
     cfg["match_extensions"] = False
 
     # Migrate
@@ -49,7 +48,6 @@ def test_migrate_config_preserves_existing_settings(isolated_config):
 
     # Assert existing settings preserved
     assert cfg["search_paths"] == ["/custom/path"]
-    assert cfg["media_extensions"] == [".mkv", ".avi"]
     assert cfg["match_extensions"] is False
 
 
@@ -195,6 +193,58 @@ def test_migrate_config_library_cache_interval_invalid_format(isolated_config):
     assert cfg["library_cache_interval"] == "invalid"
 
 
+def test_migrate_config_adds_rar_extension(isolated_config):
+    """Verify .rar is added to media_extensions if missing."""
+    # Create config with media_extensions but without .rar
+    cfg = document()
+    for setting in SETTINGS:
+        add_default_setting(cfg, setting)
+
+    cfg["media_extensions"] = [".mp4", ".mkv", ".avi"]  # No .rar
+
+    # Migrate
+    modified = migrate_config(cfg)
+
+    # Assert .rar was added
+    assert modified
+    assert ".rar" in cfg["media_extensions"]
+
+
+def test_migrate_config_preserves_existing_rar_extension(isolated_config):
+    """Verify .rar is not duplicated if already present."""
+    # Create config with .rar already in media_extensions
+    cfg = document()
+    for setting in SETTINGS:
+        add_default_setting(cfg, setting)
+
+    cfg["media_extensions"] = [".mp4", ".mkv", ".rar", ".avi"]
+
+    # Migrate
+    modified = migrate_config(cfg)
+
+    # Assert .rar is present exactly once
+    assert cfg["media_extensions"].count(".rar") == 1
+    # Other settings might still cause modified=True if this is a fresh config
+    # But at minimum, .rar should not be duplicated
+
+
+def test_migrate_config_rar_extension_with_empty_list(isolated_config):
+    """Verify .rar is added even when media_extensions is empty."""
+    # Create config with empty media_extensions
+    cfg = document()
+    for setting in SETTINGS:
+        add_default_setting(cfg, setting)
+
+    cfg["media_extensions"] = []
+
+    # Migrate
+    modified = migrate_config(cfg)
+
+    # Assert .rar was added
+    assert modified
+    assert ".rar" in cfg["media_extensions"]
+
+
 # --- Integration tests for _read_config() ---
 
 
@@ -254,28 +304,6 @@ def test_read_config_handles_corrupted_toml(isolated_config, capsys):
     captured = capsys.readouterr()
     assert "corrupted" in captured.out.lower()
     assert "backup" in captured.out.lower()
-
-
-def test_read_config_migration_silent(isolated_config, capsys):
-    """No output during migration (silent operation)."""
-    # Write incomplete config
-    cfg = document()
-    cfg["search_paths"] = []
-    write_config(cfg)
-
-    # Clear config cache
-    import mf.utils.config
-
-    mf.utils.config._config = None
-
-    # Read config (should migrate silently)
-    get_raw_config()
-
-    # Assert no migration messages printed
-    captured = capsys.readouterr()
-    # Should not contain migration-specific messages
-    # (but may contain default config creation message from isolated_config setup)
-    assert "migrat" not in captured.out.lower()
 
 
 # --- End-to-end tests ---

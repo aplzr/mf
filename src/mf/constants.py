@@ -27,6 +27,7 @@ DEFAULT_MEDIA_EXTENSIONS: list[str] = [
     ".wmv",
     ".flv",
     ".webm",
+    ".rar",
 ]
 
 # Boolean normalization sets (lowercase tokens)
@@ -52,11 +53,5 @@ STATUS_SYMBOLS = {
     "info": "ℹ",
 }
 
-__all__ = [
-    "DEFAULT_MEDIA_EXTENSIONS",
-    "BOOLEAN_TRUE_VALUES",
-    "BOOLEAN_FALSE_VALUES",
-    "FALLBACK_EDITORS_POSIX",
-    "FD_BINARIES",
-    "STATUS_SYMBOLS",
-]
+# Directory name prefix for temporary directories created / used by mediafinder
+TEMP_DIR_PREFIX = "mediafinder_video_"

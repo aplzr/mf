@@ -50,7 +50,13 @@ from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import Configuration
 from .utils.console import console, print_and_raise, print_warn
-from .utils.file import cleanup
+from .utils.file import (
+    FileResult,
+    FileResults,
+    cleanup,
+    extract_rar,
+    remove_temp_paths,
+)
 from .utils.misc import open_imdb_entry
 from .utils.play import launch_video_player, resolve_play_target
 from .utils.scan import FindQuery, NewQuery
@@ -123,6 +129,16 @@ def play(
     """Play a media file by its index."""
     cfg = Configuration.from_config()
     file_to_play = resolve_play_target(target)
+
+    if file_to_play.is_rar():
+        if isinstance(file_to_play, FileResult):
+            file_to_play = extract_rar(file_to_play, cfg.media_extensions)
+        elif isinstance(file_to_play, FileResults):
+            print_and_raise(
+                "Can't play 'list' when results contain .rar files. Play individual"
+                "files by index (this will extract .rar files)."
+            )
+
     launch_video_player(file_to_play, cfg)
 
 
@@ -185,7 +201,11 @@ def stats():
 
 @app_mf.callback(invoke_without_command=True)
 def main_callback(ctx: typer.Context):
-    """Show help when no command is provided."""
+    """Delete temporary directories from previous invocations and show help when no
+    command is provided.
+    """
+    remove_temp_paths()
+
     if ctx.invoked_subcommand is None:
         console.print("")
         console.print(f" Version: {__version__}", style="bright_yellow")
