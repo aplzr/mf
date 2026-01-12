@@ -153,3 +153,7 @@ pypi-production VERSION TOKEN:
     uv publish --token {{TOKEN}}
     git checkout -
     if ($hasChanges) { git stash pop }
+
+# Find first commit containing search term
+find-first-commit TERM:
+    git log -p -S "{{TERM}}"
