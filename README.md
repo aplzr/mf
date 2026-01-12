@@ -226,12 +226,7 @@ Use the `mf stats` command to print various statistics that describe your collec
 
 ## RAR Archive Support
 
-`mf` can automatically extract and play video files from RAR archives:
-
-- **Automatic detection**: RAR files (`.rar` extension) are recognized as media files
-- **On-demand extraction**: When you play a RAR file, it's automatically extracted to a temporary directory
-- **Smart file selection**: If an archive contains multiple files, the largest video file is selected
-- **Automatic cleanup**: Temporary extraction directories older than 3 hours are cleaned up on startup
+**On-demand extraction**: `mf` can extract and play video files from RAR archives. When you play a RAR file, it's automatically extracted to a temporary directory.
 
 **Requirements**: Requires one of these extraction tools installed:
 - `unrar` (official UnRAR utility)
