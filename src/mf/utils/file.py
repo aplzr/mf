@@ -25,9 +25,10 @@ The FileResults collection supports:
     - Sorting by name or modification time
     - In-place and non-mutating operations
 
-Mutation Pattern:
-    Filter methods modify the collection in-place and return None. To preserve the
-    original, copy first.
+Method Variants:
+    Operations are available in both in-place and non-mutating forms:
+    - In-place: filter_by_*(), sort() - Modify collection, return None
+    - Non-mutating: filtered_by_*(), sorted() - Return new collection
 
 Example:
     >>> # Create from paths
