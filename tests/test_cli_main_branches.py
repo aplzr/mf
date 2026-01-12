@@ -93,6 +93,9 @@ def test_play_command_integration(monkeypatch):
     class DummyResult:
         file = DummyFile()
 
+        def is_rar(self):
+            return False
+
     resolve_called_with = None
     launch_called_with = None
 

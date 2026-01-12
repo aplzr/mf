@@ -51,6 +51,7 @@ from __future__ import annotations
 import os
 import platform
 import stat
+import tempfile
 from collections import UserList
 from dataclasses import dataclass
 from fnmatch import fnmatch
@@ -58,12 +59,15 @@ from importlib.resources import files
 from io import TextIOWrapper
 from operator import attrgetter
 from pathlib import Path
+from shutil import rmtree
+from time import time
 from typing import TYPE_CHECKING, Literal
 
 import typer
+from patoolib import extract_archive, supported_formats
 
-from ..constants import FD_BINARIES
-from .console import print_info, print_ok, print_warn
+from ..constants import FD_BINARIES, TEMP_DIR_PREFIX
+from .console import print_and_raise, print_info, print_ok, print_warn
 
 if TYPE_CHECKING:
     from .cache import CacheData
@@ -196,6 +200,14 @@ class FileResult:
             Path: FileResult path.
         """
         return self.file
+
+    def is_rar(self):
+        """Check if file is a rar archive.
+
+        Returns:
+            bool: True if file is a rar archive, False otherwise.
+        """
+        return self.file.suffix.lower() == ".rar"
 
     @classmethod
     def from_string(cls, path: str | Path) -> FileResult:
@@ -388,6 +400,14 @@ class FileResults(UserList[FileResult]):
         """
         return [result.get_path() for result in self.data]
 
+    def is_rar(self) -> bool:
+        """Check if any file is a rar archive.
+
+        Returns:
+            bool: True if any file is a rar archive, False otherwise.
+        """
+        return any(result.is_rar() for result in self.data)
+
 
 def get_config_file() -> Path:
     """Return path to config file.
@@ -442,3 +462,80 @@ def cleanup():
         print_ok("Configuration and cache files deleted.")
     else:
         print_info("Cleanup aborted.")
+
+
+def is_unrar_present() -> bool:
+    """Check if RAR archives can be extracted.
+
+    Returns:
+        bool: True if RAR archives can be extracted, False otherwise.
+    """
+    return "rar" in supported_formats(operations=["extract"])
+
+
+def extract_rar(result: FileResult, media_extensions: list[str]) -> FileResult:
+    """Extract video file from rar archive.
+
+    Extracts the video into a temporary directory and returns a new FileResult pointing
+    to it.
+
+    Args:
+        result (FileResult): Archived video.
+        media_extensions (list[str]): List of allowed media extensions.
+
+    Raises:
+        typer.Exit: Archive does not contain a video file.
+
+    Returns:
+        FileResult: Extracted video.
+    """
+    if not is_unrar_present():
+        print_and_raise(
+            "No program to extract .rar archives found. "
+            "Please install one (examples: unrar, unar, bsdtar, 7z, WinRAR)."
+        )
+
+    temp_dir = tempfile.mkdtemp(prefix=TEMP_DIR_PREFIX)
+    extract_dir = Path(extract_archive(str(result.file), outdir=temp_dir))
+    extracted_files = sorted(
+        (p for p in extract_dir.glob("**/*") if p.is_file()),
+        key=lambda p: p.stat().st_size,
+    )
+
+    extracted_files = [
+        file for file in extracted_files if file.suffix.lower() in media_extensions
+    ]
+
+    if not extracted_files:
+        print_and_raise("Archive is empty or does not contain a video file.")
+
+    # In case the archive contains multiple files, assume the largest one is the video
+    # we're looking for
+    result = FileResult(extracted_files[-1])
+
+    return result
+
+
+def remove_temp_paths(max_age: int = 10800):
+    """Remove temporary directories created by mediafinder on previous invocations.
+
+    Args:
+        max_age (int, optional): Maximum age of temp paths before they will be deleted,
+            in seconds. Defaults to 10800 (3 hours).
+    """
+    temp_base = Path(tempfile.gettempdir())
+    now = time()
+    dirs_to_delete = [
+        p
+        for p in temp_base.glob(TEMP_DIR_PREFIX + "*")
+        if now - p.stat().st_mtime > max_age
+    ]
+
+    for dir_to_delete in dirs_to_delete:
+        try:
+            rmtree(dir_to_delete)
+        except Exception:
+            print_warn(
+                f"Could not delete temporary directory '{dir_to_delete}'. "
+                "Delete manually."
+            )

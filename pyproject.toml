@@ -11,6 +11,7 @@ dependencies = [
     "guessit>=3.8.0",
     "imdbinfo>=0.6.3",
     "packaging>=25.0",
+    "patool>=4.0.1",
     "rich>=14.2.0",
     "tomlkit>=0.13.3",
     "typer>=0.19.2",

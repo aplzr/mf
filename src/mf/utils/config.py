@@ -58,7 +58,7 @@ from contextlib import suppress
 from datetime import timedelta
 from pathlib import Path
 from textwrap import wrap
-from typing import Any
+from typing import Any, cast
 
 import tomlkit
 from rich.panel import Panel
@@ -66,7 +66,7 @@ from rich.table import Column, Table
 from tomlkit import TOMLDocument, comment, document, nl
 from tomlkit.exceptions import ParseError, TOMLKitError
 
-from .console import console, print_ok, print_warn
+from .console import console, print_info, print_ok, print_warn
 from .file import get_config_file, open_utf8
 from .parsers import parse_timedelta_str
 from .settings import SETTINGS, SettingSpec
@@ -96,7 +96,7 @@ def _read_config() -> TOMLDocument:
         cfg = write_default_config()
         return cfg
 
-    # Migrate missing settings silently
+    # Migrate missing settings with per-setting info messages
     modified = migrate_config(cfg)
 
     if modified:
@@ -308,7 +308,9 @@ def migrate_config(raw_cfg: TOMLDocument) -> bool:
         bool: True if configuration was modified in-place, false otherwise.
     """
     modified = False
+    info_prefix = "Configuration migration: "
 
+    # Simplify library_cache_interval to a value in seconds in v0.8.1
     # Before it got simplified to a value in seconds, the library_cache_interval setting
     # was of the format "<number><unit>", with unit one of s, m, h, d, w. Migrate to new
     # format if necessary.
@@ -325,13 +327,27 @@ def migrate_config(raw_cfg: TOMLDocument) -> bool:
                 # Update with old value converted to new format (this will not update
                 # the help text comment)
                 raw_cfg[key_interval] = interval_s
-
+                print_info(
+                    f"{info_prefix}Updated the '{key_interval}' setting "
+                    "to use new format in seconds."
+                )
                 modified = True
+
+    key_extensions = "media_extensions"
+
+    # Support RARed media in v0.11.0
+    if key_extensions in raw_cfg and ".rar" not in cast(
+        list[str], raw_cfg[key_extensions]
+    ):
+        raw_cfg[key_extensions].append(".rar")  # type: ignore [union-attr, call-arg]
+        print_info(f"{info_prefix}Added '.rar' to the '{key_extensions}' list.")
+        modified = True
 
     # Add missing settings with default values.
     if missing_settings := set(SETTINGS.keys()) - set(raw_cfg.keys()):
         for missing_setting in missing_settings:
             add_default_setting(raw_cfg, missing_setting)
+            print_info(f"{info_prefix}Added '{missing_setting}' setting.")
 
         modified = True
 
