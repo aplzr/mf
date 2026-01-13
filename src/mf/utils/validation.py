@@ -104,6 +104,8 @@ def validate_media_extensions(media_extensions: list[str]):
     # quite annoying and I currently don't see a reason for allowing it (it would be
     # akin to the match_extensions setting which got removed because it was annoying for
     # other reasons). Internally we can and do scan files without extension matching
-    # though, via Query with media_extensions=[].
+    # though, via Query with media_extensions=[]. Non-media files are currently stored
+    # in the cache so we can estimate how many files need to be scanned in a cache
+    # rebuild.
     if not media_extensions:
         print_and_raise("'media_extensions' can't be empty.")
