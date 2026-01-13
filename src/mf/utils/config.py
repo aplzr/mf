@@ -380,7 +380,7 @@ def list_settings():
 
         if spec.allowed_values is not None:
             allowed_display = ", ".join(
-                str(allowed_value) for allowed_value in spec.allowed_values
+                spec.display(allowed_value) for allowed_value in spec.allowed_values
             )
 
         table.add_row(
