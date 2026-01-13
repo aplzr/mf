@@ -118,9 +118,7 @@ def test_new_query_cache_enabled(monkeypatch, isolated_media_dir):
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("should not scan")),
     )
     # Use direct instantiation with explicit parameters (no need to mock get_config!)
-    results = NewQuery(
-        5, cache_library=True, media_extensions=[".mkv"], match_extensions=True
-    ).execute()
+    results = NewQuery(5, cache_library=True, media_extensions=[".mkv"]).execute()
     assert [r.file.name for r in results] == ["new1.mkv"]
 
 
@@ -152,7 +150,6 @@ def test_find_query_cache_enabled(monkeypatch, isolated_media_dir):
         auto_wildcards=False,
         cache_library=True,
         media_extensions=[".mkv"],
-        match_extensions=True,
     ).execute()
     # Only the .mkv file should remain after filtering
     assert [r.file.name for r in results] == ["find1.mkv"]

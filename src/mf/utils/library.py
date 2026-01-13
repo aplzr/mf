@@ -29,7 +29,6 @@ def load_library() -> FileResults:
             show_progress=True,
             cache_library=False,
             media_extensions=[],
-            match_extensions=False,
         ).execute()
     )
 

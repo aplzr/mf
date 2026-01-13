@@ -73,6 +73,7 @@ from .normalizers import (
     normalize_media_extension,
     normalize_path,
 )
+from .validation import validate_media_extensions
 
 
 def _rebuild_cache_if_enabled():
@@ -145,20 +146,11 @@ SETTINGS: dict[str, SettingSpec] = {
         key="media_extensions",
         kind="list",
         value_type=str,
-        actions={"set", "add", "remove", "clear"},
+        actions={"set", "add", "remove"},
         normalize=normalize_media_extension,
         default=DEFAULT_MEDIA_EXTENSIONS,
+        validate_all=validate_media_extensions,
         help="Allowed media file extensions.",
-    ),
-    "match_extensions": SettingSpec(
-        key="match_extensions",
-        kind="scalar",
-        value_type=bool,
-        actions={"set"},
-        normalize=normalize_bool_str,
-        default=True,
-        display=normalize_bool_to_toml,
-        help="Filter results by media_extensions.",
     ),
     "fullscreen_playback": SettingSpec(
         key="fullscreen_playback",
@@ -167,6 +159,7 @@ SETTINGS: dict[str, SettingSpec] = {
         actions={"set"},
         normalize=normalize_bool_str,
         default=True,
+        allowed_values=["true", "false"],
         display=normalize_bool_to_toml,
         help="Play files in fullscreen mode.",
     ),
@@ -177,6 +170,7 @@ SETTINGS: dict[str, SettingSpec] = {
         actions={"set"},
         normalize=normalize_bool_str,
         default=True,
+        allowed_values=["true", "false"],
         display=normalize_bool_to_toml,
         help="Use fd for file searches where possible.",
     ),
@@ -187,6 +181,7 @@ SETTINGS: dict[str, SettingSpec] = {
         actions={"set"},
         normalize=normalize_bool_str,
         default=False,
+        allowed_values=["true", "false"],
         display=normalize_bool_to_toml,
         after_update=lambda _: _rebuild_cache_if_enabled(),
         help="Cache library metadata locally.",
@@ -211,6 +206,7 @@ SETTINGS: dict[str, SettingSpec] = {
         actions={"set"},
         normalize=normalize_bool_str,
         default=True,
+        allowed_values=["true", "false"],
         display=normalize_bool_to_toml,
         help=(
             "Automatically wrap search patterns with '*' if they don't contain "
@@ -224,6 +220,7 @@ SETTINGS: dict[str, SettingSpec] = {
         actions={"set"},
         normalize=normalize_bool_str,
         default=True,
+        allowed_values=["true", "false"],
         display=normalize_bool_to_toml,
         help=(
             "Parallelize file searches over search paths. Turn off if search paths are "
@@ -237,6 +234,7 @@ SETTINGS: dict[str, SettingSpec] = {
         actions={"set"},
         normalize=normalize_bool_str,
         default=True,
+        allowed_values=["true", "false"],
         display=normalize_bool_to_toml,
         help="Display file paths in search results.",
     ),
@@ -252,6 +250,17 @@ SETTINGS: dict[str, SettingSpec] = {
             "Video player to use. 'vlc', 'mpv', or 'auto'. If 'auto', uses VLC with "
             "fallback to mpv. Note that video player(s) must be installed separately."
         ),
+    ),
+    "treat_rar_as_media": SettingSpec(
+        key="treat_rar_as_media",
+        kind="scalar",
+        value_type=bool,
+        actions={"set"},
+        normalize=normalize_bool_str,
+        default=True,
+        allowed_values=["true", "false"],
+        display=normalize_bool_to_toml,
+        help="Include .rar files in search results and auto-extract for playing.",
     ),
 }
 
@@ -314,6 +323,7 @@ def _apply_action(
     # List setting
     if action == "clear":
         raw_cfg[key].clear()  # type: ignore [union-attr]
+        spec.validate_all(raw_cfg[key])
         print_ok(f"Cleared {key}.")
         return
 

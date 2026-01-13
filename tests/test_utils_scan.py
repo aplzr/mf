@@ -91,7 +91,6 @@ def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
         lambda: SimpleNamespace(cache_library=False,
                         prefer_fd=False,
                         media_extensions=[".mp4", ".mkv"],
-                        match_extensions=True,
                         search_paths=[tmp_path.as_posix()],
                         auto_wildcards=True,
                         parallel_search=True)
@@ -109,7 +108,6 @@ def test_find_query_filters_and_sorts(monkeypatch, tmp_path: Path):
         auto_wildcards=False,
         cache_library=False,
         media_extensions=[".mp4", ".mkv"],
-        match_extensions=True,
     )
     results = q.execute()
     names = [r.file.name for r in results]
@@ -129,7 +127,7 @@ def test_new_query_latest(monkeypatch, tmp_path: Path):
 
     monkeypatch.setattr("mf.utils.scan.validate_search_paths", lambda paths: [tmp_path])
     # Use direct instantiation with explicit parameters (no need to mock get_config!)
-    q = NewQuery(2, cache_library=False, media_extensions=[".mp4"], match_extensions=True)
+    q = NewQuery(2, cache_library=False, media_extensions=[".mp4"])
     results = q.execute()
     names = [r.file.name for r in results]
     assert names == ["b.mp4", "a.mp4"]
@@ -143,7 +141,6 @@ def test_find_query_auto_wildcards_setting():
         auto_wildcards=True,
         cache_library=False,
         media_extensions=[".mp4"],
-        match_extensions=True,
     )
     assert query.pattern == "*batman*"
 
@@ -153,7 +150,6 @@ def test_find_query_auto_wildcards_setting():
         auto_wildcards=False,
         cache_library=False,
         media_extensions=[".mp4"],
-        match_extensions=True,
     )
     assert query.pattern == "batman"
 

@@ -67,8 +67,8 @@ def test_config_clear_media_extensions(monkeypatch):
 
 
 def test_invalid_bool_value(monkeypatch):
-    # match_extensions set expects 'true' or 'false'; provide invalid
-    result = runner.invoke(app_config, ["set", "match_extensions", "notabool"])
+    # display_paths set expects 'true' or 'false'; provide invalid
+    result = runner.invoke(app_config, ["set", "display_paths", "notabool"])
     assert result.exit_code != 0
     assert "Invalid boolean value" in result.stdout
 

@@ -41,14 +41,14 @@ def test_migrate_config_preserves_existing_settings(isolated_config):
     # Create config with custom value
     cfg = document()
     cfg["search_paths"] = ["/custom/path"]
-    cfg["match_extensions"] = False
+    cfg["display_paths"] = False
 
     # Migrate
     modified = migrate_config(cfg)
 
     # Assert existing settings preserved
     assert cfg["search_paths"] == ["/custom/path"]
-    assert cfg["match_extensions"] is False
+    assert cfg["display_paths"] is False
 
 
 def test_migrate_config_no_changes_when_complete(isolated_config):
@@ -365,7 +365,7 @@ def test_upgrade_scenario(isolated_config):
     """Simulate old config missing new settings, verify auto-upgrade."""
     # Simulate old config with only original settings
     # (e.g., missing newly added settings like auto_wildcards, parallel_search, etc.)
-    old_settings = ["search_paths", "media_extensions", "match_extensions"]
+    old_settings = ["search_paths", "media_extensions"]
 
     cfg = document()
     for setting in old_settings:

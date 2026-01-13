@@ -47,12 +47,12 @@ def test_config_clear_media_extensions(tmp_path, monkeypatch):
     assert cfg["media_extensions"] == []
 
 
-def test_config_set_match_extensions(tmp_path, monkeypatch):
+def test_config_set(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
-    r = runner.invoke(app_config, ["set", "match_extensions", "false"])  # disable
+    r = runner.invoke(app_config, ["set", "display_paths", "false"])  # disable
     assert r.exit_code == 0
     cfg = get_raw_config()
-    assert cfg["match_extensions"] is False
+    assert cfg["display_paths"] is False
 
 
 def test_config_set_match_extensions_too_many_values(tmp_path, monkeypatch):
@@ -65,9 +65,9 @@ def test_config_set_match_extensions_too_many_values(tmp_path, monkeypatch):
 
 def test_config_get_prints_boolean(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
-    runner.invoke(app_config, ["set", "match_extensions", "true"])  # set
-    r = runner.invoke(app_config, ["get", "match_extensions"])  # should print 'true'
-    assert "match_extensions = true" in r.stdout
+    runner.invoke(app_config, ["set", "display_paths", "true"])  # set
+    r = runner.invoke(app_config, ["get", "display_paths"])  # should print 'true'
+    assert "display_paths = true" in r.stdout
 
 
 def test_config_file_outputs_path(tmp_path, monkeypatch):

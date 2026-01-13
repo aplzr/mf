@@ -144,14 +144,6 @@ mf config set media_extensions ".mp4" ".mkv" ".avi" ".mov" ".wmv" ".rar"
 
 By default, common video formats and `.rar` archives are included.
 
-#### Extension Matching
-Toggle whether to filter results by media extensions:
-
-```bash
-mf config set match_extensions true # Only return configured media types
-mf config set match_extensions false # Return all files matching pattern
-```
-
 #### Automatic wildcard wrapping
 Toggle whether search patterns should be wrapped with wildcards automatically:
 

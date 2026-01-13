@@ -110,14 +110,14 @@ def test_play_generic_exception(monkeypatch, tmp_path):
     assert "Error launching vlc" in result.stdout
 
 
-def test_match_extensions_add_not_supported(monkeypatch):
-    result = runner.invoke(app_config, ["add", "match_extensions", "true"])
+def test_add_not_supported(monkeypatch):
+    result = runner.invoke(app_config, ["add", "display_paths", "true"])
     assert result.exit_code != 0
     assert "not supported" in result.stdout
 
 
-def test_match_extensions_clear_not_supported(monkeypatch):
-    result = runner.invoke(app_config, ["clear", "match_extensions"])
+def test_clear_not_supported(monkeypatch):
+    result = runner.invoke(app_config, ["clear", "display_paths"])
     assert result.exit_code != 0
     assert "not supported" in result.stdout
 
@@ -142,9 +142,9 @@ def test_scan_path_python_permission(monkeypatch, tmp_path):
     assert results == []  # skipped
 
 
-def test_set_match_extensions_false(monkeypatch):
+def test_set_false(monkeypatch):
     # Ensure we can set false and cover branch
-    result = runner.invoke(app_config, ["set", "match_extensions", "false"])
+    result = runner.invoke(app_config, ["set", "display_paths", "false"])
     assert result.exit_code == 0
     cfg = get_raw_config()
-    assert cfg["match_extensions"] is False
+    assert cfg["display_paths"] is False

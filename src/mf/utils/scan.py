@@ -522,26 +522,23 @@ class Query(ABC):
     Attributes:
         cache_library (bool): Loads library metadata from cache if True, performs
             a fresh filescan otherwise.
-        media_extensions (list[str]): Media extensions to match if matching is
-            turned on.
-        match_extensions (bool): Whether to match media extensions.
+        media_extensions (list[str]): Media extensions to filter by.
     """
 
     def __init__(
-        self, cache_library: bool, media_extensions: list[str], match_extensions: bool
+        self,
+        cache_library: bool,
+        media_extensions: list[str],
     ):
         """Initialize query.
 
         Args:
             cache_library (bool): Loads library metadata from cache if True, performs
                 a fresh filescan otherwise.
-            media_extensions (list[str]): Media extensions to match if matching is
-                turned on.
-            match_extensions (bool): Whether to match media extensions.
+            media_extensions (list[str]): Media extensions to filter by.
         """
         self.cache_library = cache_library
         self.media_extensions = media_extensions
-        self.match_extensions = match_extensions
 
     @classmethod
     def _get_config_params(cls) -> dict:
@@ -551,7 +548,6 @@ class Query(ABC):
         {
             "cache_library": <bool>,
             "media_extensions": <list[str]>,
-            "match_extensions": <bool>,
         }
         """
         cfg = Configuration.from_config()
@@ -559,7 +555,6 @@ class Query(ABC):
         return {
             "cache_library": cfg.cache_library,
             "media_extensions": cfg.media_extensions,
-            "match_extensions": cfg.match_extensions,
         }
 
     @abstractmethod
@@ -588,9 +583,7 @@ class FindQuery(Query):
         show_progress (bool): Show progress bar during scanning. Defaults to False.
         cache_library (bool): Loads library metadata from cache if True, performs
             a fresh filescan otherwise.
-        media_extensions (list[str]): Media extensions to match if matching is
-            turned on.
-        match_extensions (bool): Whether to match media extensions.
+        media_extensions (list[str]): Media extensions to filter by.
     """
 
     def __init__(
@@ -602,7 +595,6 @@ class FindQuery(Query):
         *,
         cache_library: bool,
         media_extensions: list[str],
-        match_extensions: bool,
     ):
         """Initialize the find query.
 
@@ -616,9 +608,7 @@ class FindQuery(Query):
                 to False.
             cache_library (bool): Loads library metadata from cache if True, performs
                 a fresh filescan otherwise.
-            media_extensions (list[str]): Media extensions to match if matching is
-                turned on.
-            match_extensions (bool): Whether to match media extensions.
+            media_extensions (list[str]): Media extensions to filter by.
 
         """
         if auto_wildcards:
@@ -632,7 +622,6 @@ class FindQuery(Query):
         super().__init__(
             cache_library=cache_library,
             media_extensions=media_extensions,
-            match_extensions=match_extensions,
         )
 
     @classmethod
@@ -675,9 +664,7 @@ class FindQuery(Query):
             )
         )
 
-        results.filter_by_extension(
-            self.media_extensions if self.match_extensions else None
-        )
+        results.filter_by_extension(self.media_extensions)
         results.filter_by_pattern(self.pattern)
         results.sort()
 
@@ -698,9 +685,7 @@ class NewQuery(Query):
         show_progress (bool): Show progress bar during scanning. Defaults to False.
         cache_library (bool): Loads library metadata from cache if True, performs
             a fresh filescan otherwise.
-        media_extensions (list[str]): Media extensions to match if matching is
-            turned on.
-        match_extensions (bool): Whether to match media extensions.
+        media_extensions (list[str]): Media extensions to filter by.
     """
 
     def __init__(
@@ -710,7 +695,6 @@ class NewQuery(Query):
         *,
         cache_library: bool,
         media_extensions: list[str],
-        match_extensions: bool,
     ):
         """Initialize the new files query.
 
@@ -720,9 +704,7 @@ class NewQuery(Query):
                 to False.
             cache_library (bool): Loads library metadata from cache if True, performs
                 a fresh filescan otherwise.
-            media_extensions (list[str]): Media extensions to match if matching is
-                turned on.
-            match_extensions (bool): Whether to match media extensions.
+            media_extensions (list[str]): Media extensions to filter by.
         """
         self.n = n
         self.show_progress = show_progress
@@ -730,7 +712,6 @@ class NewQuery(Query):
         super().__init__(
             cache_library=cache_library,
             media_extensions=media_extensions,
-            match_extensions=match_extensions,
         )
 
     @classmethod
@@ -767,8 +748,6 @@ class NewQuery(Query):
             )
             results.sort(by_mtime=True)
 
-        results.filter_by_extension(
-            self.media_extensions if self.match_extensions else None
-        )
+        results.filter_by_extension(self.media_extensions)
 
         return results[: self.n]
