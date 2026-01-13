@@ -202,9 +202,9 @@ class Configuration:
                 setattr(self, setting, spec.from_toml(values))
 
         if (
-            "media_extensions" in raw_config
-            and "treat_rar_as_media" in raw_config
-            and raw_config["treat_rar_as_media"] is True
+            hasattr(self, "media_extensions")
+            and hasattr(self, "treat_rar_as_media")
+            and self.treat_rar_as_media is True
         ):
             self.media_extensions.append(".rar")
 
