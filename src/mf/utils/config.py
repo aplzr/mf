@@ -205,6 +205,7 @@ class Configuration:
             hasattr(self, "media_extensions")
             and hasattr(self, "treat_rar_as_media")
             and self.treat_rar_as_media is True
+            and ".rar" not in self.media_extensions
         ):
             self.media_extensions.append(".rar")
 

@@ -448,6 +448,7 @@ def _print_stats(
     layout.add_panel(make_extension_histogram(results, format=layout.panel_format))
     layout.add_panel(make_filesize_histogram(results, format=layout.panel_format))
     layout.add_panel(make_file_age_histogram(results, format=layout.panel_format))
+
     print_summary(results, cfg.search_paths, cfg.media_extensions)
     layout.print()
 
