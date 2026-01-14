@@ -7,7 +7,6 @@ from .config import Configuration
 from .file import FileResults
 
 
-# TODO: make progress bar optional
 def load_library(show_progress: bool = False) -> FileResults:
     """Loads the full media library from cache if caching is activated, does a fresh
     filesystem scan with stat caching otherwise.
