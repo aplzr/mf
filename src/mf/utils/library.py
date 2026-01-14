@@ -9,18 +9,19 @@ from .file import FileResults
 
 # TODO: make progress bar optional
 def load_library() -> FileResults:
-    """Loads the full library from cache if caching is activated, does a fresh
+    """Loads the full media library from cache if caching is activated, does a fresh
     filesystem scan with stat caching otherwise.
 
     Returns:
-        FileResilts: Full library.
+        FileResilts: Full library (media files only).
     """
     from .scan import FindQuery
 
-    cache_library = Configuration.from_config().cache_library
+    cfg = Configuration.from_config()
+    cache_library = cfg.cache_library
 
     return (
-        load_library_cache()
+        load_library_cache().filtered_by_extension(cfg.media_extensions)
         if cache_library
         else FindQuery(
             "*",
@@ -28,7 +29,7 @@ def load_library() -> FileResults:
             cache_stat=True,
             show_progress=True,
             cache_library=False,
-            media_extensions=[],
+            media_extensions=cfg.media_extensions,
         ).execute()
     )
 
