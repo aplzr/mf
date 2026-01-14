@@ -45,7 +45,7 @@ def show():
     if "latest additions" not in pattern:
         pattern = f"Search pattern: {pattern}"
 
-    print_search_results(pattern, results, Configuration.from_config().display_paths)
+    print_search_results(results, pattern, Configuration.from_config().display_paths)
 
 
 @app_last.command()

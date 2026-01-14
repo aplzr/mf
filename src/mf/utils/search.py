@@ -55,16 +55,14 @@ from .file import FileResult, FileResults, get_search_cache_file, open_utf8
 from .playlist import get_last_played_index
 
 
-def print_search_results(title: str, results: FileResults, display_paths: bool):
+def print_search_results(results: FileResults, title: str, display_paths: bool):
     """Render a table of search results.
 
     Args:
+        results (Fil eResults): Search results.
         title (str): Title displayed above table.
-        results (FileResults): Search results.
         display_paths (bool): Whether to display file paths.
     """
-    # TODO: Change signature to
-    # print_search_results(results: FileResults, title: str, display_paths: bool)
     max_index_width = len(str(len(results))) if results else 1
 
     table = Table(show_header=False, box=None, padding=(0, 1))

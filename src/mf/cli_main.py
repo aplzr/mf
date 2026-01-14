@@ -96,7 +96,7 @@ def find(
     display_paths = Configuration.from_config().display_paths
 
     save_search_results(query.pattern, results)
-    print_search_results(f"Search pattern: {query.pattern}", results, display_paths)
+    print_search_results(results, f"Search pattern: {query.pattern}", display_paths)
 
 
 @app_mf.command()
@@ -112,7 +112,7 @@ def new(
         print_and_raise("No media files found (empty collection).")
 
     save_search_results(pattern, newest_files)
-    print_search_results(pattern, newest_files, display_paths)
+    print_search_results(newest_files, pattern, display_paths)
 
 
 @app_mf.command()
