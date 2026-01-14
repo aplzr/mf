@@ -150,6 +150,7 @@ SETTINGS: dict[str, SettingSpec] = {
         normalize=normalize_media_extension,
         default=DEFAULT_MEDIA_EXTENSIONS,
         validate_all=validate_media_extensions,
+        after_update=lambda _: _rebuild_cache_if_enabled(),
         help="Allowed media file extensions.",
     ),
     "fullscreen_playback": SettingSpec(
@@ -260,6 +261,7 @@ SETTINGS: dict[str, SettingSpec] = {
         default=True,
         allowed_values=[True, False],
         display=normalize_bool_to_toml,
+        after_update=lambda _: _rebuild_cache_if_enabled(),
         help="Include .rar files in search results and auto-extract for playing.",
     ),
 }
