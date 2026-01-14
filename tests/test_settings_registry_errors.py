@@ -16,8 +16,8 @@ def test_unsupported_action_scalar(monkeypatch):
 
 def test_scalar_multi_value_error(monkeypatch):
     """Providing multiple values to scalar setting should raise error."""
-    # match_extensions is scalar; passing two values triggers error path
-    result = runner.invoke(app_config, ["set", "match_extensions", "true", "false"])
+    # display_paths is scalar; passing two values triggers error path
+    result = runner.invoke(app_config, ["set", "display_paths", "true", "false"])
     assert result.exit_code != 0
     assert "requires a single value" in result.stdout
     # Ensure original value not overwritten unpredictably; it should remain whatever
@@ -26,4 +26,4 @@ def test_scalar_multi_value_error(monkeypatch):
     cfg = get_raw_config()
     # Value should still be boolean (default) either True/False;
     # we just assert key exists.
-    assert "match_extensions" in cfg
+    assert "display_paths" in cfg

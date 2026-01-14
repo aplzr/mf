@@ -101,7 +101,7 @@ def test_make_histogram_sorts_and_limits():
     assert "(top 2)" in str(panel.title)
 
 
-def test_make_extension_histogram_all_files(tmp_path):
+def test_make_extension_histogram(tmp_path):
     """Test extension histogram for all files returns Panel."""
     from pathlib import Path
 
@@ -121,33 +121,10 @@ def test_make_extension_histogram_all_files(tmp_path):
         f.touch()
 
     results = FileResults.from_paths([str(f) for f in files])
-    panel = make_extension_histogram(results, type="all_files", format=format)
+    panel = make_extension_histogram(results, format=format)
 
     assert isinstance(panel, Panel)
-    assert "file extensions" in str(panel.title).lower()
-    # Should include top_n in title
-    assert "(top" in str(panel.title)
-
-
-def test_make_extension_histogram_media_files(tmp_path):
-    """Test extension histogram for media files returns Panel."""
-    from pathlib import Path
-
-    from mf.utils.file import FileResults
-    from mf.utils.stats import make_extension_histogram
-
-    format = PanelFormat(panel_width=50)
-
-    # Create test files
-    files = [tmp_path / "movie.mp4", tmp_path / "show.mkv"]
-    for f in files:
-        f.touch()
-
-    results = FileResults.from_paths([str(f) for f in files])
-    panel = make_extension_histogram(results, type="media_files", format=format)
-
-    assert isinstance(panel, Panel)
-    assert "media file extensions" in str(panel.title).lower()
+    assert "extension" in str(panel.title).lower()
 
 
 def test_make_resolution_histogram(tmp_path):
@@ -390,35 +367,4 @@ def test_print_stats_runs_without_error(monkeypatch, tmp_path):
     monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
 
     # Should run without error
-    print_stats()
-
-
-def test_print_stats_without_configured_extensions(monkeypatch, tmp_path):
-    """Test print_stats when no media extensions are configured."""
-    from pathlib import Path
-
-    from mf.utils.file import FileResult, FileResults
-
-    # Create test files with resolution info
-    files = []
-    test_files = ["movie.1080p.mp4", "show.720p.mkv", "video.4k.mp4"]
-    for filename in test_files:
-        f = tmp_path / filename
-        f.write_bytes(b"0" * 1000)
-        files.append(f)
-
-    # FileResult expects Path, not str
-    results = FileResults([FileResult(f, os.stat(f)) for f in files])
-
-    # Mock with no media extensions configured
-    monkeypatch.setattr(
-        "mf.utils.stats.Configuration.from_config",
-        lambda: SimpleNamespace(
-            media_extensions=[],
-            search_paths=[str(tmp_path)],
-            )
-    )
-    monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
-
-    # Should run without error (won't create media_files histograms)
     print_stats()

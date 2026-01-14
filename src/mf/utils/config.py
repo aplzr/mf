@@ -58,7 +58,7 @@ from contextlib import suppress
 from datetime import timedelta
 from pathlib import Path
 from textwrap import wrap
-from typing import Any, cast
+from typing import Any
 
 import tomlkit
 from rich.panel import Panel
@@ -166,7 +166,6 @@ class Configuration:
 
     search_paths: list[Path]
     media_extensions: list[str]
-    match_extensions: bool
     fullscreen_playback: bool
     prefer_fd: bool
     cache_library: bool
@@ -175,6 +174,7 @@ class Configuration:
     parallel_search: bool
     display_paths: bool
     video_player: str
+    treat_rar_as_media: bool
 
     def __init__(
         self, raw_config: TOMLDocument, settings_registry: dict[str, SettingSpec]
@@ -200,6 +200,14 @@ class Configuration:
                 setattr(self, setting, [spec.from_toml(value) for value in values])
             else:
                 setattr(self, setting, spec.from_toml(values))
+
+        if (
+            hasattr(self, "media_extensions")
+            and hasattr(self, "treat_rar_as_media")
+            and self.treat_rar_as_media is True
+            and ".rar" not in self.media_extensions
+        ):
+            self.media_extensions.append(".rar")
 
     def __repr__(self) -> str:
         """Return a representation showing all configured settings."""
@@ -333,23 +341,23 @@ def migrate_config(raw_cfg: TOMLDocument) -> bool:
                 )
                 modified = True
 
-    key_extensions = "media_extensions"
-
-    # Support RARed media in v0.11.0
-    if key_extensions in raw_cfg and ".rar" not in cast(
-        list[str], raw_cfg[key_extensions]
-    ):
-        raw_cfg[key_extensions].append(".rar")  # type: ignore [union-attr, call-arg]
-        print_info(f"{info_prefix}Added '.rar' to the '{key_extensions}' list.")
-        modified = True
-
-    # Add missing settings with default values.
+    # Add missing settings with default values
+    # v0.8.0: auto_wildcards, parallel_search, display_paths
+    # v0.9.0: video_player
+    # v0.11.0: treat_rar_as_media
     if missing_settings := set(SETTINGS.keys()) - set(raw_cfg.keys()):
         for missing_setting in missing_settings:
             add_default_setting(raw_cfg, missing_setting)
-            print_info(f"{info_prefix}Added '{missing_setting}' setting.")
+            print_info(f"{info_prefix}Added new setting '{missing_setting}'.")
 
         modified = True
+
+    # Remove obsolete settings
+    # v0.11.0: match_extensions
+    if obsolete_settings := set(raw_cfg.keys()) - set(SETTINGS.keys()):
+        for obsolete_setting in obsolete_settings:
+            raw_cfg.remove(obsolete_setting)
+            print_info(f"Removed deprecated setting '{obsolete_setting}'.")
 
     return modified
 
@@ -373,7 +381,7 @@ def list_settings():
 
         if spec.allowed_values is not None:
             allowed_display = ", ".join(
-                str(allowed_value) for allowed_value in spec.allowed_values
+                spec.display(allowed_value) for allowed_value in spec.allowed_values
             )
 
         table.add_row(

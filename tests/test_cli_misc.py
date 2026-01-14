@@ -47,28 +47,9 @@ def test_imdb_parse_failure(monkeypatch, tmp_path):
     assert "Could not parse a title" in result.stdout
 
 
-def test_config_clear_paths(monkeypatch):
-    cfg = get_raw_config()
-    cfg["search_paths"] = [Path.cwd().resolve().as_posix()]
-    write_config(cfg)
-    result = runner.invoke(app_config, ["clear", "search_paths"])
-    assert result.exit_code == 0
-    assert get_raw_config()["search_paths"] == []
-
-
-def test_config_clear_media_extensions(monkeypatch):
-    cfg = get_raw_config()
-    # Guarantee some entries
-    cfg["media_extensions"] = [".mp4", ".mkv"]
-    write_config(cfg)
-    result = runner.invoke(app_config, ["clear", "media_extensions"])
-    assert result.exit_code == 0
-    assert get_raw_config()["media_extensions"] == []
-
-
 def test_invalid_bool_value(monkeypatch):
-    # match_extensions set expects 'true' or 'false'; provide invalid
-    result = runner.invoke(app_config, ["set", "match_extensions", "notabool"])
+    # display_paths set expects 'true' or 'false'; provide invalid
+    result = runner.invoke(app_config, ["set", "display_paths", "notabool"])
     assert result.exit_code != 0
     assert "Invalid boolean value" in result.stdout
 

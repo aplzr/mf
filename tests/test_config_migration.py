@@ -41,14 +41,14 @@ def test_migrate_config_preserves_existing_settings(isolated_config):
     # Create config with custom value
     cfg = document()
     cfg["search_paths"] = ["/custom/path"]
-    cfg["match_extensions"] = False
+    cfg["display_paths"] = False
 
     # Migrate
     modified = migrate_config(cfg)
 
     # Assert existing settings preserved
     assert cfg["search_paths"] == ["/custom/path"]
-    assert cfg["match_extensions"] is False
+    assert cfg["display_paths"] is False
 
 
 def test_migrate_config_no_changes_when_complete(isolated_config):
@@ -193,56 +193,70 @@ def test_migrate_config_library_cache_interval_invalid_format(isolated_config):
     assert cfg["library_cache_interval"] == "invalid"
 
 
-def test_migrate_config_adds_rar_extension(isolated_config):
-    """Verify .rar is added to media_extensions if missing."""
-    # Create config with media_extensions but without .rar
+def test_migrate_config_removes_obsolete_match_extensions(isolated_config):
+    """Verify obsolete match_extensions setting is removed during migration."""
+    # Create config with the obsolete match_extensions setting
     cfg = document()
     for setting in SETTINGS:
         add_default_setting(cfg, setting)
 
-    cfg["media_extensions"] = [".mp4", ".mkv", ".avi"]  # No .rar
+    # Add obsolete setting
+    cfg["match_extensions"] = True
+
+    # Migrate
+    migrate_config(cfg)
+
+    # Assert obsolete setting was removed
+    assert "match_extensions" not in cfg
+    # All current settings should still be present
+    for setting in SETTINGS:
+        assert setting in cfg
+
+
+def test_migrate_config_removes_multiple_obsolete_settings(isolated_config):
+    """Verify multiple obsolete settings are all removed."""
+    # Create config with current settings plus obsolete ones
+    cfg = document()
+    for setting in SETTINGS:
+        add_default_setting(cfg, setting)
+
+    # Add multiple obsolete settings
+    cfg["match_extensions"] = True
+    cfg["some_old_setting"] = "value"
+    cfg["another_obsolete"] = False
+
+    # Migrate
+    migrate_config(cfg)
+
+    # Assert all obsolete settings were removed
+    assert "match_extensions" not in cfg
+    assert "some_old_setting" not in cfg
+    assert "another_obsolete" not in cfg
+    # All current settings should still be present
+    for setting in SETTINGS:
+        assert setting in cfg
+
+
+def test_migrate_config_adds_treat_rar_as_media(isolated_config):
+    """Verify treat_rar_as_media is added to old configs."""
+    # Create old config without treat_rar_as_media
+    cfg = document()
+    cfg["search_paths"] = ["/test/path"]
+    cfg["media_extensions"] = [".mp4", ".mkv"]
+    # Intentionally omit treat_rar_as_media
 
     # Migrate
     modified = migrate_config(cfg)
 
-    # Assert .rar was added
+    # Assert treat_rar_as_media was added with default value
     assert modified
-    assert ".rar" in cfg["media_extensions"]
+    assert "treat_rar_as_media" in cfg
+    assert cfg["treat_rar_as_media"] is True  # Default value
 
 
-def test_migrate_config_preserves_existing_rar_extension(isolated_config):
-    """Verify .rar is not duplicated if already present."""
-    # Create config with .rar already in media_extensions
-    cfg = document()
-    for setting in SETTINGS:
-        add_default_setting(cfg, setting)
-
-    cfg["media_extensions"] = [".mp4", ".mkv", ".rar", ".avi"]
-
-    # Migrate
-    modified = migrate_config(cfg)
-
-    # Assert .rar is present exactly once
-    assert cfg["media_extensions"].count(".rar") == 1
-    # Other settings might still cause modified=True if this is a fresh config
-    # But at minimum, .rar should not be duplicated
 
 
-def test_migrate_config_rar_extension_with_empty_list(isolated_config):
-    """Verify .rar is added even when media_extensions is empty."""
-    # Create config with empty media_extensions
-    cfg = document()
-    for setting in SETTINGS:
-        add_default_setting(cfg, setting)
 
-    cfg["media_extensions"] = []
-
-    # Migrate
-    modified = migrate_config(cfg)
-
-    # Assert .rar was added
-    assert modified
-    assert ".rar" in cfg["media_extensions"]
 
 
 # --- Integration tests for _read_config() ---
@@ -365,7 +379,7 @@ def test_upgrade_scenario(isolated_config):
     """Simulate old config missing new settings, verify auto-upgrade."""
     # Simulate old config with only original settings
     # (e.g., missing newly added settings like auto_wildcards, parallel_search, etc.)
-    old_settings = ["search_paths", "media_extensions", "match_extensions"]
+    old_settings = ["search_paths", "media_extensions"]
 
     cfg = document()
     for setting in old_settings:

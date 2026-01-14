@@ -12,7 +12,6 @@ def test_scan_search_paths_progress_no_estimate(monkeypatch, tmp_path: Path):
                     cache_stat=False,
                     cache_library=False,
                     media_extensions=[],
-                    match_extensions=False,
                     search_paths=[tmp_path.as_posix()],
                     parallel_search=True)
     )

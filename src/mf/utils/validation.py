@@ -88,3 +88,24 @@ def validate_search_cache(cache_data: dict[str, Any]) -> dict[str, Any]:
         raise KeyError(f"Cache missing required keys: {missing}")
 
     return cache_data
+
+
+def validate_media_extensions(media_extensions: list[str]):
+    """Validate media extensions.
+
+    Raises:
+        typer.Exit: List of media extensions is empty.
+
+    Args:
+        media_extensions (list[str]): Media extensions.
+    """
+    # NOTE: media extensions can't be empty because otherwise handling the specical case
+    # where '.rar' gets added to the list (when treat_rar_as_media == True) becomes
+    # quite annoying and I currently don't see a reason for allowing it (it would be
+    # akin to the match_extensions setting which got removed because it was annoying for
+    # other reasons). Internally we can and do scan files without extension matching
+    # though, via Query with media_extensions=[]. Non-media files are currently stored
+    # in the cache so we can estimate how many files need to be scanned in a cache
+    # rebuild.
+    if not media_extensions:
+        print_and_raise("'media_extensions' can't be empty.")

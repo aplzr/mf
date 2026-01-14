@@ -22,7 +22,7 @@ def test_config_unknown_key_set():
     for expected in [
         "search_paths",
         "media_extensions",
-        "match_extensions",
+        "display_paths",
         "fullscreen_playback",
         "prefer_fd",
     ]:
