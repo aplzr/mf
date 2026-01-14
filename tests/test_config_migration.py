@@ -193,56 +193,9 @@ def test_migrate_config_library_cache_interval_invalid_format(isolated_config):
     assert cfg["library_cache_interval"] == "invalid"
 
 
-def test_migrate_config_adds_rar_extension(isolated_config):
-    """Verify .rar is added to media_extensions if missing."""
-    # Create config with media_extensions but without .rar
-    cfg = document()
-    for setting in SETTINGS:
-        add_default_setting(cfg, setting)
-
-    cfg["media_extensions"] = [".mp4", ".mkv", ".avi"]  # No .rar
-
-    # Migrate
-    modified = migrate_config(cfg)
-
-    # Assert .rar was added
-    assert modified
-    assert ".rar" in cfg["media_extensions"]
 
 
-def test_migrate_config_preserves_existing_rar_extension(isolated_config):
-    """Verify .rar is not duplicated if already present."""
-    # Create config with .rar already in media_extensions
-    cfg = document()
-    for setting in SETTINGS:
-        add_default_setting(cfg, setting)
 
-    cfg["media_extensions"] = [".mp4", ".mkv", ".rar", ".avi"]
-
-    # Migrate
-    modified = migrate_config(cfg)
-
-    # Assert .rar is present exactly once
-    assert cfg["media_extensions"].count(".rar") == 1
-    # Other settings might still cause modified=True if this is a fresh config
-    # But at minimum, .rar should not be duplicated
-
-
-def test_migrate_config_rar_extension_with_empty_list(isolated_config):
-    """Verify .rar is added even when media_extensions is empty."""
-    # Create config with empty media_extensions
-    cfg = document()
-    for setting in SETTINGS:
-        add_default_setting(cfg, setting)
-
-    cfg["media_extensions"] = []
-
-    # Migrate
-    modified = migrate_config(cfg)
-
-    # Assert .rar was added
-    assert modified
-    assert ".rar" in cfg["media_extensions"]
 
 
 # --- Integration tests for _read_config() ---

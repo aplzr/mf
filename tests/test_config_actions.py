@@ -40,13 +40,6 @@ def test_config_remove_missing(tmp_path, monkeypatch):
     assert "skipping" in r.stdout
 
 
-def test_config_clear_media_extensions(tmp_path, monkeypatch):
-    _set_env(monkeypatch, tmp_path)
-    runner.invoke(app_config, ["clear", "media_extensions"])  # ensure clears
-    cfg = get_raw_config()
-    assert cfg["media_extensions"] == []
-
-
 def test_config_set(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
     r = runner.invoke(app_config, ["set", "display_paths", "false"])  # disable
@@ -55,10 +48,10 @@ def test_config_set(tmp_path, monkeypatch):
     assert cfg["display_paths"] is False
 
 
-def test_config_set_match_extensions_too_many_values(tmp_path, monkeypatch):
+def test_config_set_display_paths_too_many_values(tmp_path, monkeypatch):
     _set_env(monkeypatch, tmp_path)
     r = runner.invoke(
-        app_config, ["set", "match_extensions", "true", "false"]
+        app_config, ["set", "display_paths", "true", "false"]
     )  # invalid
     assert r.exit_code != 0
 
