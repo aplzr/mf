@@ -78,7 +78,7 @@ from datetime import datetime
 from os import stat_result
 from pathlib import Path
 from statistics import mean
-from typing import Any, Literal, TypeAlias
+from typing import Any, TypeAlias
 
 from rich import box
 from rich.panel import Panel
@@ -191,7 +191,6 @@ def make_histogram(
 
 def make_extension_histogram(
     results: FileResults,
-    type: Literal["all_files", "media_files"],
     format: PanelFormat,
 ) -> Panel:
     """Make a histogram of file extensions.
@@ -199,8 +198,6 @@ def make_extension_histogram(
     Args:
         results (FileResults): File collection. For type "media_files", collection must
             be filtered to media files.
-        type (Literal["all_files", "media_files"]): Histogram type. Defines histogram
-            formatting.
         format (PanelFormat): Panel format.
 
     Returns:
@@ -208,22 +205,14 @@ def make_extension_histogram(
     """
     bins = get_string_counts(file.suffix for file in results.get_paths())
 
-    if type == "all_files":
-        return make_histogram(
-            bins=bins,
-            title="File extensions",
-            format=format,
-            sort=True,
-            sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
-            top_n=10,
-        )
-    else:  # media_files
-        return make_histogram(
-            bins=bins,
-            title="Media file extensions",
-            format=format,
-            sort=True,
-        )
+    return make_histogram(
+        bins=bins,
+        title="Extension",
+        format=format,
+        sort=True,
+        sort_key=lambda bin_data: (-bin_data[1], bin_data[0]),
+        top_n=10,
+    )
 
 
 def make_resolution_histogram(results: FileResults, format: PanelFormat) -> Panel:
@@ -238,7 +227,7 @@ def make_resolution_histogram(results: FileResults, format: PanelFormat) -> Pane
     """
     return make_histogram(
         bins=get_string_counts(parse_resolutions(results)),
-        title="File resolution",
+        title="Resolution",
         format=format,
         sort=True,
         sort_key=lambda bin_data: int("".join(filter(str.isdigit, bin_data[0]))),
@@ -268,11 +257,11 @@ def make_filesize_histogram(results: FileResults, format: PanelFormat) -> Panel:
         (label, count) for label, count in zip(bin_labels, bin_counts)
     ]
 
-    return make_histogram(bins=bins, title="Media file size", format=format)
+    return make_histogram(bins=bins, title="Size", format=format)
 
 
 def make_file_age_histogram(
-    results: FileResults, format: PanelFormat, title: str = "File age"
+    results: FileResults, format: PanelFormat, title: str = "Age"
 ) -> Panel:
     """Make a histogram of file age by year.
 
@@ -282,7 +271,7 @@ def make_file_age_histogram(
         title (str, optional): Panel title. Defaults to "File age".
 
     Returns:
-        Panel: _description_
+        Panel: Ready-to-render histogram panel.
     """
     year_strings = [
         datetime.fromtimestamp(file.stat.st_mtime).strftime("%Y")
@@ -448,39 +437,17 @@ def _print_stats(
 ):
     """Print results statistics.
 
+    Prints a summary table (per-path + total) followed by a collection of histograms.
+
     Args:
         results (FileResults): Results to summarize.
         layout (ColumnLayout): Terminal layout to use for printing.
         cfg (Configuration): mediafinder configuration.
     """
-    if cfg.media_extensions:
-        results_media = results.filtered_by_extension(cfg.media_extensions)
-
-    # Create statistics
-    layout.add_panel(
-        make_extension_histogram(results, type="all_files", format=layout.panel_format)
-    )
     layout.add_panel(make_resolution_histogram(results, format=layout.panel_format))
-
-    if cfg.media_extensions:
-        layout.add_panel(
-            make_extension_histogram(
-                results_media, type="media_files", format=layout.panel_format
-            )
-        )
-        layout.add_panel(
-            make_filesize_histogram(results_media, format=layout.panel_format)
-        )
-        layout.add_panel(
-            make_file_age_histogram(
-                results_media, format=layout.panel_format, title="Media file age"
-            )
-        )
-    else:
-        layout.add_panel(make_file_age_histogram(results, format=layout.panel_format))
-
-    # Render summary statistics table followed by more in-depth statistics in a
-    # multi-column layout
+    layout.add_panel(make_extension_histogram(results, format=layout.panel_format))
+    layout.add_panel(make_filesize_histogram(results, format=layout.panel_format))
+    layout.add_panel(make_file_age_histogram(results, format=layout.panel_format))
     print_summary(results, cfg.search_paths, cfg.media_extensions)
     layout.print()
 
@@ -505,19 +472,20 @@ def print_summary(
             into "all files" and "media files".
     """
     subsets = split_by_search_path(results, search_paths)
-    subsets["Full library"] = results
+
+    if len(subsets) > 1:
+        subsets["Full library"] = results
 
     table = Table(box=box.ROUNDED, padding=(0, 1), header_style="bright_cyan")
     table.add_column("Subset", justify="left", overflow="ellipsis")
 
-    for header in ["Files", "Media", "Newest", "Oldest", "Av. Size", "Total Size"]:
+    for header in ["Media files", "Newest", "Oldest", "Av. Size", "Total Size"]:
         table.add_column(header, justify="right")
 
     def build_row(label: str, subset: FileResults) -> tuple[str, ...]:
         subset.sort(by_mtime=True)
         subset_media = subset.filtered_by_extension(media_extensions)
 
-        files = str(len(subset))
         media_files = str(len(subset_media)) if media_extensions else "N/A"
         newest = (
             datetime.fromtimestamp(subset[0].stat.st_mtime).strftime("%Y-%m-%d")
@@ -532,7 +500,7 @@ def print_summary(
         av_size = format_size(mean(file.stat.st_size for file in subset if file.stat))
         total_size = format_size(sum(file.stat.st_size for file in subset if file.stat))
 
-        return label, files, media_files, newest, oldest, av_size, total_size
+        return label, media_files, newest, oldest, av_size, total_size
 
     for label, subset in subsets.items():
         table.add_row(*build_row(label, subset))
