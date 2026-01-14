@@ -493,6 +493,6 @@ def print_stats():
     """Print library statistics."""
     cfg = Configuration.from_config()
     layout = ColumnLayout.from_terminal()
-    library = load_library()
+    library = load_library(show_progress=True)
     print_summary(library, cfg.search_paths)
     print_distributions(library, layout)

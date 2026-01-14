@@ -364,7 +364,7 @@ def test_print_stats_runs_without_error(monkeypatch, tmp_path):
             search_paths=[str(tmp_path)],
             )
     )
-    monkeypatch.setattr("mf.utils.stats.load_library", lambda: results)
+    monkeypatch.setattr("mf.utils.stats.load_library", lambda show_progress: results)
 
     # Should run without error
     print_stats()
