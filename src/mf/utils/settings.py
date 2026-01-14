@@ -153,6 +153,18 @@ SETTINGS: dict[str, SettingSpec] = {
         after_update=lambda _: _rebuild_cache_if_enabled(),
         help="Allowed media file extensions.",
     ),
+    "treat_rar_as_media": SettingSpec(
+        key="treat_rar_as_media",
+        kind="scalar",
+        value_type=bool,
+        actions={"set"},
+        normalize=normalize_bool_str,
+        default=True,
+        allowed_values=[True, False],
+        display=normalize_bool_to_toml,
+        after_update=lambda _: _rebuild_cache_if_enabled(),
+        help="Include .rar files in search results and auto-extract for playing.",
+    ),
     "fullscreen_playback": SettingSpec(
         key="fullscreen_playback",
         kind="scalar",
@@ -251,18 +263,6 @@ SETTINGS: dict[str, SettingSpec] = {
             "Video player to use. 'vlc', 'mpv', or 'auto'. If 'auto', uses VLC with "
             "fallback to mpv. Note that video player(s) must be installed separately."
         ),
-    ),
-    "treat_rar_as_media": SettingSpec(
-        key="treat_rar_as_media",
-        kind="scalar",
-        value_type=bool,
-        actions={"set"},
-        normalize=normalize_bool_str,
-        default=True,
-        allowed_values=[True, False],
-        display=normalize_bool_to_toml,
-        after_update=lambda _: _rebuild_cache_if_enabled(),
-        help="Include .rar files in search results and auto-extract for playing.",
     ),
 }
 
