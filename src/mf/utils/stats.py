@@ -260,15 +260,12 @@ def make_filesize_histogram(results: FileResults, format: PanelFormat) -> Panel:
     return make_histogram(bins=bins, title="Size", format=format)
 
 
-def make_file_age_histogram(
-    results: FileResults, format: PanelFormat, title: str = "Age"
-) -> Panel:
+def make_file_age_histogram(results: FileResults, format: PanelFormat) -> Panel:
     """Make a histogram of file age by year.
 
     Args:
         results (FileResults): File collection.
         format (PanelFormat): Panel format.
-        title (str, optional): Panel title. Defaults to "File age".
 
     Returns:
         Panel: Ready-to-render histogram panel.
@@ -282,7 +279,7 @@ def make_file_age_histogram(
 
     return make_histogram(
         bins,
-        title=title,
+        title="Age",
         format=format,
         sort=True,
         sort_key=lambda bin: bin[0],
@@ -430,47 +427,32 @@ def get_log_histogram(
     return bin_centers, [len(bin) for bin in bins]
 
 
-def _print_stats(
-    results: FileResults,
-    layout: ColumnLayout,
-    cfg: Configuration,
-):
-    """Print results statistics.
-
-    Prints a summary table (per-path + total) followed by a collection of histograms.
+def print_distributions(results: FileResults, layout: ColumnLayout):
+    """Print distributions of various library properties.
 
     Args:
         results (FileResults): Results to summarize.
         layout (ColumnLayout): Terminal layout to use for printing.
-        cfg (Configuration): mediafinder configuration.
     """
-    layout.add_panel(make_resolution_histogram(results, format=layout.panel_format))
-    layout.add_panel(make_extension_histogram(results, format=layout.panel_format))
-    layout.add_panel(make_filesize_histogram(results, format=layout.panel_format))
-    layout.add_panel(make_file_age_histogram(results, format=layout.panel_format))
+    makers = [
+        make_resolution_histogram,
+        make_extension_histogram,
+        make_filesize_histogram,
+        make_file_age_histogram,
+    ]
 
-    print_summary(results, cfg.search_paths, cfg.media_extensions)
+    for make_histogram in makers:
+        layout.add_panel(make_histogram(results, format=layout.panel_format))
+
     layout.print()
 
 
-def print_stats():
-    """Print library statistics."""
-    cfg = Configuration.from_config()
-    layout = ColumnLayout.from_terminal()
-    library = load_library()
-    _print_stats(library, layout, cfg)
-
-
-def print_summary(
-    results: FileResults, search_paths: list[Path], media_extensions: list[str] | None
-):
+def print_summary(results: FileResults, search_paths: list[Path]):
     """Print summary statistics table of individual search paths and the full results.
 
     Args:
         results (FileResults): Results to summarize.
         search_paths (list[Path]): Base paths by which to split results into subsets.
-        media_extensions (list[str] | None): Media file extensions by which to split
-            into "all files" and "media files".
     """
     subsets = split_by_search_path(results, search_paths)
 
@@ -485,9 +467,7 @@ def print_summary(
 
     def build_row(label: str, subset: FileResults) -> tuple[str, ...]:
         subset.sort(by_mtime=True)
-        subset_media = subset.filtered_by_extension(media_extensions)
-
-        media_files = str(len(subset_media)) if media_extensions else "N/A"
+        n_files = str(len(subset))
         newest = (
             datetime.fromtimestamp(subset[0].stat.st_mtime).strftime("%Y-%m-%d")
             if subset[0].stat
@@ -501,9 +481,18 @@ def print_summary(
         av_size = format_size(mean(file.stat.st_size for file in subset if file.stat))
         total_size = format_size(sum(file.stat.st_size for file in subset if file.stat))
 
-        return label, media_files, newest, oldest, av_size, total_size
+        return label, n_files, newest, oldest, av_size, total_size
 
     for label, subset in subsets.items():
         table.add_row(*build_row(label, subset))
 
     console.print(table)
+
+
+def print_stats():
+    """Print library statistics."""
+    cfg = Configuration.from_config()
+    layout = ColumnLayout.from_terminal()
+    library = load_library()
+    print_summary(library, cfg.search_paths)
+    print_distributions(library, layout)
