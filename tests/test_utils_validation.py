@@ -5,6 +5,7 @@ import pytest
 import typer
 
 from mf.utils.validation import (
+    validate_media_extensions,
     validate_search_cache,
     validate_search_paths,
     validate_search_paths_overlap,
@@ -194,3 +195,33 @@ def test_validate_search_paths_overlap_similar_names_no_overlap():
     paths = ["/media/videos", "/media/videos-archive", "/media/audio"]
     # These don't overlap - just similar names
     validate_search_paths_overlap(paths)
+
+
+# Media extensions validation tests
+
+
+def test_validate_media_extensions_with_valid_list():
+    """Test validation passes with non-empty list of extensions."""
+    valid_extensions = [".mp4", ".mkv", ".avi"]
+    # Should not raise
+    validate_media_extensions(valid_extensions)
+
+
+def test_validate_media_extensions_with_single_extension():
+    """Test validation passes with single extension."""
+    valid_extensions = [".mp4"]
+    # Should not raise
+    validate_media_extensions(valid_extensions)
+
+
+def test_validate_media_extensions_empty_list_raises():
+    """Test validation fails when media_extensions list is empty."""
+    with pytest.raises(typer.Exit):
+        validate_media_extensions([])
+
+
+def test_validate_media_extensions_with_rar():
+    """Test validation passes when .rar is in the list."""
+    valid_extensions = [".mp4", ".mkv", ".rar"]
+    # Should not raise
+    validate_media_extensions(valid_extensions)

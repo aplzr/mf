@@ -193,6 +193,67 @@ def test_migrate_config_library_cache_interval_invalid_format(isolated_config):
     assert cfg["library_cache_interval"] == "invalid"
 
 
+def test_migrate_config_removes_obsolete_match_extensions(isolated_config):
+    """Verify obsolete match_extensions setting is removed during migration."""
+    # Create config with the obsolete match_extensions setting
+    cfg = document()
+    for setting in SETTINGS:
+        add_default_setting(cfg, setting)
+
+    # Add obsolete setting
+    cfg["match_extensions"] = True
+
+    # Migrate
+    migrate_config(cfg)
+
+    # Assert obsolete setting was removed
+    assert "match_extensions" not in cfg
+    # All current settings should still be present
+    for setting in SETTINGS:
+        assert setting in cfg
+
+
+def test_migrate_config_removes_multiple_obsolete_settings(isolated_config):
+    """Verify multiple obsolete settings are all removed."""
+    # Create config with current settings plus obsolete ones
+    cfg = document()
+    for setting in SETTINGS:
+        add_default_setting(cfg, setting)
+
+    # Add multiple obsolete settings
+    cfg["match_extensions"] = True
+    cfg["some_old_setting"] = "value"
+    cfg["another_obsolete"] = False
+
+    # Migrate
+    migrate_config(cfg)
+
+    # Assert all obsolete settings were removed
+    assert "match_extensions" not in cfg
+    assert "some_old_setting" not in cfg
+    assert "another_obsolete" not in cfg
+    # All current settings should still be present
+    for setting in SETTINGS:
+        assert setting in cfg
+
+
+def test_migrate_config_adds_treat_rar_as_media(isolated_config):
+    """Verify treat_rar_as_media is added to old configs."""
+    # Create old config without treat_rar_as_media
+    cfg = document()
+    cfg["search_paths"] = ["/test/path"]
+    cfg["media_extensions"] = [".mp4", ".mkv"]
+    # Intentionally omit treat_rar_as_media
+
+    # Migrate
+    modified = migrate_config(cfg)
+
+    # Assert treat_rar_as_media was added with default value
+    assert modified
+    assert "treat_rar_as_media" in cfg
+    assert cfg["treat_rar_as_media"] is True  # Default value
+
+
 
 
 
