@@ -161,9 +161,9 @@ class PanelFormat:
 class ColumnLayout:
     """Mutable builder for multi-column panel layouts.
 
-    Accumulates Rich Panel objects and renders them in a responsive multi-column
-    grid. The layout automatically distributes panels across columns (row-first)
-    and adapts to terminal width constraints.
+    Accumulates Rich Panel objects and renders them in a responsive multi-column grid.
+    The layout automatically distributes panels across columns using a greedy best fit
+    algorithm and adapts to terminal width constraints.
 
     Usage:
         Create layout from terminal dimensions, add panels, then print:
