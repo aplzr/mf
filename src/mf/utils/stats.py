@@ -115,7 +115,7 @@ def make_histogram(
 
     Args:
         bins (list[BinData]): List of (label, count) pairs that represent one histogram
-            bin each.
+            bin each. If empty, produces a Panel that says "No data".
         title (str): Histogram title.
         format (PanelFormat): Panel format.
         sort (bool, optional): Whether to sort bins. Sorts by label if no sort_key is
@@ -136,6 +136,18 @@ def make_histogram(
     if top_n:
         bins = bins[:top_n]
         title = title + f" (top {top_n})"
+
+    if not bins:
+        panel_border_width = 1
+        return Panel(
+            "[dim]No data[/dim]",
+            title=(f"[bold cyan]{title}[/bold cyan]"),
+            padding=format.padding,
+            title_align=format.title_align,
+            expand=False,
+            width=format.panel_width,
+            height=1 + 2 * panel_border_width + 2 * format.padding[0],
+        )
 
     # Statistical parameters
     max_count = max(count for _, count in bins)
