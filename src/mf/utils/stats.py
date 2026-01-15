@@ -85,7 +85,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .config import Configuration
-from .console import ColumnLayout, PanelFormat, console
+from .console import ColumnLayout, PanelFormat, console, print_and_raise
 from .file import FileResults
 from .library import load_library, split_by_search_path
 from .misc import format_size
@@ -526,6 +526,9 @@ def print_distributions(results: FileResults, layout: ColumnLayout):
         results (FileResults): Results to summarize.
         layout (ColumnLayout): Terminal layout to use for printing.
     """
+    if not results:
+        print_and_raise("Library is empty, can't compute statistics.")
+
     makers = [
         make_resolution_histogram,
         make_extension_histogram,
@@ -545,10 +548,16 @@ def print_distributions(results: FileResults, layout: ColumnLayout):
 def print_summary(results: FileResults, search_paths: list[Path]):
     """Print summary statistics table of individual search paths and the full results.
 
+    Raises:
+        typer.Exit: Library is empty.
+
     Args:
         results (FileResults): Results to summarize.
         search_paths (list[Path]): Base paths by which to split results into subsets.
     """
+    if not results:
+        print_and_raise("Library is empty, can't compute statistics.")
+
     subsets = split_by_search_path(results, search_paths)
 
     if len(subsets) > 1:
