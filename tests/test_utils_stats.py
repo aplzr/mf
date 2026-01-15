@@ -11,7 +11,10 @@ from mf.utils.stats import (
     get_log_histogram,
     get_string_counts,
     group_values_by_bins,
+    make_audio_codec_histogram,
+    make_dynamic_range_histogram,
     make_histogram,
+    make_video_codec_histogram,
     print_stats,
 )
 
@@ -368,3 +371,173 @@ def test_print_stats_runs_without_error(monkeypatch, tmp_path):
 
     # Should run without error
     print_stats()
+
+
+def test_make_histogram_empty_bins():
+    """Test that make_histogram handles empty bins gracefully."""
+    from mf.utils.stats import make_histogram
+
+    panel = make_histogram(
+        bins=[],
+        title="Empty Test",
+        format=PanelFormat(panel_width=40, padding=(1, 1), title_align="left"),
+    )
+
+    assert isinstance(panel, Panel)
+    assert panel.renderable == "[dim]No data[/dim]"
+
+
+def test_make_video_codec_histogram_with_codecs(tmp_path):
+    """Test video codec histogram with files containing codec info."""
+    from mf.utils.file import FileResult, FileResults
+
+    files = []
+    test_files = [
+        "movie.x264.1080p.mkv",
+        "show.H.265.2160p.mp4",
+        "video.VP9.webm",
+    ]
+    for filename in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"test")
+        files.append(f)
+
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    panel = make_video_codec_histogram(
+        results, format=PanelFormat(panel_width=40, padding=(1, 1), title_align="left")
+    )
+
+    assert isinstance(panel, Panel)
+    # Should not be "No data" panel
+    assert panel.renderable != "[dim]No data[/dim]"
+
+
+def test_make_video_codec_histogram_no_codecs(tmp_path):
+    """Test video codec histogram with files without codec info."""
+    from mf.utils.file import FileResult, FileResults
+
+    files = []
+    test_files = [
+        "movie.1080p.mkv",
+        "show.2160p.mp4",
+        "video.720p.webm",
+    ]
+    for filename in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"test")
+        files.append(f)
+
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    panel = make_video_codec_histogram(
+        results, format=PanelFormat(panel_width=40, padding=(1, 1), title_align="left")
+    )
+
+    assert isinstance(panel, Panel)
+    # Should be "No data" panel when no codecs found
+    assert panel.renderable == "[dim]No data[/dim]"
+
+
+def test_make_audio_codec_histogram_with_codecs(tmp_path):
+    """Test audio codec histogram with files containing codec info."""
+    from mf.utils.file import FileResult, FileResults
+
+    files = []
+    test_files = [
+        "movie.DTS-HD.MA.mkv",
+        "show.AAC.mp4",
+        "video.Opus.webm",
+    ]
+    for filename in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"test")
+        files.append(f)
+
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    panel = make_audio_codec_histogram(
+        results, format=PanelFormat(panel_width=40, padding=(1, 1), title_align="left")
+    )
+
+    assert isinstance(panel, Panel)
+    # Should not be "No data" panel
+    assert panel.renderable != "[dim]No data[/dim]"
+
+
+def test_make_audio_codec_histogram_no_codecs(tmp_path):
+    """Test audio codec histogram with files without codec info."""
+    from mf.utils.file import FileResult, FileResults
+
+    files = []
+    test_files = [
+        "movie.1080p.mkv",
+        "show.2160p.mp4",
+        "video.720p.webm",
+    ]
+    for filename in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"test")
+        files.append(f)
+
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    panel = make_audio_codec_histogram(
+        results, format=PanelFormat(panel_width=40, padding=(1, 1), title_align="left")
+    )
+
+    assert isinstance(panel, Panel)
+    # Should be "No data" panel when no codecs found
+    assert panel.renderable == "[dim]No data[/dim]"
+
+
+def test_make_dynamic_range_histogram_with_hdr(tmp_path):
+    """Test dynamic range histogram with files containing HDR info."""
+    from mf.utils.file import FileResult, FileResults
+
+    files = []
+    test_files = [
+        "movie.HDR10.mkv",
+        "show.DV.mp4",
+        "video.HDR10+.webm",
+    ]
+    for filename in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"test")
+        files.append(f)
+
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    panel = make_dynamic_range_histogram(
+        results, format=PanelFormat(panel_width=40, padding=(1, 1), title_align="left")
+    )
+
+    assert isinstance(panel, Panel)
+    # Should not be "No data" panel
+    assert panel.renderable != "[dim]No data[/dim]"
+
+
+def test_make_dynamic_range_histogram_no_hdr(tmp_path):
+    """Test dynamic range histogram with files without HDR info."""
+    from mf.utils.file import FileResult, FileResults
+
+    files = []
+    test_files = [
+        "movie.1080p.mkv",
+        "show.2160p.mp4",
+        "video.720p.webm",
+    ]
+    for filename in test_files:
+        f = tmp_path / filename
+        f.write_bytes(b"test")
+        files.append(f)
+
+    results = FileResults([FileResult(f, os.stat(f)) for f in files])
+
+    panel = make_dynamic_range_histogram(
+        results, format=PanelFormat(panel_width=40, padding=(1, 1), title_align="left")
+    )
+
+    assert isinstance(panel, Panel)
+    # Should be "No data" panel when no HDR found
+    assert panel.renderable == "[dim]No data[/dim]"
