@@ -359,6 +359,8 @@ def migrate_config(raw_cfg: TOMLDocument) -> bool:
             raw_cfg.remove(obsolete_setting)
             print_info(f"Removed deprecated setting '{obsolete_setting}'.")
 
+        modified = True
+
     return modified
 
 
