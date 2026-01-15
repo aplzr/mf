@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from unittest.mock import PropertyMock, patch
 
 from typer.testing import CliRunner
 
@@ -56,3 +57,64 @@ def test_cache_default_invokes_show(tmp_path, monkeypatch):
     r = runner.invoke(app_last, [])
     assert r.exit_code == 0
     assert "Cached results:" in r.stdout
+
+
+def test_cache_show_plain_flag(tmp_path, monkeypatch):
+    """Test that --plain flag outputs only file paths."""
+    _set_env(monkeypatch, tmp_path)
+    test_path1 = Path("/tmp/foo1.mp4")
+    test_path2 = Path("/tmp/foo2.mkv")
+    save_search_results("*foo*", [
+        FileResult(test_path1),
+        FileResult(test_path2)
+    ])
+    r = runner.invoke(app_last, ["show", "--plain"])
+    assert r.exit_code == 0
+    # Plain output should only contain file paths (normalized for platform)
+    assert str(test_path1) in r.stdout
+    assert str(test_path2) in r.stdout
+    # Plain output should NOT contain rich formatting
+    assert "Cache file:" not in r.stdout
+    assert "Timestamp:" not in r.stdout
+    assert "Cached results:" not in r.stdout
+    assert "*foo*" not in r.stdout
+
+
+def test_cache_show_plain_short_flag(tmp_path, monkeypatch):
+    """Test that -p short flag works for plain output."""
+    _set_env(monkeypatch, tmp_path)
+    test_path = Path("/tmp/test.mp4")
+    save_search_results("test", [FileResult(test_path)])
+    r = runner.invoke(app_last, ["show", "-p"])
+    assert r.exit_code == 0
+    assert str(test_path) in r.stdout
+    assert "Cache file:" not in r.stdout
+
+
+def test_cache_show_tty_detection(tmp_path, monkeypatch):
+    """Test that TTY detection triggers plain output automatically."""
+    _set_env(monkeypatch, tmp_path)
+    # Override the global mock to simulate non-TTY environment (piped output)
+    from mf.utils.search import console
+
+    test_path = Path("/tmp/bar.mp4")
+    save_search_results("*bar*", [FileResult(test_path)])
+
+    with patch.object(type(console), 'is_terminal', new_callable=PropertyMock, return_value=False):
+        r = runner.invoke(app_last, ["show"])
+        assert r.exit_code == 0
+        # Should automatically output plain text
+        assert str(test_path) in r.stdout
+        assert "Cache file:" not in r.stdout
+        assert "*bar*" not in r.stdout
+
+
+def test_cache_default_with_plain_flag(tmp_path, monkeypatch):
+    """Test that plain flag works when using default command (no 'show')."""
+    _set_env(monkeypatch, tmp_path)
+    test_path = Path("/tmp/a.mp4")
+    save_search_results("pattern", [FileResult(test_path)])
+    r = runner.invoke(app_last, ["--plain"])
+    assert r.exit_code == 0
+    assert str(test_path) in r.stdout
+    assert "Cached results:" not in r.stdout

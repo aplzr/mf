@@ -24,6 +24,7 @@ A cross-platform command-line tool for finding and playing video files in large 
 - **📦 RAR archive support** - Automatically extract and play video files from RAR archives
 - **🌐 IMDB lookup** - Automatically open IMDB pages for media files
 - **⚙️ Flexible configuration** - TOML-based config with extension filtering and path management
+- **📜 Scriptable output** - Plain text output mode for easy piping and scripting
 - **🖥️ Cross-platform** - Works on Windows, Linux, and macOS
 
 ## Installation
@@ -75,12 +76,10 @@ mf new # Show 20 newest files
 mf new 50 # Show 50 newest files
 ```
 
-## Commands
+## Core Commands
 
-### Core Commands
-
-- `mf find [pattern]` - Search for media files matching the glob pattern
-- `mf new [n]` - Show latest additions (default: 20 files)
+- `mf find [pattern]` - Search for media files matching the glob pattern (supports `--plain`/`-p` for scriptable output)
+- `mf new [n]` - Show latest additions (default: 20 files, supports `--plain`/`-p` for scriptable output)
 - `mf play [index]` - Play a file by index, or random file if no index given
 - `mf imdb <index>` - Open IMDB page for a media file
 - `mf filepath <index>` - Print full path of a search result
@@ -93,128 +92,51 @@ mf new 50 # Show 50 newest files
 - `mf` or `mf --help` - Print help
 
 
-### Last search results
-
-- `mf last` / `mf last show`- Show indexed results from the last file search
-- `mf last file` - Print search result file location
-- `mf last clear` - Clear last search results
-
-Cached indices remain valid until you run another `find` or `new` command that overwrites the last search.
-
-### Cache Management
-
-**Configuration:**
-
-- `mf config set cache_library <true/false>` - Turn library caching on or off
-- `mf config set library_cache_interval <interval>` - Set auto-rebuild interval in seconds (default 86400 (1 day), 0 to disable)
-
-**Manual control:**
-
-- `mf cache rebuild` - Trigger a library cache rebuild
-- `mf cache file` - Print cache location
-- `mf cache clear` - Clear the cache
-- `mf stats` - Show library statistics
 
 
-### Configuration Management
-`mf` can be configured directly on the command line:
 
-- `mf config set <key> <values>` - Set configuration values
-- `mf config add <key> <values>` - Add values to list settings
-- `mf config remove <key> <values>` - Remove values from list settings
-- `mf config get <key>` - Get configuration value
-- `mf config list` - Show the current configuration
-- `mf config edit` - Edit config file in default editor
-- `mf config file` - Print config file location
-- `mf config settings` - Print a table of all available settings
+## Scripting and Automation
 
-#### Search Paths
-Add multiple paths of a (scattered) collection:
+The `find`, `new`, and `last` commands support plain text output for easy scripting and piping.
+
+### Automatic Plain Mode (TTY Detection)
+
+Plain mode is **automatically enabled** when output is piped or redirected - no flags needed:
 
 ```bash
-mf config set search_paths "/movies" "/tv-shows" "/documentaries"
+# Automatically outputs plain text
+mf find batman | head -5
+mf new 10 | grep 1080p
+mf last > results.txt
+
+# Find and play first result
+vlc "$(mf find batman | head -1)"
+
+# Count search results
+mf find 2023 | wc -l
+
+# Process multiple files
+mf find "*.mkv" | while read -r file; do
+    echo "Processing: $file"
+done
 ```
 
-#### Media Extensions
-Control which file types are considered media files:
+Interactive terminal usage displays rich formatted output, while piped/redirected commands automatically get plain text.
 
-```
-mf config set media_extensions ".mp4" ".mkv" ".avi" ".mov" ".wmv" ".rar"
-```
+### Explicit Plain Mode
 
-By default, common video formats and `.rar` archives are included.
-
-#### Automatic wildcard wrapping
-Toggle whether search patterns should be wrapped with wildcards automatically:
+Use `--plain` or `-p` when you want plain output **directly in your terminal** without piping:
 
 ```bash
-# Wraps search patterns with '*' if no wildcards (* ? [ ]) present.
-# 'mf find batman' searches for files matching *batman*.
-mf config set auto_wildcards true
-
-# Does not wrap search patterns.
-# 'mf find batman' searches for files exactly named batman.
-mf config set auto_wildcards false
+# View plain paths in terminal (useful for copying paths, etc.)
+mf find batman --plain
+mf new 5 -p
 ```
 
-#### Parallel search
-Toggle whether file searches should be parallelized over search paths:
-
-```bash
-# Runs file searches concurrently over all paths defined in search_paths (potentially faster).
-mf config set parallel_search true
-
-# Runs file searches sequentially over all paths defined in search_paths. Use this if
-# your search paths are on the same mechanical (but not solid state) hard drive to avoid
-# disk thrashing.
-mf config set parallel_search false
-```
-
-#### Other Settings
-
-- `video_player` (str): Video player to use (`vlc`, `mpv`, or `auto`). Default is `auto`, which prefers VLC with automatic fallback to mpv.
-- `fullscreen_playback` (bool): If true, `mf play` launches the video player in fullscreen mode.
-- `prefer_fd` (bool): Use the bundled `fd` scanner when possible. Automatically ignored for mtime-sorted searches (`mf new`) which always use the Python scanner.
-- `display_paths` (bool): Turn filepath display in search results on or off.
-
-#### Editing the Config
-
-`mf config edit` resolves an editor in this order:
-1. `$VISUAL` or `$EDITOR`
-2. Windows: Notepad++ if present else Notepad
-3. POSIX: first available of `nano`, `vim`, `vi`
-
-If no editor is found, it prints the path so you can edit manually.
-
-#### Input Normalization
-
-- Boolean values accept: `true`, `false`, `yes`, `no`, `y`, `n`, `on`, `off`, `1`, `0` (case-insensitive; synonyms normalized to true/false).
-- Media extensions are normalized to lowercase with a leading dot (`mkv` → `.mkv`).
-- Paths are stored as absolute POSIX-style strings.
-
-### Library Statistics
+## Library Statistics
 Use the `mf stats` command to print various statistics that describe your collection:
 
 ![](static/stats_example.png)
-
-## Search Patterns
-
-- Use quotes around patterns with wildcards to prevent shell expansion
-- Patterns without wildcards are automatically wrapped: `batman` becomes `*batman*`
-- Automatic wildcard wrapping only happens if the pattern contains none of: `* ? [ ]`.
-- Examples:
-  - `mf find "*.mp4"` - All MP4 files
-  - `mf find batman` - Files containing "batman"
-  - `mf find "*2023*1080p*"` - 2023 releases in 1080p
-  - `mf find "s01e??"` - Season 1 episodes
-
-## Integration Features
-
-- **Video Player Integration**: Automatically launches VLC or mpv media player with configurable preference
-- **IMDB Lookup**: Uses filename parsing to find matching IMDB entries
-- **Smart Caching**: Search results are cached for quick index-based access
-- **Cross-platform paths**: Handles Windows and Unix path conventions
-- **Random Playback**: `mf play` (without index) randomly selects a file by scanning all configured paths (not just the last cached search).
 
 ## RAR Archive Support
 
@@ -234,6 +156,126 @@ mf play 1            # Automatically extracts and plays the video
 ```
 
 **Note**: The `mf play list` command (playing multiple files as a playlist) is not supported for RAR archives. Play individual RAR files by index instead.
+
+## Last search results
+
+- `mf last` / `mf last show`- Show indexed results from the last file search (supports `--plain`/`-p` for scriptable output)
+- `mf last file` - Print search result file location
+- `mf last clear` - Clear last search results
+
+Cached indices remain valid until you run another `find` or `new` command that overwrites the last search.
+
+## Cache Management
+
+**Configuration:**
+
+- `mf config set cache_library <true/false>` - Turn library caching on or off
+- `mf config set library_cache_interval <interval>` - Set auto-rebuild interval in seconds (default 86400 (1 day), 0 to disable)
+
+**Manual control:**
+
+- `mf cache rebuild` - Trigger a library cache rebuild
+- `mf cache file` - Print cache location
+- `mf cache clear` - Clear the cache
+- `mf stats` - Show library statistics
+
+## Configuration Management
+`mf` can be configured directly on the command line:
+
+- `mf config set <key> <values>` - Set configuration values
+- `mf config add <key> <values>` - Add values to list settings
+- `mf config remove <key> <values>` - Remove values from list settings
+- `mf config get <key>` - Get configuration value
+- `mf config list` - Show the current configuration
+- `mf config edit` - Edit config file in default editor
+- `mf config file` - Print config file location
+- `mf config settings` - Print a table of all available settings
+
+### Search Paths
+Add multiple paths of a (scattered) collection:
+
+```bash
+mf config set search_paths "/movies" "/tv-shows" "/documentaries"
+```
+
+### Media Extensions
+Control which file types are considered media files:
+
+```
+mf config set media_extensions ".mp4" ".mkv" ".avi" ".mov" ".wmv" ".rar"
+```
+
+By default, common video formats and `.rar` archives are included.
+
+### Automatic wildcard wrapping
+Toggle whether search patterns should be wrapped with wildcards automatically:
+
+```bash
+# Wraps search patterns with '*' if no wildcards (* ? [ ]) present.
+# 'mf find batman' searches for files matching *batman*.
+mf config set auto_wildcards true
+
+# Does not wrap search patterns.
+# 'mf find batman' searches for files exactly named batman.
+mf config set auto_wildcards false
+```
+
+### Parallel search
+Toggle whether file searches should be parallelized over search paths:
+
+```bash
+# Runs file searches concurrently over all paths defined in search_paths (potentially faster).
+mf config set parallel_search true
+
+# Runs file searches sequentially over all paths defined in search_paths. Use this if
+# your search paths are on the same mechanical (but not solid state) hard drive to avoid
+# disk thrashing.
+mf config set parallel_search false
+```
+
+### Other Settings
+
+- `video_player` (str): Video player to use (`vlc`, `mpv`, or `auto`). Default is `auto`, which prefers VLC with automatic fallback to mpv.
+- `fullscreen_playback` (bool): If true, `mf play` launches the video player in fullscreen mode.
+- `prefer_fd` (bool): Use the bundled `fd` scanner when possible. Automatically ignored for mtime-sorted searches (`mf new`) which always use the Python scanner.
+- `display_paths` (bool): Turn filepath display in search results on or off.
+
+### Editing the Config
+
+`mf config edit` resolves an editor in this order:
+1. `$VISUAL` or `$EDITOR`
+2. Windows: Notepad++ if present else Notepad
+3. POSIX: first available of `nano`, `vim`, `vi`
+
+If no editor is found, it prints the path so you can edit manually.
+
+### Input Normalization
+
+- Boolean values accept: `true`, `false`, `yes`, `no`, `y`, `n`, `on`, `off`, `1`, `0` (case-insensitive; synonyms normalized to true/false).
+- Media extensions are normalized to lowercase with a leading dot (`mkv` → `.mkv`).
+- Paths are stored as absolute POSIX-style strings.
+
+## Search Patterns
+
+- Use quotes around patterns with wildcards to prevent shell expansion
+- Patterns without wildcards are automatically wrapped: `batman` becomes `*batman*`
+- Automatic wildcard wrapping only happens if the pattern contains none of: `* ? [ ]`.
+- Examples:
+  - `mf find "*.mp4"` - All MP4 files
+  - `mf find batman` - Files containing "batman"
+  - `mf find "*2023*1080p*"` - 2023 releases in 1080p
+  - `mf find "s01e??"` - Season 1 episodes
+
+
+
+
+## Integration Features
+
+- **Video Player Integration**: Automatically launches VLC or mpv media player with configurable preference
+- **IMDB Lookup**: Uses filename parsing to find matching IMDB entries
+- **Smart Caching**: Search results are cached for quick index-based access
+- **Cross-platform paths**: Handles Windows and Unix path conventions
+- **Random Playback**: `mf play` (without index) randomly selects a file by scanning all configured paths (not just the last cached search).
 
 ## Performance
 
