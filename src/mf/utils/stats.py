@@ -89,7 +89,13 @@ from .console import ColumnLayout, PanelFormat, console
 from .file import FileResults
 from .library import load_library, split_by_search_path
 from .misc import format_size
-from .parsers import parse_resolutions
+from .parsers import (
+    parse_audio_codecs,
+    parse_dynamic_ranges,
+    parse_release_years,
+    parse_resolutions,
+    parse_video_codecs,
+)
 
 BinData: TypeAlias = tuple[str, int]  # (label, count)
 
@@ -109,7 +115,7 @@ def make_histogram(
 
     Args:
         bins (list[BinData]): List of (label, count) pairs that represent one histogram
-            bin each.
+            bin each. If empty, produces a Panel that says "No data".
         title (str): Histogram title.
         format (PanelFormat): Panel format.
         sort (bool, optional): Whether to sort bins. Sorts by label if no sort_key is
@@ -130,6 +136,18 @@ def make_histogram(
     if top_n:
         bins = bins[:top_n]
         title = title + f" (top {top_n})"
+
+    if not bins:
+        panel_border_width = 1
+        return Panel(
+            "[dim]No data[/dim]",
+            title=(f"[bold cyan]{title}[/bold cyan]"),
+            padding=format.padding,
+            title_align=format.title_align,
+            expand=False,
+            width=format.panel_width,
+            height=1 + 2 * panel_border_width + 2 * format.padding[0],
+        )
 
     # Statistical parameters
     max_count = max(count for _, count in bins)
@@ -286,6 +304,80 @@ def make_file_age_histogram(results: FileResults, format: PanelFormat) -> Panel:
     )
 
 
+def make_video_codec_histogram(results: FileResults, format: PanelFormat) -> Panel:
+    """Make a video codec histogram.
+
+    Args:
+        results (FileResults): File collection.
+        format (PanelFormat): Panel format.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    return make_histogram(
+        bins=get_string_counts(parse_video_codecs(results)),
+        title="Video codec",
+        format=format,
+        sort=True,
+    )
+
+
+def make_audio_codec_histogram(results: FileResults, format: PanelFormat) -> Panel:
+    """Make an audio codec histogram.
+
+    Args:
+        results (FileResults): File collection.
+        format (PanelFormat): Panel format.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    return make_histogram(
+        bins=get_string_counts(parse_audio_codecs(results)),
+        title="Audio codec",
+        format=format,
+        sort=True,
+    )
+
+
+def make_dynamic_range_histogram(results: FileResults, format: PanelFormat) -> Panel:
+    """Make a dynamic range histogram.
+
+    Args:
+        results (FileResults): File collection.
+        format (PanelFormat): Panel format.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    return make_histogram(
+        bins=get_string_counts(parse_dynamic_ranges(results)),
+        title="Dynamic range",
+        format=format,
+        sort=True,
+    )
+
+
+def make_release_year_histogram(results: FileResults, format: PanelFormat) -> Panel:
+    """Make a histogram of release years.
+
+    Args:
+        results (FileResults): File collection.
+        format (PanelFormat): Panel format.
+
+    Returns:
+        Panel: Ready-to-render histogram panel.
+    """
+    # NOTE: currently not used because it produces too many false positives from years
+    # in filenames that are not the year of release.
+    return make_histogram(
+        bins=get_string_counts(parse_release_years(results)),
+        title="Year of release",
+        format=format,
+        sort=True,
+    )
+
+
 def create_log_bins(
     min_size: float, max_size: float, bins_per_decade: int = 4
 ) -> list[float]:
@@ -439,6 +531,9 @@ def print_distributions(results: FileResults, layout: ColumnLayout):
         make_extension_histogram,
         make_filesize_histogram,
         make_file_age_histogram,
+        make_video_codec_histogram,
+        make_audio_codec_histogram,
+        make_dynamic_range_histogram,
     ]
 
     for make_histogram in makers:
