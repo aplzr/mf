@@ -87,15 +87,12 @@ from rich.panel import Panel
 
 from ..constants import STATUS_SYMBOLS
 
-__all__ = [
-    "console",
-    "print_and_raise",
-    "print_info",
-    "print_ok",
-    "print_warn",
-]
-
 COLUMNLAYOUT_MAX_COLUMNS = 5
+
+# Option to add to all CLI commands that should be able to request plain output
+plain_option = typer.Option(
+    False, "--plain", "-p", help="Output plain text for scripting."
+)
 
 # Shared console instance for the project
 console = Console()

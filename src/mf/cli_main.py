@@ -49,14 +49,8 @@ from .cli_cache import app_cache
 from .cli_config import app_config
 from .cli_last import app_last
 from .utils.config import Configuration
-from .utils.console import console, print_and_raise, print_warn
-from .utils.file import (
-    FileResult,
-    FileResults,
-    cleanup,
-    extract_rar,
-    remove_temp_paths,
-)
+from .utils.console import console, plain_option, print_and_raise, print_warn
+from .utils.file import FileResult, FileResults, cleanup, extract_rar, remove_temp_paths
 from .utils.misc import open_imdb_entry
 from .utils.play import launch_video_player, resolve_play_target
 from .utils.scan import FindQuery, NewQuery
@@ -80,6 +74,7 @@ def find(
             "are present, the pattern will be wrapped with wildcards automatically."
         ),
     ),
+    plain: bool = plain_option,
 ):
     """Find media files matching the search pattern.
 
@@ -94,14 +89,16 @@ def find(
         raise typer.Exit(0)
 
     display_paths = Configuration.from_config().display_paths
+    title = f"Search pattern: {query.pattern}"
 
     save_search_results(query.pattern, results)
-    print_search_results(results, f"Search pattern: {query.pattern}", display_paths)
+    print_search_results(results, title, display_paths, plain)
 
 
 @app_mf.command()
 def new(
     n: int = typer.Argument(20, help="Number of latest additions to show"),
+    plain: bool = plain_option,
 ):
     """Find the latest additions to the media database."""
     newest_files = NewQuery.from_config(n).execute()
@@ -112,7 +109,7 @@ def new(
         print_and_raise("No media files found (empty collection).")
 
     save_search_results(pattern, newest_files)
-    print_search_results(newest_files, pattern, display_paths)
+    print_search_results(newest_files, pattern, display_paths, plain)
 
 
 @app_mf.command()

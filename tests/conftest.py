@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from unittest.mock import PropertyMock, patch
 
 import pytest
 
@@ -25,19 +26,23 @@ def isolated_config(monkeypatch):
     import mf.utils.config
     mf.utils.config._config = None
 
-    tmp_root = Path(tempfile.mkdtemp(prefix="mf-test-"))
-    if os.name == "nt":
-        monkeypatch.setenv("LOCALAPPDATA", str(tmp_root))
-    else:
-        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_root))
-        monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_root))
-    # Force re-load to create default config in isolated dir
-    cfg = get_raw_config()
-    write_config(cfg)
-    # No direct monkeypatch of get_cache_file: environment vars ensure isolation.
-    # Tests that need a different cache location can override env vars themselves.
-    yield tmp_root
-    shutil.rmtree(tmp_root, ignore_errors=True)
+    # Mock console.is_terminal to return True by default (rich output mode)
+    # Tests can override this to test plain mode explicitly
+    from mf.utils.search import console
+    with patch.object(type(console), 'is_terminal', new_callable=PropertyMock, return_value=True):
+        tmp_root = Path(tempfile.mkdtemp(prefix="mf-test-"))
+        if os.name == "nt":
+            monkeypatch.setenv("LOCALAPPDATA", str(tmp_root))
+        else:
+            monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_root))
+            monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_root))
+        # Force re-load to create default config in isolated dir
+        cfg = get_raw_config()
+        write_config(cfg)
+        # No direct monkeypatch of get_cache_file: environment vars ensure isolation.
+        # Tests that need a different cache location can override env vars themselves.
+        yield tmp_root
+        shutil.rmtree(tmp_root, ignore_errors=True)
 
 
 @pytest.fixture
