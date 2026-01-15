@@ -545,7 +545,9 @@ def print_distributions(results: FileResults, layout: ColumnLayout):
     layout.print()
 
 
-def print_summary(results: FileResults, search_paths: list[Path]):
+def print_summary(
+    results: FileResults, search_paths: list[Path], redact_paths: bool = False
+):
     """Print summary statistics table of individual search paths and the full results.
 
     Raises:
@@ -554,11 +556,19 @@ def print_summary(results: FileResults, search_paths: list[Path]):
     Args:
         results (FileResults): Results to summarize.
         search_paths (list[Path]): Base paths by which to split results into subsets.
+        redact_paths (bool, optional): Replaces actual search path names with generic
+            ones for display purposes. Defaults to False.
     """
     if not results:
         print_and_raise("Library is empty, can't compute statistics.")
 
     subsets = split_by_search_path(results, search_paths)
+
+    if redact_paths:
+        subsets = {
+            f"/media/media{i + 1}": subset
+            for i, (_, subset) in enumerate(subsets.items())
+        }
 
     if len(subsets) > 1:
         subsets["Full library"] = results
@@ -593,10 +603,15 @@ def print_summary(results: FileResults, search_paths: list[Path]):
     console.print(table)
 
 
-def print_stats():
-    """Print library statistics."""
+def print_stats(redact_paths: bool = False):
+    """Print library statistics.
+
+    Args:
+        redact_paths (bool, optional): Replaces actual search path names with generic
+            ones for display purposes. Defaults to False.
+    """
     cfg = Configuration.from_config()
     layout = ColumnLayout.from_terminal()
     library = load_library(show_progress=True)
-    print_summary(library, cfg.search_paths)
+    print_summary(library, cfg.search_paths, redact_paths)
     print_distributions(library, layout)
