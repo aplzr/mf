@@ -247,7 +247,7 @@ class Configuration:
         Returns:
             Configuration: Default configuration.
         """
-        return cls(get_default_cfg(), SETTINGS)
+        return cls(get_default_config(), SETTINGS)
 
 
 def add_default_setting(raw_cfg: TOMLDocument, key: str):
@@ -266,7 +266,7 @@ def add_default_setting(raw_cfg: TOMLDocument, key: str):
     raw_cfg.add(nl())
 
 
-def get_default_cfg() -> TOMLDocument:
+def get_default_config() -> TOMLDocument:
     """Get the default configuration.
 
     Builds the default configuration from the settings registry.
@@ -298,7 +298,7 @@ def write_default_config() -> TOMLDocument:
     Returns:
         TOMLDocument: The default configuration document after writing.
     """
-    default_cfg = get_default_cfg()
+    default_cfg = get_default_config()
     write_config(default_cfg)
     print_ok(f"Written default configuration to '{get_config_file()}'.")
 
