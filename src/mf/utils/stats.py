@@ -566,8 +566,7 @@ def print_summary(
 
     if redact_paths:
         subsets = {
-            f"/media/media{i + 1}": subset
-            for i, (_, subset) in enumerate(subsets.items())
+            f"/media/media{i + 1}": subset for i, subset in enumerate(subsets.values())
         }
 
     if len(subsets) > 1:
