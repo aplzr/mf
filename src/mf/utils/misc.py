@@ -78,12 +78,12 @@ def open_imdb_entry(result: FileResult):
     title = parsed["title"]
     results = search_title(title)
 
-    if results.titles:
+    if results and results.titles:
         imdb_url = results.titles[0].url
         console.print(f"IMDB entry for [green]{title}[/green]: {imdb_url}")
         typer.launch(imdb_url)
     else:
-        print_and_raise(f"No IMDB results found for parsed title {title}.")
+        print_and_raise(f"No IMDB results found for parsed title '{title}'.")
 
 
 def format_size(size_bytes: int | float) -> str:
